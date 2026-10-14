@@ -33,6 +33,8 @@ jobs:
           repository: ${{ github.repository_owner }}/${{ vars.DATA_REPO || 'reelio-data' }}
           token: ${{ secrets.DATA_PAT }}
           path: data
+      - name: Install video converter
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run Reelio
         working-directory: worker
         env:
