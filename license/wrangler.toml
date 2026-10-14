@@ -1,0 +1,16 @@
+name = "reelio-license"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[kv_namespaces]]
+binding = "LICENSE_KV"
+id = "PASTE_KV_ID_HERE"   # npx wrangler kv namespace create LICENSE_KV
+
+[vars]
+GRACE_DAYS = "3"
+TRIAL_DAYS = "0"
+TOKEN_TTL_HOURS = "24"
+ALLOWED_ORIGINS = "*"      # set to your app address once known
+# Secrets (never put these in this file). Set each with: npx wrangler secret put NAME
+#   SIGNING_KEY_JWK  (output of: npm run keys)   ADMIN_SECRET
+#   STRIPE_SECRET_KEY  STRIPE_WEBHOOK_SECRET   RAZORPAY_KEY_ID  RAZORPAY_KEY_SECRET  RAZORPAY_WEBHOOK_SECRET

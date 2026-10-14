@@ -37,6 +37,8 @@ export const ICONS = {
   log: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6',
   settings: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-2-4-2 1-2-1-1-2h-4l-1 2-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1 1 2h4l1-2 2-1 2 1 2-4-2-1z',
   help: 'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17h.01',
+  pages: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  search: 'M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5',
   play: 'M7 4l13 8-13 8z', pause: 'M7 4h3v16H7zM14 4h3v16h-3z', plus: 'M12 5v14M5 12h14',
   check: 'M5 13l4 4L19 7', refresh: 'M20 11a8 8 0 10-2 6M20 4v7h-7',
 };
@@ -196,3 +198,10 @@ export const FILTERS = {
   vintage: ['Vintage', 'sepia(.5) contrast(.95) saturate(.9)'], bw: ['Black and white', 'grayscale(1) contrast(1.1)'],
   vivid: ['Vivid', 'saturate(1.6) contrast(1.1)'], fade: ['Faded', 'contrast(.9) brightness(1.05) saturate(.8)'],
 };
+
+/** A stable colour + initials for each account, so a page is recognised at a glance everywhere in the app. */
+export const hue = (id) => { let n = 0; for (const c of String(id)) n = (n * 31 + c.charCodeAt(0)) % 360; return n; };
+export function chip(label, id) {
+  const ini = String(label || '?').replace(/[^A-Za-z0-9 ]/g, '').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  return h('span', { class: 'chip', style: `--h:${hue(id)}`, 'aria-hidden': 'true' }, ini);
+}

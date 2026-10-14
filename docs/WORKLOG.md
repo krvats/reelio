@@ -1,0 +1,5 @@
+- 2026-10-14T08:41:15Z v1.1.0: baseline of v1 before v1.1 work (+51 added, ~0 changed, -0 removed)
+- 2026-10-14T08:41:31Z v1.1.0: baseline of v1 before v1.1 work (+3 added, ~1 changed, -0 removed)
+- 2026-10-14T16:58:37Z v1.1.0: v1.1: license service, paywall, worker license check, pages view, palette, screens, CONTEXT (+19 added, ~9 changed, -0 removed)
+- 2026-10-14T17:02:10Z v1.1.0: fix test command (+0 added, ~1 changed, -0 removed)
+- 2026-10-14T17:09:05Z v1.1.0: merged owner's live repo edits (youtube clips, brand channel login, privacy.html, tick.yml) (+1 added, ~5 changed, -0 removed)

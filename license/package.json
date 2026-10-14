@@ -1,0 +1,8 @@
+{
+  "name": "reelio-license",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Device-bound subscription licensing for Reelio. Runs on Cloudflare Workers (free tier) or any Node 20+ host.",
+  "scripts": { "test": "node --test test/*.test.mjs", "keys": "node scripts/gen-keys.mjs", "dev": "node scripts/dev-server.mjs" }
+}

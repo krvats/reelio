@@ -1,6 +1,6 @@
 // Keeps the app shell available offline. Data always comes fresh from GitHub, never from this cache.
-const V = 'reelio-v1';
-const SHELL = ['./', 'index.html', 'style.css', 'icon.svg', 'js/app.js', 'js/core.js', 'js/setup.js', 'js/v_home.js', 'js/v_queue.js', 'js/v_flows.js', 'js/v_accounts.js', 'js/v_more.js'];
+const V = 'reelio-v2';
+const SHELL = ['./', 'index.html', 'style.css', 'icon.svg', 'app-config.js', 'js/app.js', 'js/license.js', 'js/v_paywall.js', 'js/v_pages.js', 'js/palette.js', 'js/core.js', 'js/setup.js', 'js/v_home.js', 'js/v_queue.js', 'js/v_flows.js', 'js/v_accounts.js', 'js/v_more.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x !== V).map((x) => caches.delete(x)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

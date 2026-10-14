@@ -62,7 +62,8 @@ export async function settings(S, params, app) {
     const url = URL.createObjectURL(new Blob([JSON.stringify({ reelio_backup: 1, config: cfg, ledger: led }, null, 1)], { type: 'application/json' }));
     const a = h('a', { href: url, download: 'reelio-backup.json' }); document.body.append(a); a.click(); a.remove();
   };
-  return h('div', { class: 'col' }, h('h1', null, 'Settings'),
+  const sub = S.ent && S.ent.claims ? await (await import('./v_paywall.js')).subscriptionCard(S.ent) : null;
+  return h('div', { class: 'col' }, h('h1', null, 'Settings'), sub,
     h('div', { class: 'card col' }, h('h2', null, 'Time zone'), h('select', { 'aria-label': 'Time zone', onchange: async (e) => { await saveCfg((c) => { c.timezone = e.target.value; }, 'Reelio: time zone'); toast('Saved.'); app.rerender(); } }, zones.map((z) => h('option', { value: z, selected: z === S.tz }, z)))),
     h('div', { class: 'card col' }, h('h2', null, 'How it looks'),
       h('label', { class: 'f' }, 'Text size', h('input', { type: 'range', min: 15, max: 24, step: 1, value: LS.get('fs', 17), oninput: (e) => { LS.set('fs', +e.target.value); document.documentElement.style.setProperty('--fs', e.target.value + 'px'); } })),

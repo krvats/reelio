@@ -72,19 +72,6 @@ def run(store):
             add("src-" + r["id"], f"{r.get('name', r['id'])}: source", False, p.msg, p.fix)
         except Exception as e:
             add("src-" + r["id"], f"{r.get('name', r['id'])}: source", False, str(e)[:200], "Check the flow's source settings.")
-    from .sources import drive as _drive
-    for r in cfg["routes"]:
-        bk = [f for f in (r["source"].get("backup_folders") or []) if str(f).strip()]
-        if not r.get("enabled", True) or not bk:
-            continue
-        t = f"{r.get('name', r['id'])}: backup Drive folder"
-        try:
-            n = len(_drive.list_items({"conn": r["source"].get("backup_conn") or "google", "folders": bk}, store, r))
-            add("bk-" + r["id"], t, True, f"{n} videos found")
-        except Problem as p:
-            add("bk-" + r["id"], t, False, p.msg, p.fix)
-        except Exception as e:
-            add("bk-" + r["id"], t, False, str(e)[:200], "Check the backup folder link and that it is shared with the connected Google account.")
     return _save(store, checks)
 
 

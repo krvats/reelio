@@ -1,0 +1,376 @@
+{
+ "version": "1.1.0",
+ "at": "2026-10-14T17:09:05Z",
+ "files": {
+  ".github/workflows/pages.yml": {
+   "sha": "82f43d3128ae659d",
+   "lines": 28,
+   "bytes": 619
+  },
+  ".github/workflows/tests.yml": {
+   "sha": "d2c09d1ad5222a91",
+   "lines": 12,
+   "bytes": 312
+  },
+  ".github/workflows/tick.yml": {
+   "sha": "60d933914c3d2705",
+   "lines": 49,
+   "bytes": 1666
+  },
+  "CLAUDE.md": {
+   "sha": "bc6d2391aba748e3",
+   "lines": 12,
+   "bytes": 2084
+  },
+  "CONTEXT.md": {
+   "sha": "62dbe0de60d1ec84",
+   "lines": 40,
+   "bytes": 6914
+  },
+  "README.md": {
+   "sha": "07b8f85f5e7e9422",
+   "lines": 38,
+   "bytes": 3344
+  },
+  "docs/CHANGELOG.md": {
+   "sha": "03add43beaebc3f6",
+   "lines": 13,
+   "bytes": 958
+  },
+  "docs/ROADMAP.md": {
+   "sha": "5d5c9cc0c79501d5",
+   "lines": 20,
+   "bytes": 1675
+  },
+  "docs/SETUP_CHECKLIST.md": {
+   "sha": "ee99f8cd81043d0f",
+   "lines": 13,
+   "bytes": 690
+  },
+  "license/README.md": {
+   "sha": "4ab94b908bad9140",
+   "lines": 24,
+   "bytes": 1889
+  },
+  "license/package.json": {
+   "sha": "06cfa264013bab26",
+   "lines": 9,
+   "bytes": 352
+  },
+  "license/scripts/dev-server.mjs": {
+   "sha": "331737e16876e952",
+   "lines": 14,
+   "bytes": 1001
+  },
+  "license/scripts/gen-keys.mjs": {
+   "sha": "0d32fb85c51cbdf1",
+   "lines": 6,
+   "bytes": 459
+  },
+  "license/scripts/mint-token.mjs": {
+   "sha": "85e0474a8f39f03a",
+   "lines": 7,
+   "bytes": 484
+  },
+  "license/src/crypto.js": {
+   "sha": "8fab6c1a89f2b5a9",
+   "lines": 52,
+   "bytes": 3492
+  },
+  "license/src/index.js": {
+   "sha": "7b3d72e414058f65",
+   "lines": 247,
+   "bytes": 18321
+  },
+  "license/src/store.js": {
+   "sha": "68b95beaf24f66e7",
+   "lines": 16,
+   "bytes": 1055
+  },
+  "license/test/license.test.mjs": {
+   "sha": "9c5b032a3528a2e6",
+   "lines": 207,
+   "bytes": 15153
+  },
+  "license/wrangler.toml": {
+   "sha": "aebde4f803f3d02e",
+   "lines": 17,
+   "bytes": 580
+  },
+  "tools/handoff.py": {
+   "sha": "f1c95dc6953c5272",
+   "lines": 163,
+   "bytes": 8494
+  },
+  "tools/make_seed.py": {
+   "sha": "fa61f3131ca432e7",
+   "lines": 78,
+   "bytes": 6083
+  },
+  "tools/screens.py": {
+   "sha": "60506b6763ca3268",
+   "lines": 45,
+   "bytes": 2544
+  },
+  "tools/ui_demo.py": {
+   "sha": "86e031e670275ec6",
+   "lines": 89,
+   "bytes": 5668
+  },
+  "web/app-config.js": {
+   "sha": "1a7d73cdf079c0f2",
+   "lines": 7,
+   "bytes": 258
+  },
+  "web/icon.svg": {
+   "sha": "f1fa3fa34ca6d18f",
+   "lines": 2,
+   "bytes": 418
+  },
+  "web/index.html": {
+   "sha": "c562e062b11f2e67",
+   "lines": 23,
+   "bytes": 1035
+  },
+  "web/js/app.js": {
+   "sha": "d6f3cf2bfe86de93",
+   "lines": 110,
+   "bytes": 7135
+  },
+  "web/js/core.js": {
+   "sha": "232b3baed747e831",
+   "lines": 208,
+   "bytes": 12160
+  },
+  "web/js/license.js": {
+   "sha": "ed9e6a4c9cefab6a",
+   "lines": 67,
+   "bytes": 4471
+  },
+  "web/js/palette.js": {
+   "sha": "f5b26d208dd3243e",
+   "lines": 36,
+   "bytes": 2770
+  },
+  "web/js/setup.js": {
+   "sha": "c7ab713496beb6fc",
+   "lines": 92,
+   "bytes": 7698
+  },
+  "web/js/v_accounts.js": {
+   "sha": "d9c8407f087f35b2",
+   "lines": 134,
+   "bytes": 15260
+  },
+  "web/js/v_flows.js": {
+   "sha": "e30b18c9f70e6230",
+   "lines": 152,
+   "bytes": 18395
+  },
+  "web/js/v_home.js": {
+   "sha": "63ee90f2b272a8a6",
+   "lines": 72,
+   "bytes": 5787
+  },
+  "web/js/v_more.js": {
+   "sha": "fcb3784b951803dc",
+   "lines": 106,
+   "bytes": 14076
+  },
+  "web/js/v_pages.js": {
+   "sha": "ca94b47560faeb19",
+   "lines": 43,
+   "bytes": 4796
+  },
+  "web/js/v_paywall.js": {
+   "sha": "f72c00b59c7f3c56",
+   "lines": 50,
+   "bytes": 4101
+  },
+  "web/js/v_queue.js": {
+   "sha": "a871373ac2d3edb8",
+   "lines": 94,
+   "bytes": 9194
+  },
+  "web/manifest.webmanifest": {
+   "sha": "870961a3a3c7f402",
+   "lines": 2,
+   "bytes": 286
+  },
+  "web/privacy.html": {
+   "sha": "d8840ac82fb6d60e",
+   "lines": 20,
+   "bytes": 1445
+  },
+  "web/style.css": {
+   "sha": "45cb4c88861bc236",
+   "lines": 162,
+   "bytes": 14593
+  },
+  "web/sw.js": {
+   "sha": "8586bc92236143e5",
+   "lines": 11,
+   "bytes": 1053
+  },
+  "worker/reelio/__init__.py": {
+   "sha": "f7b4864f754e9ff7",
+   "lines": 3,
+   "bytes": 118
+  },
+  "worker/reelio/__main__.py": {
+   "sha": "f35124e530c67e14",
+   "lines": 4,
+   "bytes": 50
+  },
+  "worker/reelio/analytics.py": {
+   "sha": "b51f6e9955009677",
+   "lines": 44,
+   "bytes": 2522
+  },
+  "worker/reelio/captions.py": {
+   "sha": "960e793393ca1cb8",
+   "lines": 63,
+   "bytes": 2421
+  },
+  "worker/reelio/cli.py": {
+   "sha": "9327568b3085f640",
+   "lines": 54,
+   "bytes": 2272
+  },
+  "worker/reelio/crypto.py": {
+   "sha": "2fc8a9a455cf46fc",
+   "lines": 28,
+   "bytes": 1189
+  },
+  "worker/reelio/diagnose.py": {
+   "sha": "adc8ebf1b3815e0d",
+   "lines": 102,
+   "bytes": 5071
+  },
+  "worker/reelio/engine.py": {
+   "sha": "228d9fbcc24a4e07",
+   "lines": 600,
+   "bytes": 31872
+  },
+  "worker/reelio/errors.py": {
+   "sha": "9cff67be03e31ee2",
+   "lines": 87,
+   "bytes": 4965
+  },
+  "worker/reelio/google.py": {
+   "sha": "46b5e2de71884eb9",
+   "lines": 38,
+   "bytes": 2074
+  },
+  "worker/reelio/hosting.py": {
+   "sha": "861ce53e5dbcc005",
+   "lines": 70,
+   "bytes": 3336
+  },
+  "worker/reelio/license.py": {
+   "sha": "54bdbd3c02d90891",
+   "lines": 68,
+   "bytes": 3217
+  },
+  "worker/reelio/media.py": {
+   "sha": "fdd22f029f929614",
+   "lines": 162,
+   "bytes": 7932
+  },
+  "worker/reelio/notify.py": {
+   "sha": "8de53a9534409185",
+   "lines": 36,
+   "bytes": 1683
+  },
+  "worker/reelio/scheduler.py": {
+   "sha": "615aa67e6cfd3173",
+   "lines": 68,
+   "bytes": 2593
+  },
+  "worker/reelio/sources/__init__.py": {
+   "sha": "c62839ab91d40340",
+   "lines": 32,
+   "bytes": 1398
+  },
+  "worker/reelio/sources/drive.py": {
+   "sha": "d54632f8740e4cae",
+   "lines": 83,
+   "bytes": 3519
+  },
+  "worker/reelio/sources/instagram.py": {
+   "sha": "633e95dfef386143",
+   "lines": 32,
+   "bytes": 1420
+  },
+  "worker/reelio/sources/upload.py": {
+   "sha": "d675bd6407c8b1d0",
+   "lines": 34,
+   "bytes": 1317
+  },
+  "worker/reelio/sources/youtube.py": {
+   "sha": "09a2dbd61c6df8e6",
+   "lines": 297,
+   "bytes": 14468
+  },
+  "worker/reelio/store.py": {
+   "sha": "81978f1a15c9415a",
+   "lines": 233,
+   "bytes": 9363
+  },
+  "worker/reelio/targets/__init__.py": {
+   "sha": "eab99ffe2c226c09",
+   "lines": 4,
+   "bytes": 123
+  },
+  "worker/reelio/targets/instagram.py": {
+   "sha": "fbe54f77c4821c75",
+   "lines": 133,
+   "bytes": 6384
+  },
+  "worker/reelio/targets/youtube.py": {
+   "sha": "9fb19779c618dfb3",
+   "lines": 87,
+   "bytes": 4491
+  },
+  "worker/reelio/util.py": {
+   "sha": "2252e46a4c1884a1",
+   "lines": 109,
+   "bytes": 3248
+  },
+  "worker/requirements-dev.txt": {
+   "sha": "6603d61524204b7e",
+   "lines": 3,
+   "bytes": 27
+  },
+  "worker/requirements.txt": {
+   "sha": "7be6037ef53f9902",
+   "lines": 4,
+   "bytes": 39
+  },
+  "worker/tests/helpers.py": {
+   "sha": "9f5238c087fcdec3",
+   "lines": 285,
+   "bytes": 15245
+  },
+  "worker/tests/test_e2e.py": {
+   "sha": "f591595db67f55c4",
+   "lines": 377,
+   "bytes": 19036
+  },
+  "worker/tests/test_git.py": {
+   "sha": "ff9d8b455e3b8cc8",
+   "lines": 47,
+   "bytes": 2403
+  },
+  "worker/tests/test_license.py": {
+   "sha": "9539ffca29b728eb",
+   "lines": 80,
+   "bytes": 3780
+  },
+  "worker/tests/test_units.py": {
+   "sha": "df54ac7b5588e983",
+   "lines": 71,
+   "bytes": 4029
+  }
+ }
+}
