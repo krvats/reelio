@@ -413,6 +413,51 @@ class Engine:
         ok.sort(key=keyf)
         return ok
 
+    # ---------------------------------------------------------------- backup Drive folder
+    def _backup_items(self, route):
+        """Videos sitting in the flow's backup Drive folder (listed once per run)."""
+        cache = self.__dict__.setdefault("_bk_cache", {})
+        rid = route["id"]
+        if rid not in cache:
+            src = route["source"]
+            from .sources import drive
+            try:
+                cache[rid] = [i for i in drive.list_items({"conn": src.get("backup_conn") or "google", "folders": src.get("backup_folders") or []}, self.store, route) if not i.get("empty")]
+            except Problem as p:
+                self.ev("warn", f"Backup Drive folder could not be read: {p.msg}", rid, p.fix)
+                cache[rid] = []
+        return cache[rid]
+
+    def _backup_match(self, route, it):
+        """A backup file whose name contains the source video's id, or equals its name/title."""
+        vid = it["key"].split(":", 1)[-1].lower()
+        names = {str(x).strip().lower() for x in (it.get("name"), (it.get("meta") or {}).get("title")) if x and len(str(x).strip()) >= 4}
+        for f in self._backup_items(route):
+            stem = os.path.splitext(f["name"])[0].strip().lower()
+            if (len(vid) >= 4 and vid in stem) or stem in names:
+                return f
+        return None
+
+    def fetch_with_backup(self, route, it, dest):
+        s, src = self.store, route["source"]
+        typ = src["type"]
+        if not [f for f in (src.get("backup_folders") or []) if str(f).strip()] or typ in ("drive", "upload"):
+            return get_source(typ).fetch(it, dest, s, route)
+        hit = self._backup_match(route, it) if it.get("fails", 0) > 0 else None     # failed before: go straight to the backup copy
+        if hit is None:
+            try:
+                return get_source(typ).fetch(it, dest, s, route)
+            except Problem as e:
+                if e.scope == "account":
+                    raise
+                hit = self._backup_match(route, it)
+                if hit is None:
+                    e.fix = (e.fix + " Or " if e.fix else "") + f"put the video in your backup Drive folder with its id '{it['key'].split(':', 1)[-1]}' in the file name, then tap Retry."
+                    raise
+        from .sources import drive
+        drive.fetch({"key": hit["key"]}, dest, s, {"source": {"conn": src.get("backup_conn") or "google"}})
+        self.ev("ok", f"Used the backup Drive copy for '{it.get('name')}'", route["id"])
+
     # ---------------------------------------------------------------- posting one video
     def post_one(self, route, conn, q, it, rs):
         s, rid = self.store, route["id"]
@@ -423,7 +468,7 @@ class Engine:
                "journal": lambda d, it=it, cap=cap, title=title: self._journal(route, it, cap, title, d)}
         try:
             src, out = os.path.join(tmp, "src"), os.path.join(tmp, "out.mp4")
-            get_source(route["source"]["type"]).fetch(it, src, s, route)
+            self.fetch_with_backup(route, it, src)
             logo = music = None
             edit = route.get("edit") or {}
             wm = edit.get("watermark") or {}
