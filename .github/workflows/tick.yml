@@ -1,0 +1,46 @@
+name: Reelio worker
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "run | scan | diagnose | analytics"
+        default: "run"
+      route:
+        description: "only this flow id (optional)"
+        default: ""
+concurrency:
+  group: reelio
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 58
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: worker/requirements.txt
+      - run: pip install -r worker/requirements.txt
+      - name: Fetch your private data repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/${{ vars.DATA_REPO || 'reelio-data' }}
+          token: ${{ secrets.DATA_PAT }}
+          path: data
+      - name: Run Reelio
+        working-directory: worker
+        env:
+          REELIO_KEY: ${{ secrets.REELIO_KEY }}
+          ACTION: ${{ inputs.action || 'run' }}
+          ROUTE: ${{ inputs.route }}
+        run: python -m reelio "$ACTION" --data ../data --route "$ROUTE" --budget 50
+      - name: Keep the schedule alive (GitHub pauses idle public repos after 60 days)
+        env:
+          GH_TOKEN: ${{ secrets.DATA_PAT }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/tick.yml/enable" || true
