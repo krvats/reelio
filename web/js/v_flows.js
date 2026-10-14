@@ -68,6 +68,11 @@ async function editor(S, id, app) {
       kids.push(field('Instagram account', h('select', { onchange: (e) => { r.source.conn = e.target.value; } }, ofKind('instagram').map((c) => h('option', { value: c.id, selected: c.id === r.source.conn }, c.label)))));
       if (!r.source.conn && ofKind('instagram')[0]) r.source.conn = ofKind('instagram')[0].id;
     } else kids.push(h('p', { class: 'muted' }, 'After saving, open Videos and press Add videos. Each video is removed from storage once it is posted.'));
+    if (t === 'youtube' || t === 'instagram') {
+      kids.push(field('Backup Drive folder (optional)', h('textarea', { 'aria-label': 'Backup Drive folder links', placeholder: 'https://drive.google.com/drive/folders/...', oninput: (e) => { r.source.backup_folders = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }, (r.source.backup_folders || []).join('\n')),
+        'If a video cannot be downloaded, Reelio uses the file from this folder instead. Name the file with the video id shown in Videos (for example ' + (t === 'youtube' ? 'JizoiMeSzvg.mp4' : '17912345678.mp4') + '). If the folder is in the Google account you connected, no sharing is needed. Otherwise share it with that account (Viewer is enough) or set Anyone with the link: Viewer.'));
+      r.source.backup_conn = r.source.backup_conn || (ofKind('google')[0] || {}).id || 'google';
+    }
     srcBox.replaceChildren(...kids);
   }
   function drawDst() {
