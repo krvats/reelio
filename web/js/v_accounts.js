@@ -9,6 +9,7 @@ const KINDS = {
   ytnet: { name: 'YouTube downloads', sub: 'Cookies if YouTube blocks the server (optional)', secret: ['cookies'] },
 };
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
+const YT_ONLY_SCOPES = 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
 const redirectUri = () => location.origin + location.pathname;
 
 function dlg(title, body, actions) {
@@ -77,12 +78,13 @@ export async function connect(S, kind, existing, app) {
         h('li', null, h('div', null, 'Create credentials, ', h('b', null, 'OAuth client ID'), ', type ', h('b', null, 'Web application'), '. Under Authorized redirect URIs add exactly:', h('div', { class: 'row' }, h('code', { style: 'word-break:break-all' }, redirectUri()), h('button', { class: 'btn small', onclick: () => navigator.clipboard.writeText(redirectUri()).then(() => toast('Copied')) }, 'Copy')))),
         h('li', null, h('div', null, 'Paste the client ID and client secret below, then press Connect.'))),
       inp('f_label', 'A name', { value: existing ? existing.label : 'Google' }),
-      inp('f_cid', 'Client ID', { value: prev.client_id || '' }), inp('f_cs', 'Client secret', { type: 'password', value: prev.client_secret || '' }));
+      inp('f_cid', 'Client ID', { value: prev.client_id || '' }), inp('f_cs', 'Client secret', { type: 'password', value: prev.client_secret || '' }),
+      h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', id: 'f_yt' }), h('span', null, 'This is a YouTube brand channel (no Drive). Use this for Advayu, PK Pujari and similar channels.')));
     return dlg(existing ? 'Reconnect Google' : 'Connect Google', body, (close) => [
       h('button', { class: 'btn primary', onclick: () => {
         const cid = val('f_cid'), cs = val('f_cs'); if (!cid || !cs) return toast('Paste both the client ID and the secret.');
         const state = uid(); sessionStorage.setItem('reelio.oauth', JSON.stringify({ state, id, label: val('f_label') || 'Google', cid, cs }));
-        location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: cid, redirect_uri: redirectUri(), response_type: 'code', scope: GOOGLE_SCOPES, access_type: 'offline', prompt: 'consent', state });
+        location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: cid, redirect_uri: redirectUri(), response_type: 'code', scope: (document.getElementById('f_yt') && document.getElementById('f_yt').checked) ? YT_ONLY_SCOPES : GOOGLE_SCOPES, access_type: 'offline', prompt: 'consent', state });
       } }, 'Connect with Google'), h('button', { class: 'btn', onclick: close }, 'Cancel')]);
   }
   if (kind === 'cloudinary') {
