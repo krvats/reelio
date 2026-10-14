@@ -1,0 +1,12 @@
+# Reelio one-time checklist
+- [ ] Public repo `reelio` created, files uploaded
+- [ ] Settings > Pages > Source = GitHub Actions (page loads)
+- [ ] Private repo `reelio-data` created (seed files uploaded if migrating)
+- [ ] GitHub key made (Contents + Actions read/write on both repos)
+- [ ] Secrets `DATA_PAT` and `REELIO_KEY` added to `reelio`
+- [ ] App setup page shows all green
+- [ ] Instagram connected (professional account, token with publish permission)
+- [ ] Cloudinary connected
+- [ ] Google connected (Drive API + YouTube Data API on, consent screen published)
+- [ ] Old tokens, API keys and client secrets rotated
+- [ ] Help > Why is it failing? shows "Everything is connected"
