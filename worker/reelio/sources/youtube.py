@@ -122,6 +122,41 @@ def _block_fix(stderr):
     return "Usually temporary. If it keeps happening open Help > Why is it failing?"
 
 
+# YouTube keeps changing how it serves video. "The page needs to be reloaded" and similar errors usually mean the
+# default player client is being refused. We try several clients in turn and let yt-dlp use Node to solve YouTube's
+# JavaScript challenge. Each attempt only runs if the previous one failed with one of these "try another way" errors.
+_RETRY_WORDS = ("page needs to be reloaded", "requested format is not available", "only images are available",
+                "nsig", "po token", "challenge", "signature", "http error 403", "unable to extract")
+_CLIENT_TRIES = [None, "youtube:player_client=tv,web_safari", "youtube:player_client=android_vr,mweb", "youtube:player_client=ios"]
+
+
+def _js_args():
+    return ["--js-runtimes", "node", "--remote-components", "ejs:github"] if shutil.which("node") else []
+
+
+def _run_download(cmd, tmpd):
+    last = None
+    for client in _CLIENT_TRIES:
+        for f in os.listdir(tmpd):
+            if f.startswith("v."):
+                try: os.remove(os.path.join(tmpd, f))
+                except OSError: pass
+        c = list(cmd)
+        if client:
+            c += ["--extractor-args", client]
+        p = subprocess.run(c + _js_args(), capture_output=True, text=True, timeout=1800)
+        if p.returncode != 0 and ("no such option" in (p.stderr or "").lower() or "unrecognized arguments" in (p.stderr or "").lower()):
+            p = subprocess.run(c, capture_output=True, text=True, timeout=1800)   # older yt-dlp without the JS options
+        files = [f for f in os.listdir(tmpd) if f.startswith("v.") and not f.endswith((".part", ".ytdl"))]
+        if p.returncode == 0 and files:
+            return p, files
+        last = (p, files)
+        low = (p.stderr or "").lower()
+        if not any(w in low for w in _RETRY_WORDS):
+            break
+    return last
+
+
 def fetch(item, dest, store, route):
     src = route["source"]
     vid = item["key"].split(":", 1)[1]
@@ -136,8 +171,7 @@ def fetch(item, dest, store, route):
             open(cookie_file, "w").write(sec["cookies"]); cmd += ["--cookies", cookie_file]
         if sec.get("proxy"):
             cmd += ["--proxy", sec["proxy"]]
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
-        files = [f for f in os.listdir(tmpd) if f.startswith("v.") and not f.endswith((".part", ".ytdl"))]
+        p, files = _run_download(cmd, tmpd)
         if p.returncode != 0 or not files:
             err = scrub((p.stderr or "")[-400:])
             low = err.lower()
