@@ -1,7 +1,7 @@
 import { h, icon, toast, uid, slug, FILTERS } from './core.js';
 import { saveCfg, runNow } from './app.js';
 
-const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device']];
+const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device']];
 const DST = [['instagram', 'Instagram Reels', 'Posts as a Reel'], ['youtube', 'YouTube Shorts', 'Uploads as a Short']];
 
 export async function flows(S, params, app) {
@@ -48,7 +48,20 @@ async function editor(S, id, app) {
       kids.push(field('Google account', h('select', { onchange: (e) => { r.source.conn = e.target.value; } }, (ofKind('google').length ? ofKind('google') : [{ id: 'google', label: 'Google' }]).map((c) => h('option', { value: c.id, selected: c.id === r.source.conn }, c.label)))));
     } else if (t === 'youtube') {
       kids.push(field('Channel', h('input', { type: 'text', value: r.source.handle || '', placeholder: '@yourchannel', oninput: (e) => { r.source.handle = e.target.value.trim(); } }), 'Only use channels you own or have permission to reuse.'));
-      kids.push(field('Which videos', h('select', { onchange: (e) => { r.source.include = e.target.value; } }, [['shorts', 'Shorts only'], ['all', 'All videos']].map(([v, l]) => h('option', { value: v, selected: (r.source.include || 'shorts') === v }, l)))));
+      const inc = r.source.include || 'shorts';
+      kids.push(field('Which videos', h('select', { onchange: (e) => { r.source.include = e.target.value; drawSrc(); } }, [['shorts', 'Shorts only'], ['long', 'Long videos and past live streams only'], ['all', 'Everything on the channel'], ['selected', 'Only videos I pick']].map(([v, l]) => h('option', { value: v, selected: inc === v }, l)))));
+      if (inc === 'selected') kids.push(field('Video links', h('textarea', { 'aria-label': 'Video links', placeholder: 'https://www.youtube.com/watch?v=...', oninput: (e) => { r.source.videos_text = e.target.value; } }, r.source.videos_text || (r.source.videos || []).join('\n')), 'One link per line. They are posted in this order.'));
+      if (inc !== 'shorts') {
+        const c = (r.source.clip = r.source.clip || { enabled: true, seconds: 60, skip_start: 0, skip_end: 0, max_per_video: 0 });
+        kids.push(field('Long videos', h('select', { onchange: (e) => { c.enabled = e.target.value === '1'; drawSrc(); } }, [['1', 'Cut into short clips (best for Reels and Shorts)'], ['0', 'Post the whole video (Instagram allows about 15 minutes at most)']].map(([v, l]) => h('option', { value: v, selected: (c.enabled ? '1' : '0') === v }, l)))));
+        if (c.enabled) {
+          const num = (k, label, hint) => field(label, h('input', { type: 'number', min: 0, value: c[k] || 0, oninput: (e) => { c[k] = Math.max(0, +e.target.value || 0); } }), hint);
+          kids.push(num('seconds', 'Length of each clip (seconds)', '60 is a good start. Shorts must stay under 180.'));
+          kids.push(num('skip_start', 'Skip the first (seconds)', 'Skips an intro or the waiting screen at the start of a live.'));
+          kids.push(num('skip_end', 'Skip the last (seconds)', 'Skips the outro.'));
+          kids.push(num('max_per_video', 'Most clips from one video (0 = all)', 'Handy for a 5 hour stream: 0 uses the whole stream. Each clip is downloaded on its own, nothing is stored.'));
+        }
+      }
       r.source.conn = r.source.conn || (ofKind('google')[0] || {}).id || 'google'; r.source.net_conn = r.source.net_conn || 'youtube-net';
       kids.push(h('p', { class: 'small muted' }, 'YouTube sometimes blocks cloud servers from downloading. If it does, Reelio tells you, and you can add browser cookies in Accounts.'));
     } else if (t === 'instagram') {
@@ -90,7 +103,9 @@ async function editor(S, id, app) {
     if (!r.name.trim()) r.name = `${(SRC.find((s) => s[0] === r.source.type) || [])[1] || 'Videos'} to ${(DST.find((s) => s[0] === r.target.type) || [])[1]}`;
     if (!r.target.conn) return toast('Connect an account for the destination first.', 5000);
     if (r.source.type === 'drive' && !(r.source.folders || []).length) return toast('Paste at least one Drive folder link.', 5000);
-    if (r.source.type === 'youtube' && !r.source.handle) return toast('Type the channel name, like @yourchannel.', 5000);
+    if (r.source.type === 'youtube' && !r.source.handle && r.source.include !== 'selected') return toast('Type the channel name, like @yourchannel.', 5000);
+    if (r.source.type === 'youtube' && r.source.include === 'selected' && !(r.source.videos_text || '').trim() && !(r.source.videos || []).length) return toast('Paste at least one video link.', 5000);
+    if (r.source.clip && r.source.clip.seconds) r.source.clip.seconds = Math.max(15, Math.min(r.source.clip.seconds, 180));
     if (mins(r.schedule.end) <= mins(r.schedule.start)) return toast('The end time must be after the start time.', 5000);
     e.currentTarget.disabled = true;
     r.caption.hashtag_sets = (r.caption.hashtag_sets || []).filter(Boolean); r.schedule.gap_seconds = Math.max(+r.schedule.gap_seconds || 90, 60);
