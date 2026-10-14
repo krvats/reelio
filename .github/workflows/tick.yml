@@ -34,7 +34,7 @@ jobs:
           token: ${{ secrets.DATA_PAT }}
           path: data
       - name: Install video converter
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg   
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run Reelio
         working-directory: worker
         env:
