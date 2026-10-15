@@ -368,6 +368,13 @@ class Tools(MockBase):
         accts = store.status()["accounts"]
         self.assertTrue(accts and all(a["connected"] for a in accts.values()), accts)
 
+    def test_diagnose_shows_whether_youtube_cookies_are_visible(self):
+        from reelio import diagnose
+        cfg = self.base_config(); cfg["routes"] = [self.route("yt", source={"type": "youtube", "handle": "@X", "net_conn": "youtube-net"})]
+        self.write_env(cfg)
+        row = [c for c in diagnose.run(Store(self.data))["checks"] if c["id"] == "ytcookies"][0]
+        self.assertFalse(row["ok"]); self.assertIn("0 cookies", row["detail"])
+
     def test_diagnose_reports_fix_for_wrong_cloudinary(self):
         self.write_env(secrets={"cld": {}})
         from reelio import diagnose

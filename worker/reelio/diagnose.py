@@ -85,6 +85,18 @@ def run(store):
             add("bk-" + r["id"], t, False, p.msg, p.fix)
         except Exception as e:
             add("bk-" + r["id"], t, False, str(e)[:200], "Check the backup folder link and that it is shared with the connected Google account.")
+    yt = [r for r in cfg["routes"] if r.get("enabled", True) and r["source"].get("type") == "youtube"]
+    if yt:
+        from .cookiepool import Pool
+        src = yt[0]["source"]; n = Pool(store, src).summary(); where = src.get("net_conn", "youtube-net")
+        t = "YouTube cookies (used when YouTube blocks downloads)"
+        if not n["total"]:
+            add("ytcookies", t, False, f"0 cookies found in '{where}'", "The worker sees no cookies. Open Accounts > YouTube downloads, add them again, then run Check again.")
+        elif n["parked"] == n["total"]:
+            add("ytcookies", t, False, f"{n['total']} saved, all logged out", "These logins ended. Export fresh cookies from a private window and add them.")
+        else:
+            add("ytcookies", t, n["ready"] > 0, f"{n['total']} saved: {n['ready']} ready, {n['resting']} resting, {n['parked']} logged out",
+                "" if n["ready"] else "All are resting after YouTube refused them. YouTube blocks many cloud servers even with cookies; the reliable fix is the backup Drive folder.")
     return _save(store, checks)
 
 
