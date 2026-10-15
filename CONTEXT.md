@@ -26,8 +26,11 @@ Goal: no access until paid; each device silently proves itself; no "verify your 
 5. The app pushes the token to `license.json` in the data repo; `worker/reelio/license.py` verifies it offline with `REELIO_LICENSE_PUBKEY` (or `license_pubkey` in config). No key configured = open mode (personal use). Inactive = nothing posts, scan still works, plain message shown. Limits: accounts (first N targets in config order), posts per calendar month.
 **Honest limit:** code running on a user's own repo/machine can be patched; this stops casual sharing and makes paying the easy path. Real enforcement needs posting on infrastructure the owner controls (Phase B, multi-tenant).
 
+## Multi-user backend (Phase B, in progress)
+`api/` is a Cloudflare Worker (KV now, D1 later) with the tenant model: users, per-tenant config/queue/ledger, envelope-encrypted secrets, worker leases, exactly-once ledger. Design in `docs/PHASE_A.md`. Self-host mode (GitHub) still works unchanged.
+
 ## Tests
-`cd worker && python -m unittest discover -s tests` (about 3 min; mock Instagram/Drive/Google/Cloudinary/YouTube/Telegram), `cd license && node --test test/*.test.mjs`. Python license tests mint tokens with the real Node code (cross-language). UI checked in headless Chromium via `tools/ui_demo.py` (`tools/screens.py` writes `docs/screens/`).
+`cd worker && python -m unittest discover -s tests` (about 3 min; mock Instagram/Drive/Google/Cloudinary/YouTube/Telegram), `cd license && node --test test/*.test.mjs`, `cd api && npm test`. Python license tests mint tokens with the real Node code (cross-language). UI checked in headless Chromium via `tools/ui_demo.py` (`tools/screens.py` writes `docs/screens/`).
 
 ## Not verified live (always say so)
 Instagram publish via Cloudinary from GitHub runners, Meta real rate limits, Google OAuth redirect from the Pages URL, yt-dlp on runner IPs, GitHub cron lag and re-enable call, Telegram CORS, Stripe and Razorpay real checkout/webhooks, deployed Cloudflare Worker, the paywall in a real browser against the deployed service.

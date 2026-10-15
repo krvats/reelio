@@ -5,3 +5,4 @@
 - 2026-10-14T17:09:05Z v1.1.0: merged owner's live repo edits (youtube clips, brand channel login, privacy.html, tick.yml) (+1 added, ~5 changed, -0 removed)
 - 2026-10-14T22:38:56Z v1.1.0: backup Drive folder merged, onboarding checklist, Phase A doc (+1 added, ~7 changed, -0 removed)
 - 2026-10-14T22:39:00Z v1.1.0: cleanup (+0 added, ~0 changed, -0 removed)
+- 2026-10-14T23:19:31Z v1.1.0: Phase B part 1: multi-user api (+5 added, ~3 changed, -0 removed)

@@ -1,6 +1,6 @@
 {
  "version": "1.1.0",
- "at": "2026-10-14T22:39:00Z",
+ "at": "2026-10-14T23:19:31Z",
  "files": {
   ".github/workflows/pages.yml": {
    "sha": "82f43d3128ae659d",
@@ -23,19 +23,44 @@
    "bytes": 2084
   },
   "CONTEXT.md": {
-   "sha": "62dbe0de60d1ec84",
-   "lines": 40,
-   "bytes": 6914
+   "sha": "1295ea15121be565",
+   "lines": 43,
+   "bytes": 7233
   },
   "README.md": {
    "sha": "07b8f85f5e7e9422",
    "lines": 38,
    "bytes": 3344
   },
+  "api/README.md": {
+   "sha": "da15e1346b51baba",
+   "lines": 10,
+   "bytes": 1209
+  },
+  "api/package.json": {
+   "sha": "283a5e6ce787eed1",
+   "lines": 4,
+   "bytes": 261
+  },
+  "api/src/index.js": {
+   "sha": "e1d400a7746a51a2",
+   "lines": 143,
+   "bytes": 10914
+  },
+  "api/test/api.test.mjs": {
+   "sha": "f2874c50a9af34b6",
+   "lines": 106,
+   "bytes": 8677
+  },
+  "api/wrangler.toml": {
+   "sha": "803970cfebfad63a",
+   "lines": 8,
+   "bytes": 295
+  },
   "docs/CHANGELOG.md": {
-   "sha": "7810d4c3955ad4cb",
-   "lines": 14,
-   "bytes": 1115
+   "sha": "a4ef0307b193aa70",
+   "lines": 15,
+   "bytes": 1182
   },
   "docs/PHASE_A.md": {
    "sha": "100e9085e55a2a7b",
@@ -43,9 +68,9 @@
    "bytes": 4412
   },
   "docs/ROADMAP.md": {
-   "sha": "2f11fec765893041",
-   "lines": 21,
-   "bytes": 1708
+   "sha": "4a716888067c8494",
+   "lines": 22,
+   "bytes": 1862
   },
   "docs/SETUP_CHECKLIST.md": {
    "sha": "ee99f8cd81043d0f",

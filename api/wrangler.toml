@@ -1,0 +1,7 @@
+name = "reelio-api"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+[[kv_namespaces]]
+binding = "REELIO_KV"
+id = "PASTE_KV_ID_HERE"
+# Secrets: npx wrangler secret put MASTER_KEY (32 random bytes, base64url) and WORKER_SECRET. Optional PLANS (JSON, same plan ids as the license service).
