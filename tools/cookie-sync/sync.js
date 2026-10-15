@@ -1,7 +1,12 @@
 import { encryptJson, decryptJson } from './crypto.js';
 import { mergeProfile } from './pool.js';
 
-const SIGNED_IN = ['SAPISID', '__Secure-3PAPISID', '__Secure-3PSID', 'SID'];
+// One slot per browser profile AND per app, so adding Instagram never replaces YouTube (and the reverse).
+// YouTube keeps the plain profile id (older installs stay valid); every other app gets '<profile>-<suffix>'.
+export const APPS = [
+  { key: 'youtube', suffix: '', name: 'YouTube', domains: ['youtube.com', 'google.com'], signedIn: ['SAPISID', '__Secure-3PAPISID', '__Secure-3PSID', 'SID'] },
+  { key: 'instagram', suffix: '-ig', name: 'Instagram', domains: ['instagram.com'], signedIn: ['sessionid', 'ds_user_id'] },
+];
 const utf8b64 = (s) => btoa(unescape(encodeURIComponent(s)));
 const unb64utf8 = (s) => decodeURIComponent(escape(atob(s.replace(/\s/g, ''))));
 
@@ -11,15 +16,17 @@ export const store = {
   clear: () => chrome.storage.local.clear(),
 };
 
-/** This browser's YouTube/Google cookies as one Netscape cookie file, or null when nobody is signed in. */
-export async function exportCookies(profileId, label) {
-  const all = [...(await chrome.cookies.getAll({ domain: 'youtube.com' })), ...(await chrome.cookies.getAll({ domain: 'google.com' }))];
+/** This browser's cookies for one app as a Netscape cookie file, or null when nobody is signed in to that app. */
+export async function exportCookies(profileId, label, app = APPS[0]) {
+  const all = [];
+  for (const d of app.domains) all.push(...(await chrome.cookies.getAll({ domain: d })));
   const seen = new Set(), list = [];
   for (const c of all) { const k = c.domain + '|' + c.path + '|' + c.name; if (!seen.has(k)) { seen.add(k); list.push(c); } }
-  if (!list.some((c) => SIGNED_IN.includes(c.name))) return null;
+  if (!list.some((c) => app.signedIn.includes(c.name))) return null;
   const soon = Math.floor(Date.now() / 1000) + 30 * 86400;
   const lines = list.map((c) => `${c.httpOnly ? '#HttpOnly_' : ''}${c.domain}\t${c.domain.startsWith('.') ? 'TRUE' : 'FALSE'}\t${c.path}\t${c.secure ? 'TRUE' : 'FALSE'}\t${c.expirationDate ? Math.floor(c.expirationDate) : soon}\t${c.name}\t${c.value}`);
-  return `# Netscape HTTP Cookie File\n# reelio-profile: ${profileId} ${String(label || '').replace(/[\r\n]/g, ' ').slice(0, 40)}\n${lines.join('\n')}\n`;
+  const tag = String(label || '').replace(/[\r\n]/g, ' ').slice(0, 30) + (app.suffix ? ' (' + app.name + ')' : '');
+  return `# Netscape HTTP Cookie File\n# reelio-profile: ${profileId}${app.suffix} ${tag.trim()}\n${lines.join('\n')}\n`;
 }
 
 async function gh(cfg, path, opts = {}) {
@@ -51,16 +58,18 @@ export async function syncNow({ force = false } = {}) {
   const st = await store.get();
   if (!st.token || !st.pass) return { ok: false, msg: 'Not connected yet. Open your Reelio app and press Connect.' };
   const cfg = { token: st.token, pass: st.pass, owner: st.owner, data: st.data, api: st.api || 'https://api.github.com' };
-  const text = await exportCookies(st.profileId, st.label);
-  if (!text) return await done({ ok: false, msg: 'Not signed in to YouTube in this browser. Sign in once, then press Sync.' });
-  const digest = b64hash(text);
+  const parts = [];
+  for (const app of APPS) { const text = await exportCookies(st.profileId, st.label, app); if (text) parts.push({ app, text }); }
+  if (!parts.length) return await done({ ok: false, msg: 'Not signed in to YouTube or Instagram in this browser. Sign in once, then press Send now.' });
+  const digest = b64hash(parts.map((x) => x.text).join('\n'));
   if (!force && st.lastHash === digest) return await done({ ok: true, msg: 'Already up to date.', keep: true });
   let count = 0;
   for (let i = 0; i < 5; i++) {
     const { sha, json } = await readFile(cfg, 'secrets.enc.json');
     const all = json && json.ct ? await decryptJson(json, cfg.pass) : {};
     const yn = all['youtube-net'] || {};
-    yn.cookies = mergeProfile(yn.cookies || '', text, st.profileId);
+    yn.cookies = yn.cookies || '';
+    for (const { app, text } of parts) yn.cookies = mergeProfile(yn.cookies, text, st.profileId + app.suffix);
     all['youtube-net'] = yn;
     count = yn.cookies.split('# ---- next cookie ----').length;
     if (await writeFile(cfg, 'secrets.enc.json', await encryptJson(all, cfg.pass), sha, 'Reelio: cookie sync')) break;
@@ -75,7 +84,7 @@ export async function syncNow({ force = false } = {}) {
       if (await writeFile(cfg, 'config.json', json, sha, 'Reelio: cookie count')) break;
     }
   } catch { /* the counter is only a nicety */ }
-  return await done({ ok: true, msg: `Sent. Reelio now has ${count} cookie${count === 1 ? '' : 's'}.`, hash: digest });
+  return await done({ ok: true, msg: `Sent ${parts.map((x) => x.app.name).join(' + ')}. Reelio now has ${count} cookie${count === 1 ? '' : 's'}.`, hash: digest });
 }
 
 async function done(r) {

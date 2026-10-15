@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Reelio Cookie Sync",
-  "version": "1.0.0",
-  "description": "Keeps your Reelio YouTube cookies fresh by itself. Set up once.",
+  "version": "1.1.0",
+  "description": "Keeps your Reelio YouTube and Instagram cookies fresh by itself. Set up once.",
   "permissions": ["cookies", "alarms", "storage", "scripting", "activeTab"],
-  "host_permissions": ["https://*.youtube.com/*", "https://*.google.com/*", "https://api.github.com/*"],
+  "host_permissions": ["https://*.youtube.com/*", "https://*.google.com/*", "https://*.instagram.com/*", "https://api.github.com/*"],
   "background": { "service_worker": "background.js", "type": "module" },
   "action": { "default_popup": "popup.html", "default_title": "Reelio Cookie Sync" }
 }
