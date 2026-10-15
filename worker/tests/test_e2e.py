@@ -1,3 +1,4 @@
+import re
 import os, json, datetime, subprocess, tempfile, unittest
 from helpers import *
 from reelio import media
@@ -374,6 +375,32 @@ class Tools(MockBase):
         self.write_env(cfg)
         row = [c for c in diagnose.run(Store(self.data))["checks"] if c["id"] == "ytcookies"][0]
         self.assertFalse(row["ok"]); self.assertIn("0 cookies", row["detail"])
+
+    def test_drive_finds_videos_in_subfolders_odd_types_shortcuts_and_file_links(self):
+        from unittest import mock
+        from reelio.sources import drive
+        tree = {
+            "ROOT": [{"id": "sub1", "name": "Week 1", "mimeType": drive.FOLDER}, {"id": "sc1", "name": "link to old", "mimeType": drive.SHORTCUT, "shortcutDetails": {"targetId": "old", "targetMimeType": drive.FOLDER}},
+                     {"id": "v0", "name": "a.mp4", "mimeType": "video/mp4", "size": "5000", "createdTime": "2026-01-01T00:00:00Z"}, {"id": "n0", "name": "notes.pdf", "mimeType": "application/pdf", "size": "9000"}],
+            "sub1": [{"id": "v1", "name": "phone upload.MOV", "mimeType": "application/octet-stream", "size": "5000", "createdTime": "2026-01-02T00:00:00Z"},
+                     {"id": "x1", "name": "cover.jpg", "mimeType": "image/jpeg", "size": "100"}, {"id": "sub2", "name": "deep", "mimeType": drive.FOLDER}],
+            "sub2": [{"id": "v2", "name": "deep.mp4", "mimeType": "video/mp4", "size": "5000", "createdTime": "2026-01-03T00:00:00Z"}],
+            "old": [{"id": "v3", "name": "old.mp4", "mimeType": "video/mp4", "size": "5000", "createdTime": "2026-01-04T00:00:00Z"}]}
+        files = {"single": {"id": "single", "name": "solo.mp4", "mimeType": "video/mp4", "size": "5000", "createdTime": "2026-01-05T00:00:00Z"}}
+
+        class R:
+            def __init__(self, j, code=200): self._j, self.status_code = j, code
+            def json(self): return self._j
+
+        def fake(auth, url, params, **kw):
+            if url.endswith("/drive/v3/files"):
+                return R({"files": tree.get(re.search(r"'([^']+)' in parents", params["q"]).group(1), [])})
+            return R(files[url.rsplit("/", 1)[1]]) if url.rsplit("/", 1)[1] in files else R({}, 404)
+
+        src = {"conn": "google", "folders": ["https://drive.google.com/drive/folders/ROOT", "https://drive.google.com/file/d/single/view"]}
+        with mock.patch.object(drive, "_get", fake):
+            names = sorted(i["name"] for i in drive.list_items(src, Store(self.data), {"id": "x"}))
+        self.assertEqual(names, ["a.mp4", "deep.mp4", "old.mp4", "phone upload.MOV", "solo.mp4"])
 
     def test_diagnose_reports_fix_for_wrong_cloudinary(self):
         self.write_env(secrets={"cld": {}})

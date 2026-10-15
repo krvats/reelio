@@ -45,7 +45,7 @@ async function editor(S, id, app) {
     const t = r.source.type, kids = [];
     if (t === 'drive') {
       if (!ofKind('google').length) kids.push(h('div', { class: 'banner info' }, 'Connect Google first in Accounts, then come back.'));
-      kids.push(field('Drive folder links', h('textarea', { 'aria-label': 'Drive folder links', oninput: (e) => { r.source.folders = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }, (r.source.folders || []).join('\n')), 'Paste one link per line. Folders inside folders are included.'));
+      kids.push(field('Drive folder links', h('textarea', { 'aria-label': 'Drive folder links', oninput: (e) => { r.source.folders = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }, (r.source.folders || []).join('\n')), 'Paste one link per line. One parent folder is enough: every folder inside it (and shortcuts) is scanned and only videos are picked, other files are ignored. A link to a single video file works too.'));
       kids.push(field('Google account', h('select', { onchange: (e) => { r.source.conn = e.target.value; } }, (ofKind('google').length ? ofKind('google') : [{ id: 'google', label: 'Google' }]).map((c) => h('option', { value: c.id, selected: c.id === r.source.conn }, c.label)))));
     } else if (t === 'youtube') {
       kids.push(field('Channel', h('input', { type: 'text', value: r.source.handle || '', placeholder: '@yourchannel', oninput: (e) => { r.source.handle = e.target.value.trim(); } }), 'Only use channels you own or have permission to reuse.'));
