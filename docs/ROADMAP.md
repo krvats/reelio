@@ -11,6 +11,8 @@
 - [ ] Still open from that list: week calendar (worker should emit `plan_week`), optimistic updates, count-up numbers, bulk actions on the Flows list
 - [x] Screenshots generator `tools/screens.py` and `docs/screens/`
 
+- [x] Add-on: Video links source (`docs/ADD_LINKS.md`); open: hosted-mode support, live test of Instagram downloads
+
 ## Owner situation (important)
 No company/Stripe/Razorpay account. Payments run through manual UPI approval (done). Meta/Google reviews need a registered business, so the product runs in bring-your-own-keys mode until then.
 

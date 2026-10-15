@@ -14,3 +14,4 @@
 - api/: multi-user backend skeleton with 10 tests (Phase B part 1)
 - v1.4: worker API mode (`serve`), hosted workflow, admin/teams/legal/Hindi/week plan (from parallel work), tutorial, fixes (translator shadowing in Home/Settings)
 - UPI manual payments (QR/link + UTR claim + owner approval page), 2 new license tests; tutorial rewritten for no-company path
+- Add-on: Video links source (paste Instagram/YouTube/any link; yt-dlp + public embed fallback), caption sidecars for uploads, post-first. 7 new tests (63 total pass). See docs/ADD_LINKS.md

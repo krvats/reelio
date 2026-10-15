@@ -1,7 +1,7 @@
 import { h, icon, toast, uid, slug, FILTERS } from './core.js';
 import { saveCfg, runNow } from './app.js';
 
-const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device']];
+const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device'], ['links', 'Video links', 'Paste Instagram, YouTube or any video link']];
 const DST = [['instagram', 'Instagram Reels', 'Posts as a Reel'], ['youtube', 'YouTube Shorts', 'Uploads as a Short']];
 
 export async function flows(S, params, app) {
@@ -67,6 +67,10 @@ async function editor(S, id, app) {
     } else if (t === 'instagram') {
       kids.push(field('Instagram account', h('select', { onchange: (e) => { r.source.conn = e.target.value; } }, ofKind('instagram').map((c) => h('option', { value: c.id, selected: c.id === r.source.conn }, c.label)))));
       if (!r.source.conn && ofKind('instagram')[0]) r.source.conn = ofKind('instagram')[0].id;
+    } else if (t === 'links') {
+      r.source.net_conn = r.source.net_conn || 'youtube-net';
+      kids.push(h('p', { class: 'muted' }, 'After saving, open Videos and press Add links. Reelio downloads each link just before posting and deletes it afterwards. Only use videos you own or have permission to reuse.'));
+      kids.push(h('p', { class: 'small muted' }, 'Instagram often blocks cloud servers. If a link fails, add your browser cookies in Accounts > YouTube downloads (same box, works for Instagram too), or use Upload here.'));
     } else kids.push(h('p', { class: 'muted' }, 'After saving, open Videos and press Add videos. Each video is removed from storage once it is posted.'));
     if (t === 'youtube' || t === 'instagram') {
       kids.push(field('Backup Drive folder (optional)', h('textarea', { 'aria-label': 'Backup Drive folder links', placeholder: 'https://drive.google.com/drive/folders/...', oninput: (e) => { r.source.backup_folders = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }, (r.source.backup_folders || []).join('\n')),

@@ -1,5 +1,6 @@
 import { h, icon, toast, fmtDay, ago, FILTERS } from './core.js';
 import { saveCfg, runNow } from './app.js';
+import { parseLinks } from './links.js';
 
 const TABS = [['pending', 'Waiting'], ['posted', 'Posted'], ['failed', 'Problems'], ['skipped', 'Set aside']];
 
@@ -85,7 +86,27 @@ export async function queue(S, params, app) {
     }
     await S.data.command({ cmd: 'rescan', route: rid }); await runNow('scan', rid);
   } })) : null;
-  return h('div', { class: 'col' }, h('div', { class: 'row' }, h('h1', { class: 'grow' }, 'Videos'), upload),
+  const addLinks = route.source.type === 'links' ? h('button', { class: 'btn primary', onclick: () => {
+    const ta = h('textarea', { rows: 8, placeholder: 'One link per line.\nhttps://www.instagram.com/reel/XXXX/\nhttps://youtube.com/shorts/YYYY | optional caption for this one', 'aria-label': 'Video links' });
+    const first = h('input', { type: 'checkbox' }), rights = h('input', { type: 'checkbox' });
+    const d = h('dialog', null, h('div', { class: 'body col' }, h('h2', null, 'Add video links'), ta,
+      h('label', { class: 'row small' }, first, 'Post these first'),
+      h('label', { class: 'row small' }, rights, 'I own these videos or have permission to post them.'),
+      h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { d.close(); d.remove(); } }, 'Cancel'),
+        h('button', { class: 'btn primary', onclick: async () => {
+          if (!rights.checked) return toast('Please confirm you have the right to post these videos.', 5000);
+          const list = await parseLinks(ta.value); if (!list.length) return toast('No links found. Paste one link per line.', 4000);
+          let added = 0, had = 0;
+          for (const l of list) {
+            const body = JSON.stringify({ url: l.url, caption: l.caption || undefined, post_first: first.checked || undefined, added_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), rights_confirmed: true });
+            try { await S.data.put(`linkq/${rid}/${l.id}.json`, body, 'Reelio: added link', null); added++; } catch (er) { if (er.status === 409) had++; else { toast(er.message, 6000); } }
+          }
+          d.close(); d.remove(); toast(`${added} added${had ? `, ${had} were already there` : ''}.`);
+          if (added) { await S.data.command({ cmd: 'rescan', route: rid }); await runNow('scan', rid); }
+        } }, 'Add'))));
+    document.body.append(d); d.showModal();
+  } }, icon('plus'), 'Add links') : null;
+  return h('div', { class: 'col' }, h('div', { class: 'row' }, h('h1', { class: 'grow' }, 'Videos'), upload, addLinks),
     h('div', { class: 'row' }, h('div', { class: 'grow' }, picker), h('div', { class: 'grow' }, search)),
     h('p', { class: 'muted small' }, route.order === 'manual' ? 'Posted in the order you set. Drag a card to change it.' : `Posted ${route.order === 'newest' ? 'newest first' : route.order === 'random' ? 'in random order' : 'oldest first'}. Use "Move to top" to jump the line.`),
     tabsEl, list,
