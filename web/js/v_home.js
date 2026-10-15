@@ -43,7 +43,7 @@ export async function home(S, params, app) {
 
   const hero = h('section', { class: 'hero', 'aria-labelledby': 'hh' },
     h('h1', { id: 'hh' }, head), h('p', null, sub),
-    routes.length ? h('div', { class: 'big' }, toggle, checkBtn, h('span', { class: 'small', style: 'color:#b8bfe8' }, st.run ? `Last check ${ago(st.run.finished)}` : 'Not checked yet')) : h('div', { class: 'big' }, h('a', { class: 'btn primary', href: '#/flows/new' }, icon('plus'), 'Create a flow')),
+    routes.length ? h('div', { class: 'big' }, toggle, checkBtn, h('span', { class: 'small', style: 'color:#b8bfe8' }, st.run ? `Last check ${ago(st.run.finished)}` + (Date.now() - Date.parse(st.run.finished) > 30 * 60000 ? ' (GitHub is running late; tap Check now)' : '') : 'Not checked yet')) : h('div', { class: 'big' }, h('a', { class: 'btn primary', href: '#/flows/new' }, icon('plus'), 'Create a flow')),
     strips);
 
   const problems = [];

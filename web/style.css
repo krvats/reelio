@@ -167,3 +167,30 @@ table.t{width:100%;border-collapse:collapse;font-size:.92rem} table.t td,table.t
 .wd{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.8rem}.wd i{width:100%;max-width:28px;border-radius:6px;background:linear-gradient(var(--brand),#9a8cff);transition:height .5s}
 .wd.off i{background:var(--line)}.wd b{font-size:.9rem}.wd span{color:var(--ink-2)}
 .qr{width:200px;max-width:100%;margin:0 auto;background:#fff;padding:8px;border-radius:12px}.qr svg{width:100%;height:auto;display:block}
+
+/* ---- polish layer ---- */
+:root{--ease:cubic-bezier(.22,1,.36,1)}
+:root[data-accent="ocean"]{--brand:#2f8cff;--brand-ink:#fff}
+:root[data-accent="mint"]{--brand:#14b886;--brand-ink:#04251b}
+:root[data-accent="sunset"]{--brand:#ff7a3d;--brand-ink:#2b1000}
+:root[data-accent="rose"]{--brand:#ee4f93;--brand-ink:#fff}
+:root[data-accent]{--brand-soft:color-mix(in srgb,var(--brand) 16%,transparent)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(55% 38% at 85% -8%,color-mix(in srgb,var(--brand) 20%,transparent),transparent),radial-gradient(40% 30% at 0% 100%,color-mix(in srgb,var(--ok) 11%,transparent),transparent)}
+#navbar{position:fixed;top:0;left:0;width:100%;height:3px;z-index:50;pointer-events:none;opacity:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--brand),transparent);transition:opacity .2s}
+#navbar.on{opacity:1;animation:nbar .9s var(--ease) infinite}
+@keyframes nbar{to{transform:translateX(100%)}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.78)}to{transform:scale(1)}}
+main.view-in>*{animation:rise .42s var(--ease) both}
+main.view-in>*:nth-child(2){animation-delay:.05s} main.view-in>*:nth-child(3){animation-delay:.1s} main.view-in>*:nth-child(4){animation-delay:.15s} main.view-in>*:nth-child(5){animation-delay:.2s} main.view-in>*:nth-child(n+6){animation-delay:.25s}
+nav.tabs a{transition:background-color .2s,color .2s}
+nav.tabs a[aria-current="page"] svg{animation:pop .35s var(--ease)}
+.card{transition:border-color .25s}
+@media(hover:hover){.card:hover{border-color:color-mix(in srgb,var(--brand) 38%,var(--line))}}
+.btn{transition:transform .15s var(--ease),background-color .2s,border-color .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 62%,#ff5ec4));box-shadow:0 6px 18px color-mix(in srgb,var(--brand) 32%,transparent)}
+.pill{transition:background-color .3s,color .3s}
+.acc::before{content:"";width:.8em;height:.8em;border-radius:50%;background:var(--sw,var(--brand));margin-right:.45em;display:inline-block}
+.acc-violet{--sw:#5a4bff}.acc-ocean{--sw:#2f8cff}.acc-mint{--sw:#14b886}.acc-sunset{--sw:#ff7a3d}.acc-rose{--sw:#ee4f93}
+@media(prefers-reduced-motion:reduce){main.view-in>*,#navbar.on,nav.tabs a svg{animation:none!important}}
