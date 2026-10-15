@@ -109,6 +109,69 @@ if "--write-info-json" in a:
         self.assertEqual(os.listdir(d), [])
 
 
+class PageSource(MockBase):
+    def _fake(self, mode="ok"):
+        d = tempfile.mkdtemp(dir=self.tmp); p = os.path.join(d, "fake_ytdlp.py")
+        with open(p, "w") as f:
+            f.write(f'''
+import sys, json, shutil
+a = sys.argv[1:]
+if "{mode}" == "blocked":
+    sys.stderr.write("ERROR: login required, use --cookies"); sys.exit(1)
+if "--flat-playlist" in a:
+    for c in ("NEWEST1", "MIDDLE2", "OLDEST3"):
+        print(json.dumps({{"url": "https://www.instagram.com/reel/" + c + "/", "title": "t " + c}}))
+    sys.exit(0)
+out = a[a.index("-o") + 1]
+shutil.copy("{self.vid}", out.replace("%(ext)s", "mp4"))
+if "--write-info-json" in a:
+    json.dump({{"description": "Cap of " + a[-1].split("/")[-2]}}, open(out.replace("%(ext)s", "info.json"), "w"))
+''')
+        return f"{sys.executable} {p}"
+
+    def setUp(self):
+        super().setUp(); self.old = os.environ.get("REELIO_YTDLP")
+
+    def tearDown(self):
+        os.environ.pop("REELIO_YTDLP", None) if self.old is None else os.environ.__setitem__("REELIO_YTDLP", self.old)
+        super().tearDown()
+
+    def cfg(self, **src):
+        c = self.base_config()
+        c["routes"] = [self.route("pg", source=dict({"type": "page", "url": "https://www.instagram.com/mypage/", "net_conn": "youtube-net"}, **src), caption={"mode": "original"})]
+        return c
+
+    def test_page_link_queues_every_video_and_posts_oldest_first(self):
+        os.environ["REELIO_YTDLP"] = self._fake()
+        c = self.cfg(); c["routes"][0]["schedule"]["max_per_run"] = 1
+        self.write_env(c); self.run_engine()
+        self.assertEqual([e["src"] for e in self.ledger()["entries"]], ["link:ig_OLDEST3"])
+        self.assertEqual(len(self.queue("pg")["items"]), 3)
+        self.assertEqual([p["caption"] for p in self.W.ig_posts], ["Cap of OLDEST3"])
+
+    def test_same_video_from_links_flow_and_page_flow_is_posted_once(self):
+        os.environ["REELIO_YTDLP"] = self._fake()
+        self.write_env(self.cfg()); self.run_engine()
+        self.assertEqual(len(self.W.ig_posts), 3)
+        self.run_engine(force_scan=True)
+        self.assertEqual(len(self.W.ig_posts), 3, "a second scan of the page must not repost anything")
+
+    def test_only_new_videos_skips_the_existing_backlog(self):
+        os.environ["REELIO_YTDLP"] = self._fake()
+        self.write_env(self.cfg(backlog="new")); self.run_engine()
+        self.assertEqual(len(self.W.ig_posts), 0)
+        self.assertEqual(self.queue("pg")["items"], [])
+
+    def test_refused_page_pauses_only_that_flow_with_a_cookies_fix(self):
+        os.environ["REELIO_YTDLP"] = self._fake("blocked")
+        self.add_drive(2)
+        c = self.cfg(); c["routes"].append(self.route("r1"))
+        self.write_env(c); self.run_engine()
+        self.assertEqual(len(self.W.ig_posts), 2, "the Drive flow must keep working")
+        rs = self.store.status()["routes"]["pg"]
+        self.assertEqual(rs["state"], "cooldown"); self.assertIn("cookies", rs["problem"]["fix"])
+
+
 class LinkIdParity(unittest.TestCase):
     def test_web_and_worker_make_the_same_ids(self):
         urls = ["https://www.instagram.com/reel/ABC123/?igsh=1", "https://instagram.com/user.name/p/Zz_-9/", "https://youtu.be/abcDEF123?t=4",

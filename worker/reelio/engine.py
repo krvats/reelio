@@ -490,7 +490,7 @@ class Engine:
         try:
             src, out = os.path.join(tmp, "src"), os.path.join(tmp, "out.mp4")
             self.fetch_with_backup(route, it, src)
-            if route["source"]["type"] == "links":      # the download may have found the original caption
+            if route["source"]["type"] in ("links", "page"):      # the download may have found the original caption
                 cap, title = captions.build(route, it, n, now().astimezone(self.tz).strftime("%d %b %Y"))
                 ctx["journal"] = lambda d, it=it, cap=cap, title=title: self._journal(route, it, cap, title, d)
             logo = music = None

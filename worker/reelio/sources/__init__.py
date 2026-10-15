@@ -27,5 +27,5 @@ def download_url(url, dest, headers=None, params=None, tries=3):
 
 
 def get_source(stype):
-    from . import drive, youtube, instagram, upload, links
-    return {"drive": drive, "youtube": youtube, "instagram": instagram, "upload": upload, "links": links}[stype]
+    from . import drive, youtube, instagram, upload, links, page
+    return {"drive": drive, "youtube": youtube, "instagram": instagram, "upload": upload, "links": links, "page": page}[stype]

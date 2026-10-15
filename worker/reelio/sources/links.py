@@ -2,8 +2,8 @@
 from the cloud just before posting. Each link is one tiny file linkq/<flow>/<id>.json in the data repo (so the app, the browser
 extension and the worker never edit the same file). Only use videos you own or have permission to reuse.
 
-Honest limit: Instagram usually blocks downloads from cloud servers. For Instagram, use the browser extension's "Send video"
-(it downloads in YOUR browser and uploads the file); use "Send link" for sources that allow cloud downloads, like YouTube."""
+Honest limit: Instagram usually blocks downloads from cloud servers. For Instagram,
+(save the file yourself and use "Upload here", or add cookies); links work best for sources that allow cloud downloads, like YouTube."""
 import os, re, json, glob, hashlib, subprocess, tempfile, shutil, datetime
 from ..errors import SourceProblem, ItemProblem
 from ..util import scrub, now, iso, http, env_base, HttpFail
@@ -57,7 +57,7 @@ def list_items(src, store, route):
 
 def _block_fix(url):
     if _IG.search(url or ""):
-        return "Instagram blocks cloud servers. Use the browser extension's Send video button for Instagram posts (it downloads on your computer), or put the file in Drive."
+        return "Instagram blocks cloud servers. Add a cookies.txt that includes instagram.com in Accounts > YouTube downloads (use a spare login), or save the video yourself and use Upload here."
     return "The site is blocking this cloud server. Add your browser cookies in Accounts > YouTube downloads, or put the file in Google Drive."
 
 
