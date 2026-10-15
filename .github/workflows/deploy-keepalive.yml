@@ -1,0 +1,22 @@
+name: Deploy keep-alive
+on:
+  workflow_dispatch: {}
+  push:
+    paths: ["keepalive/**"]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: keepalive
+          command: deploy
+          secrets: |
+            GH_TOKEN
+        env:
+          GH_TOKEN: ${{ secrets.KEEPALIVE_GH_TOKEN }}
