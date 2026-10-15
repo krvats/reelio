@@ -3,3 +3,5 @@
 - 2026-10-14T16:58:37Z v1.1.0: v1.1: license service, paywall, worker license check, pages view, palette, screens, CONTEXT (+19 added, ~9 changed, -0 removed)
 - 2026-10-14T17:02:10Z v1.1.0: fix test command (+0 added, ~1 changed, -0 removed)
 - 2026-10-14T17:09:05Z v1.1.0: merged owner's live repo edits (youtube clips, brand channel login, privacy.html, tick.yml) (+1 added, ~5 changed, -0 removed)
+- 2026-10-14T22:38:56Z v1.1.0: backup Drive folder merged, onboarding checklist, Phase A doc (+1 added, ~7 changed, -0 removed)
+- 2026-10-14T22:39:00Z v1.1.0: cleanup (+0 added, ~0 changed, -0 removed)

@@ -60,6 +60,14 @@ class Engine:
         except ValueError as e:
             self.ev("error", str(e), fix="Set the REELIO_KEY secret to the passphrase you chose in the app.")
             self._finish(started, "needs_setup", str(e)); return False
+        from . import license as lic
+        self.lic = lic.check(s, self.cfg)
+        self.st["license"] = {k: self.lic.get(k) for k in ("enforced", "active", "plan", "message")}
+        self.ok_accounts = lic.allowed_accounts(self.cfg, self.lic["accounts"]) if self.lic["enforced"] and self.lic["active"] else None
+        self.month_left = (self.lic["posts_month"] - lic.month_posts(s)) if self.lic["enforced"] else 10 ** 9
+        if self.lic["enforced"] and not self.lic["active"]:
+            self.cfg["paused"] = True
+            self.ev("warn", self.lic["message"], fix="Open the Reelio app and choose a plan.")
         try:
             self.apply_inbox()
             self.recover()
@@ -215,6 +223,10 @@ class Engine:
             rs["message"] = "Connect the account(s) this flow uses."
             rs["problem"] = {"msg": "A required account is not connected yet.", "fix": "Open Accounts and finish connecting."}
             return
+        if self.ok_accounts is not None and conn["id"] not in self.ok_accounts:
+            rs["state"] = "needs_plan"; rs["message"] = "Your plan covers fewer accounts. Upgrade to turn this one on."
+            rs["problem"] = {"msg": "This account is over your plan's limit.", "fix": "Open Settings, then Subscription, and upgrade."}
+            return
         a = self.acct(conn["id"])
         cd = parse_iso(a.get("cooldown_until"))
         if cd and cd > now():
@@ -246,7 +258,10 @@ class Engine:
         want_now = [i for i in cands if i.get("post_now")]
         n = min(len(cands), max(allowed, len(want_now)), int(sched.get("max_per_run", 10) or 10))
         if paused:
-            rs["state"] = "paused"; rs["message"] = "Everything is paused."; return
+            rs["state"] = "paused"; rs["message"] = (self.lic["message"] if self.lic["enforced"] and not self.lic["active"] else "Everything is paused."); return
+        if self.month_left <= 0:
+            rs["state"] = "needs_plan"; rs["message"] = "This month's posts for your plan are used up. Upgrade or wait for next month."; return
+        n = min(n, max(self.month_left, 0)) if n else n
         if n <= 0:
             rs["state"] = "waiting" if cands else "idle"
             rs["message"] = "Next post at " + parse_iso(rs["next_slot"]).astimezone(self.tz).strftime("%H:%M") if cands else "Nothing waiting. Add videos to the source."
@@ -560,6 +575,7 @@ class Engine:
     # ---------------------------------------------------------------- ledger
     def _ledger(self, route, it, res, title):
         s = self.store
+        self.month_left -= 1
         s.add_ledger({"id": uuid.uuid4().hex[:12], "route": route["id"], "target": self.target_key(route), "src": it["key"], "md5": it.get("md5"),
                       "name": it.get("name"), "media_id": res.get("media_id"), "permalink": res.get("permalink", ""), "container_id": res.get("container_id", ""),
                       "title": title[:120], "at": iso(), "status": "posted" if res.get("media_id") else "unknown_id"})

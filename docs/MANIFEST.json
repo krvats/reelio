@@ -1,6 +1,6 @@
 {
  "version": "1.1.0",
- "at": "2026-10-14T17:09:05Z",
+ "at": "2026-10-14T22:39:00Z",
  "files": {
   ".github/workflows/pages.yml": {
    "sha": "82f43d3128ae659d",
@@ -33,14 +33,19 @@
    "bytes": 3344
   },
   "docs/CHANGELOG.md": {
-   "sha": "03add43beaebc3f6",
-   "lines": 13,
-   "bytes": 958
+   "sha": "7810d4c3955ad4cb",
+   "lines": 14,
+   "bytes": 1115
+  },
+  "docs/PHASE_A.md": {
+   "sha": "100e9085e55a2a7b",
+   "lines": 35,
+   "bytes": 4412
   },
   "docs/ROADMAP.md": {
-   "sha": "5d5c9cc0c79501d5",
-   "lines": 20,
-   "bytes": 1675
+   "sha": "2f11fec765893041",
+   "lines": 21,
+   "bytes": 1708
   },
   "docs/SETUP_CHECKLIST.md": {
    "sha": "ee99f8cd81043d0f",
@@ -163,14 +168,14 @@
    "bytes": 15260
   },
   "web/js/v_flows.js": {
-   "sha": "e30b18c9f70e6230",
-   "lines": 152,
-   "bytes": 18395
+   "sha": "45fe5f80fd8cb1a4",
+   "lines": 157,
+   "bytes": 19270
   },
   "web/js/v_home.js": {
-   "sha": "63ee90f2b272a8a6",
-   "lines": 72,
-   "bytes": 5787
+   "sha": "cbeb66a4a44b4456",
+   "lines": 82,
+   "bytes": 6799
   },
   "web/js/v_more.js": {
    "sha": "fcb3784b951803dc",
@@ -243,14 +248,14 @@
    "bytes": 1189
   },
   "worker/reelio/diagnose.py": {
-   "sha": "adc8ebf1b3815e0d",
-   "lines": 102,
-   "bytes": 5071
+   "sha": "6ce5a4ba15126b2c",
+   "lines": 115,
+   "bytes": 5814
   },
   "worker/reelio/engine.py": {
-   "sha": "228d9fbcc24a4e07",
-   "lines": 600,
-   "bytes": 31872
+   "sha": "309b855737a0b90c",
+   "lines": 647,
+   "bytes": 34489
   },
   "worker/reelio/errors.py": {
    "sha": "9cff67be03e31ee2",
@@ -353,9 +358,9 @@
    "bytes": 15245
   },
   "worker/tests/test_e2e.py": {
-   "sha": "f591595db67f55c4",
-   "lines": 377,
-   "bytes": 19036
+   "sha": "638cdddb11446ace",
+   "lines": 403,
+   "bytes": 20614
   },
   "worker/tests/test_git.py": {
    "sha": "ff9d8b455e3b8cc8",

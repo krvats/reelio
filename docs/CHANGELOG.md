@@ -10,3 +10,4 @@
 - Pages & channels view with bulk actions, command palette, skeleton loading
 - Project memory: handoff.py, CLAUDE.md, CONTEXT.md, ROADMAP, screenshots generator
 - Merged owner's live edits from krvats/reelio (Oct 14, 2026): YouTube long videos/lives cut into clips, "selected videos" source, YouTube brand-channel Google login, newest yt-dlp + ffmpeg install in tick.yml, privacy.html
+- Backup Drive folder for YouTube/Instagram sources (used when a download fails; clip-aware), diagnose check; Phase A document; onboarding checklist on Home

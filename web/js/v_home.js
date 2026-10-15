@@ -60,8 +60,18 @@ export async function home(S, params, app) {
   const todo = st.todo || [];
   const group = (k, title) => { const l = todo.filter((t) => t.kind === k); return l.length ? h('div', null, h('h3', null, title), h('ul', { style: 'margin:.25rem 0 0;padding-left:1.2rem' }, l.map((t) => h('li', null, t.text)))) : null; };
 
+  const conns = S.cfg.connections || [];
+  const steps = [['Connect an Instagram page or YouTube channel', conns.some((c) => ['instagram', 'google'].includes(c.kind) && (st.accounts || {})[c.id] && st.accounts[c.id].connected), '#/accounts'],
+    ['Create a flow (where videos come from and go to)', routes.length > 0, '#/flows/new'],
+    ['Let Reelio check once', !!st.run, null],
+    ['Get your first post', Object.values(rs).some((r) => (r.posted_total || 0) > 0 || (r.today_posted || 0) > 0), '#/queue']];
+  const left = steps.filter((x) => !x[1]).length;
+  const onboard = left ? h('div', { class: 'card col' }, h('h2', null, `Getting started: ${steps.length - left} of ${steps.length}`),
+    h('div', { class: 'meter' }, h('i', { style: `width:${100 * (steps.length - left) / steps.length}%` })),
+    steps.map(([t, ok, href]) => h('div', { class: 'row' }, h('span', { class: 'pill ' + (ok ? 'ok' : '') }, ok ? 'Done' : 'To do'), href && !ok ? h('a', { href }, t) : h('span', null, t)))) : null;
+
   return h('div', { class: 'col' },
-    hero, problems,
+    hero, onboard, problems,
     routes.length ? h('div', { class: 'grid' },
       h('div', { class: 'card stat' }, h('b', null, posted), h('span', null, 'posted today')),
       h('div', { class: 'card stat' }, h('b', null, pending), h('span', null, 'waiting in line')),
