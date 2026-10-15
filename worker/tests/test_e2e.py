@@ -310,6 +310,32 @@ shutil.copy("{self.vid}", out)
         finally:
             os.environ.pop("REELIO_YTDLP")
 
+    def test_backup_drive_folder_is_used_when_youtube_blocks_the_download(self):
+        os.environ["REELIO_YTDLP"] = self._fake_ytdlp("blocked")
+        try:
+            self.add_drive(2)
+            for fid, nm in zip(("clip0", "clip1"), ("vidA - edited.mp4", "vidB.mp4")):
+                self.W.drive[fid]["name"] = nm
+            cfg = self.base_config()
+            cfg["routes"] = [self.route("yi", source={"type": "youtube", "handle": "@MyChannel", "backup_folders": ["https://drive.google.com/drive/folders/BK1"], "backup_conn": "google"})]
+            self.write_env(cfg); self.run_engine()
+            self.assertEqual(len(self.W.ig_posts), 2, "both videos must post from the backup folder")
+            self.assertEqual(sorted(e["src"] for e in self.ledger()["entries"]), ["youtube:vidA", "youtube:vidB"])
+            self.assertNotEqual(self.store.status()["routes"]["yi"].get("state"), "cooldown")
+        finally:
+            os.environ.pop("REELIO_YTDLP")
+
+    def test_without_a_backup_file_the_error_says_what_to_add(self):
+        os.environ["REELIO_YTDLP"] = self._fake_ytdlp("blocked")
+        try:
+            cfg = self.base_config()
+            cfg["routes"] = [self.route("yi", source={"type": "youtube", "handle": "@MyChannel", "backup_folders": ["BK1"], "backup_conn": "google"})]
+            self.write_env(cfg); self.run_engine()
+            self.assertEqual(len(self.W.ig_posts), 0)
+            self.assertIn("backup Drive folder", self.store.status()["routes"]["yi"]["problem"]["fix"])
+        finally:
+            os.environ.pop("REELIO_YTDLP")
+
 
 class UploadSource(MockBase):
     def test_upload_from_app_posts_and_frees_space(self):
