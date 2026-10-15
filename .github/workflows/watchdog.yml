@@ -1,0 +1,37 @@
+name: Reelio watchdog
+# A second, independent alarm clock. If the main worker (tick.yml) has not started for 12+ minutes
+# (GitHub cron skipped or delayed it), this starts it. It does nothing when the worker is fine.
+on:
+  schedule:
+    - cron: "3,13,23,33,43,53 * * * *"
+  workflow_dispatch: {}
+concurrency:
+  group: reelio-watchdog
+  cancel-in-progress: true
+permissions:
+  contents: read
+  actions: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start the worker if it is overdue
+        env:
+          GH_TOKEN: ${{ secrets.DATA_PAT || github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -u
+          runs=$(gh run list -R "$REPO" --workflow=tick.yml --limit 5 --json status,createdAt) || { echo "could not read runs"; exit 0; }
+          busy=$(echo "$runs" | jq '[.[] | select(.status=="queued" or .status=="in_progress" or .status=="waiting" or .status=="pending")] | length')
+          last=$(echo "$runs" | jq -r '.[0].createdAt // empty')
+          if [ "$busy" != "0" ]; then echo "worker is running or queued: nothing to do"; exit 0; fi
+          if [ -n "$last" ]; then
+            age=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 60 ))
+            if [ "$age" -lt 12 ]; then echo "last run $age min ago: fine"; exit 0; fi
+            echo "last run was $age min ago: starting it now"
+          else
+            echo "no run found: starting it now"
+          fi
+          gh workflow run tick.yml -R "$REPO" --ref "$REF" -f action=run || { gh api -X PUT "repos/$REPO/actions/workflows/tick.yml/enable" || true; echo "start refused; tried to re-enable the workflow"; }
