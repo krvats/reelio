@@ -17,15 +17,11 @@ def _maybe_analytics(store):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="reelio")
-    ap.add_argument("action", choices=["run", "diagnose", "analytics", "scan", "apirun"], help="what to do")
+    ap.add_argument("action", choices=["run", "diagnose", "analytics", "scan", "long"], help="what to do")
     ap.add_argument("--data", default=os.environ.get("REELIO_DATA", "data"), help="folder with the data repo")
     ap.add_argument("--route", default=os.environ.get("REELIO_ROUTE") or None)
     ap.add_argument("--budget", type=int, default=int(os.environ.get("REELIO_BUDGET_MIN", "45")), help="max minutes for this run")
     a = ap.parse_args(argv)
-    if a.action == "apirun":
-        from . import apimode
-        apimode.run(os.environ["REELIO_API_URL"], os.environ["REELIO_WORKER_SECRET"], budget_min=a.budget)
-        return 0
     store = Store(a.data)
     try:
         if a.action in ("run", "scan"):
@@ -36,6 +32,9 @@ def main(argv=None):
             eng.run()
             if a.action == "run":
                 _maybe_analytics(store)
+        elif a.action == "long":
+            from . import longjob
+            longjob.run(store, a.budget)
         elif a.action == "diagnose":
             from . import diagnose
             r = diagnose.run(store); say(r["verdict"])

@@ -27,8 +27,6 @@ class World:
         self.drive = {}            # file id -> {name, bytes, created, md5}
         self.cdn = {}              # cloudinary public_id -> bytes
         self.ig_posts = []         # published
-        self.ig_comments = []      # (media id, text)
-        self.comment_fails = False
         self.ig_containers = {}    # cid -> dict
         self.ig_accounts = {"IGTOKA": "111", "IGTOKB": "222"}
         self.rate_limited_tokens = set()
@@ -37,6 +35,9 @@ class World:
         self.fail_container_always = False
         self.yt_uploads = []
         self.yt_limit = False
+        self.yt_fail_chunk = False   # fail the first chunk after the first one with a 503, once
+        self.yt_recent = []          # [(title, video id)] shown as the channel's newest uploads
+        self.yt_status = "uploaded"
         self.telegram = []
         self.calls = []
         self.fetched_urls = []
@@ -109,15 +110,32 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, b"", headers={"Location": f"http://{self.headers['Host']}/yt-session/{len(W.yt_uploads) - 1}"})
         mm = re.match(r"^/yt-session/(\d+)$", path)
         if mm and m == "PUT":
-            idx = int(mm[1])
-            if self.headers.get("Content-Range"):
-                return self._send(308)
-            W.yt_uploads[idx]["size"] = len(raw); W.yt_uploads[idx]["id"] = f"YT{idx}"
+            idx = int(mm[1]); up = W.yt_uploads[idx]; cr = self.headers.get("Content-Range", "")
+            if cr.startswith("bytes */"):            # "how much did you get?"
+                got = len(up.get("buf", b""))
+                return self._send(308, headers={"Range": f"bytes=0-{got - 1}"} if got else {})
+            m2 = re.match(r"bytes (\d+)-(\d+)/(\d+)", cr)
+            if m2:                                     # one chunk of a chunked upload
+                a, b, total = (int(x) for x in m2.groups())
+                if W.yt_fail_chunk and a > 0:
+                    W.yt_fail_chunk = False
+                    return self._send(503, b"")
+                buf = up.setdefault("buf", b"")
+                if a == len(buf):
+                    up["buf"] = buf + raw
+                got = len(up["buf"])
+                if got >= total:
+                    up["size"] = got; up["id"] = f"YT{idx}"
+                    return self._send(200, {"id": f"YT{idx}"})
+                return self._send(308, headers={"Range": f"bytes=0-{got - 1}"})
+            up["size"] = len(raw); up["id"] = f"YT{idx}"
             return self._send(200, {"id": f"YT{idx}"})
+        if path == "/youtube/v3/videos" and m == "GET":
+            return self._send(200, {"items": [{"id": p.get("id"), "status": {"uploadStatus": W.yt_status, **({"rejectionReason": "length"} if W.yt_status == "rejected" else {})}}]})
         if path == "/youtube/v3/channels":
             return self._send(200, {"items": [{"snippet": {"title": "Test Channel"}, "contentDetails": {"relatedPlaylists": {"uploads": "UUx"}}}]})
         if path == "/youtube/v3/playlistItems":
-            return self._send(200, {"items": []})
+            return self._send(200, {"items": [{"snippet": {"title": t, "publishedAt": "2099-01-01T00:00:00Z", "resourceId": {"videoId": v}}} for t, v in W.yt_recent]})
         # ---------------- Telegram
         mm = re.match(r"^/bot([^/]+)/sendMessage$", path)
         if mm:
@@ -187,11 +205,6 @@ class Handler(BaseHTTPRequestHandler):
             mid = f"M{len(W.ig_posts) + 1}"
             W.ig_posts.append({"id": mid, "uid": uid, "caption": c["caption"], "at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+0000"), "link": f"https://instagram.com/reel/{mid}", "url": c["url"]})
             return self._send(200, {"id": mid})
-        mm = re.match(r"^/(M\d+)/comments$", path)
-        if mm and m == "POST":
-            if W.comment_fails:
-                return self._send(400, {"error": {"message": "(#10) Application does not have permission for this action", "code": 10}})
-            W.ig_comments.append((mm[1], p.get("message"))); return self._send(200, {"id": "CM1"})
         mm = re.match(r"^/(C\d+)$", path)
         if mm:
             c = W.ig_containers[mm[1]]; c["polls"] += 1

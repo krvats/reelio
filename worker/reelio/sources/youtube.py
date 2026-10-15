@@ -170,7 +170,7 @@ def _list_api(src, gsec, include, maxs):
 
 def _list_ytdlp(src, store, include):
     base = _channel_url(src)
-    tabs = {"shorts": ["/shorts"], "long": ["/videos", "/streams"], "all": ["/shorts", "/videos", "/streams"]}.get(include, ["/shorts"])
+    tabs = src.get("tabs") or {"shorts": ["/shorts"], "long": ["/videos", "/streams"], "all": ["/shorts", "/videos", "/streams"]}.get(include, ["/shorts"])
     out, seen, err = [], set(), ""
     for tab in tabs:
         cmd = _ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings", base + tab] + _net_args(store, src) + _cookie_args(store, src)
@@ -238,7 +238,7 @@ def _js_args():
     return ["--js-runtimes", "node", "--remote-components", "ejs:github"] if shutil.which("node") else []
 
 
-def _run_download(cmd, tmpd):
+def _run_download(cmd, tmpd, timeout=1800):
     last = None
     for client in _CLIENT_TRIES:
         for f in os.listdir(tmpd):
@@ -248,9 +248,9 @@ def _run_download(cmd, tmpd):
         c = list(cmd)
         if client:
             c += ["--extractor-args", client]
-        p = subprocess.run(c + _js_args(), capture_output=True, text=True, timeout=1800)
+        p = subprocess.run(c + _js_args(), capture_output=True, text=True, timeout=timeout)
         if p.returncode != 0 and ("no such option" in (p.stderr or "").lower() or "unrecognized arguments" in (p.stderr or "").lower()):
-            p = subprocess.run(c, capture_output=True, text=True, timeout=1800)   # older yt-dlp without the JS options
+            p = subprocess.run(c, capture_output=True, text=True, timeout=timeout)   # older yt-dlp without the JS options
         files = [f for f in os.listdir(tmpd) if f.startswith("v.") and not f.endswith((".part", ".ytdl"))]
         if p.returncode == 0 and files:
             return p, files
@@ -259,6 +259,19 @@ def _run_download(cmd, tmpd):
         if not any(w in low for w in _RETRY_WORDS):
             break
     return last
+
+
+def raise_for_failure(stderr):
+    """Turn yt-dlp's error text into a plain-language problem (used by clip downloads and by long videos)."""
+    err = scrub((stderr or "")[-400:])
+    low = err.lower()
+    if "confirm you" in low or "sign in" in low or "bot" in low or "429" in low:
+        raise SourceProblem("YouTube blocked the download from this cloud server.", _block_fix(err), cooldown_min=180, kind="blocked")
+    if "private" in low or "unavailable" in low or "removed" in low:
+        raise ItemProblem("This video is private or removed on YouTube.", "Skip it.")
+    if "no space left" in low:
+        raise ItemProblem("The cloud runner ran out of disk space.", "Use shorter parts or a lower quality for this video.")
+    raise ItemProblem("YouTube download failed: " + err[-200:], "Tap Retry later.")
 
 
 def fetch(item, dest, store, route):
@@ -284,13 +297,7 @@ def fetch(item, dest, store, route):
             cmd += ["--proxy", sec["proxy"]]
         p, files = _run_download(cmd, tmpd)
         if p.returncode != 0 or not files:
-            err = scrub((p.stderr or "")[-400:])
-            low = err.lower()
-            if "confirm you" in low or "sign in" in low or "bot" in low or "429" in low:
-                raise SourceProblem("YouTube blocked the download from this cloud server.", _block_fix(err), cooldown_min=180, kind="blocked")
-            if "private" in low or "unavailable" in low or "removed" in low:
-                raise ItemProblem("This video is private or removed on YouTube.", "Skip it.")
-            raise ItemProblem("YouTube download failed: " + err[-200:], "Tap Retry later.")
+            raise_for_failure(p.stderr)
         shutil.move(os.path.join(tmpd, files[0]), dest)
     finally:
         shutil.rmtree(tmpd, ignore_errors=True)
