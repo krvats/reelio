@@ -8,4 +8,6 @@ crons = ["*/5 * * * *", "7 * * * *"]   # every 5 minutes: posting worker; minute
 [vars]
 GH_REPO = "krvats/reelio"
 GH_REF = "main"
+   [observability]
+   enabled = true
 # Secret (never write it in this file):  npx wrangler secret put GH_TOKEN
