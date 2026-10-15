@@ -42,7 +42,7 @@ def split_pool(text):
             continue
         body = "# Netscape HTTP Cookie File\n" + "\n".join(l for l in c if l.strip() and (_valid_line(l) or l.lstrip().startswith("#"))
                                                               and not _HEADER.match(l)) + "\n"
-        cid = fingerprint(body)
+        cid = meta(body)[0]
         if cid not in seen:
             seen.add(cid); out.append(body)
     return out
@@ -50,6 +50,16 @@ def split_pool(text):
 
 def fingerprint(body):
     return hashlib.sha256(body.encode()).hexdigest()[:10]
+
+
+_PROFILE = re.compile(r"^\s*#\s*reelio-profile:\s*([A-Za-z0-9_-]+)[ \t]*(.*)$", re.M)
+
+
+def meta(body):
+    """(identity, label). The sync extension marks each browser profile with '# reelio-profile: <id> <label>', so a
+    refreshed export of the SAME profile is the same cookie slot; anything else is identified by its content."""
+    m = _PROFILE.search(body or "")
+    return ("p-" + m.group(1), m.group(2).strip()) if m else (fingerprint(body), "")
 
 
 def classify(stderr):
@@ -66,9 +76,14 @@ class Pool:
     def __init__(self, store, src=None):
         self.store = store
         sec = store.secret((src or {}).get("net_conn", "youtube-net"))
-        self.items = [(fingerprint(b), b) for b in split_pool(sec.get("cookies") or "")]
+        self.items = [(meta(b)[0], b) for b in split_pool(sec.get("cookies") or "")]
+        self.labels = {meta(b)[0]: meta(b)[1] for _, b in self.items}
+        self.fp = {cid: fingerprint(b) for cid, b in self.items}
         self.path = store.p(HEALTH_FILE)
         self.h = (read_json(self.path, None) or {}).get("items", {})
+        for cid in list(self.h):                       # a refreshed export is a fresh cookie: forget its old rest timer
+            if cid in self.fp and self.h[cid].get("fp") and self.h[cid]["fp"] != self.fp[cid]:
+                self.h.pop(cid)
 
     # ---- reading
     def _until(self, cid):
@@ -106,18 +121,18 @@ class Pool:
             u, kind = self._until(cid), (self.h.get(cid) or {}).get("kind")
             if u and u > t:
                 parked = kind == "expired" and (u - t).days > 300
-                items.append({"id": cid[:4], "state": "parked" if parked else "resting", "kind": kind, "until": None if parked else iso(u)})
+                items.append({"id": cid[:4], "label": self.labels.get(cid, ""), "state": "parked" if parked else "resting", "kind": kind, "until": None if parked else iso(u)})
                 if not parked and (nxt is None or u < nxt):
                     nxt = u
             else:
-                items.append({"id": cid[:4], "state": "ready", "kind": None, "until": None})
+                items.append({"id": cid[:4], "label": self.labels.get(cid, ""), "state": "ready", "kind": None, "until": None})
         c = lambda st: sum(1 for i in items if i["state"] == st)
         return {"total": len(items), "ready": c("ready"), "resting": c("resting"), "parked": c("parked"),
                 "next_at": iso(nxt) if nxt else None, "items": items}
 
     # ---- writing
     def _save(self):
-        keep = {cid: v for cid, v in self.h.items() if any(cid == c for c, _ in self.items)}
+        keep = {cid: dict(v, fp=self.fp[cid]) for cid, v in self.h.items() if cid in self.fp}
         write_json(self.path, {"items": keep, "updated": iso()})
 
     def used(self, cid):

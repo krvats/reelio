@@ -56,13 +56,26 @@ export function openCookieDialog(S, app) {
   drop.addEventListener('dragover', (e) => e.preventDefault());
   drop.addEventListener('drop', (e) => { e.preventDefault(); take(e.dataTransfer.files); });
   const px = h('input', { type: 'text', id: 'ck_px', autocomplete: 'off', placeholder: 'http://user:pass@host:port' });
-  const body = h('div', { class: 'col' },
-    h('p', null, 'Only needed if YouTube says it is blocking downloads. Add as many as you like. Reelio tries them one by one, rests the ones that stop working, and uses them again when they recover.'),
+  const auto = h('div', { class: 'card col' },
+    h('b', null, 'Best way: automatic (set up once)'),
+    h('p', { class: 'small', style: 'margin:0' }, 'Install the Reelio Cookie Sync add-on in Chrome or Edge. After that it sends fresh cookies to Reelio by itself every hour. No more private windows, no more files.'),
+    h('a', { class: 'btn small primary', href: 'downloads/reelio-cookie-sync.zip', download: 'reelio-cookie-sync.zip' }, 'Download the add-on'),
     h('ol', { class: 'steps' },
-      h('li', null, h('div', null, 'Open a ', h('b', null, 'private (incognito) window'), ' and sign in to YouTube with a ', h('b', null, 'spare'), ' Google account, not your main one.')),
-      h('li', null, h('div', null, 'Click the extension ', h('b', null, 'Get cookies.txt LOCALLY'), ', press ', h('b', null, 'Export'), ', then close the private window. (Closing it keeps the cookie from going stale early.)')),
-      h('li', null, h('div', null, 'Do that for each account, then choose all the files below in one go.'))),
-    drop, pick, ta, info,
+      h('li', null, h('div', null, 'Unzip the file you downloaded (right-click, Extract all).')),
+      h('li', null, h('div', null, 'In Chrome type ', h('code', null, 'chrome://extensions'), ' in the address bar (Edge: ', h('code', null, 'edge://extensions'), '). Turn on ', h('b', null, 'Developer mode'), ' (top right). Click ', h('b', null, 'Load unpacked'), ' and choose the unzipped folder.')),
+      h('li', null, h('div', null, 'In that same browser, sign in to YouTube once with a ', h('b', null, 'spare'), ' Google account.')),
+      h('li', null, h('div', null, 'Come back to this Reelio page, click the puzzle-piece icon at the top of the browser, click ', h('b', null, 'Reelio Cookie Sync'), ', then ', h('b', null, 'Connect to Reelio'), '. Done.'))),
+    h('p', { class: 'small muted', style: 'margin:0' }, 'More accounts: do steps 2 to 4 again in another Chrome profile (one profile per Google account). Works with the normal GitHub login, on a computer.'));
+  const manual = h('details', null, h('summary', null, 'Or add cookie files by hand'),
+    h('div', { class: 'col' },
+      h('ol', { class: 'steps' },
+        h('li', null, h('div', null, 'Open a ', h('b', null, 'private (incognito) window'), ' and sign in to YouTube with a ', h('b', null, 'spare'), ' Google account, not your main one.')),
+        h('li', null, h('div', null, 'Click the extension ', h('b', null, 'Get cookies.txt LOCALLY'), ', press ', h('b', null, 'Export'), ', then close the private window.')),
+        h('li', null, h('div', null, 'Do that for each account, then choose all the files below in one go.'))),
+      drop, pick, ta, info));
+  const body = h('div', { class: 'col' },
+    h('p', null, 'Only needed if YouTube says it is blocking downloads. Reelio tries your cookies one by one, rests the ones that stop working, and uses them again when they recover.'),
+    auto, manual,
     h('p', { class: 'small muted' }, 'Cookies are like passwords: they are locked with your passphrase and never shown again. YouTube can limit an account that is used for downloads, so use spare accounts.'),
     h('details', null, h('summary', null, 'Advanced: proxy (optional)'), h('label', { class: 'f' }, 'Proxy address', px)));
   const d = h('dialog', null, h('div', { class: 'body' }, h('h2', null, 'YouTube cookies'), body, h('div', { class: 'row' },

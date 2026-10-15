@@ -43,9 +43,9 @@ Reference for later: Meta (developers.facebook.com, `instagram_business_content_
 (The old list is kept in PHASE_A.)
 
 ## Cookies for YouTube downloads (only if YouTube blocks)
-1. Open a private window, sign in to YouTube with a spare Google account, export with the extension "Get cookies.txt LOCALLY", close the private window. Repeat for each spare account.
-2. In the app: Accounts > YouTube cookies > Add cookies > choose ALL the files at once > Add.
-3. Nothing else: flows use them automatically, skip the ones that fail, and use them again when they recover.
+Automatic way (recommended): Accounts > YouTube cookies > Add cookies > Download the add-on, then follow the 4 steps shown (Developer mode > Load unpacked, sign in to YouTube once with a spare account, click the add-on > Connect to Reelio). After that it refreshes cookies every hour by itself. One Chrome profile per Google account.
+By hand (fallback): export cookie files from a private window with "Get cookies.txt LOCALLY", then Add cookies > choose ALL the files at once.
+Flows use the cookies automatically, skip the ones that fail, and use them again when they recover.
 
 ## Part 5: running it day to day
 - Admin screen: `admin.html` on your site (needs your ADMIN_SECRET): list users, suspend, set plan, stats.

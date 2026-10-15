@@ -21,5 +21,6 @@ No company/Stripe/Razorpay account. Payments run through manual UPI approval (do
 - [~] Phase C (partly done: days of week, blackout dates, first comment, week plan, teams/roles/audit; open: intro/outro, trim, subtitles, CSV bulk import): per-video and per-account full control (days of week, blackout dates, first comment, intro/outro, trim, subtitles), bulk CSV import, teams and roles
 - [~] Phase D (partly done: admin console, legal pages, welcome page, Hindi; open: live billing test, docs site): billing live (Stripe + Razorpay), admin console, marketing site (landing, pricing, docs), Hindi translation
 - [x] YouTube cookie pool with auto-switching and timers (v1.5); open: verify live that cookies rest/recover as designed on real runners, optional "try all cookies again now" button (needs an inbox command)
+- [x] Cookie Sync add-on (v1.6); open: verify live in real Chrome; optional Chrome Web Store listing (needs a developer account) so no Developer mode step; optional hosted-mode support
 - [ ] Phase E: hardening, load test, security review, launch checklist
 - [ ] Verify live: Instagram publish via Cloudinary, Google OAuth redirect, yt-dlp on runner IPs, GitHub cron lag, Telegram CORS, Stripe/Razorpay webhooks
