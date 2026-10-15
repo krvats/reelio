@@ -360,6 +360,14 @@ class Tools(MockBase):
         self.assertEqual(len(acc["posts"]), 2); self.assertEqual(acc["posts"][0]["reach"], 120)
         self.assertEqual(sum(a["daily"]["r1"].values()), 2)
 
+    def test_diagnose_refreshes_the_connected_pills(self):
+        from reelio import cli
+        self.write_env(self.base_config())
+        store = Store(self.data)
+        cli.refresh_account_pills(store)
+        accts = store.status()["accounts"]
+        self.assertTrue(accts and all(a["connected"] for a in accts.values()), accts)
+
     def test_diagnose_reports_fix_for_wrong_cloudinary(self):
         self.write_env(secrets={"cld": {}})
         from reelio import diagnose

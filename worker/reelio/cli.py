@@ -15,6 +15,19 @@ def _maybe_analytics(store):
             say("analytics skipped:", scrub(e))
 
 
+def refresh_account_pills(store):
+    """The Accounts page reads Connected / Not connected from status.json. Make a diagnose run refresh it too (without posting or touching flows)."""
+    st = store.status(); accts = st.setdefault("accounts", {})
+    for c in store.config().get("connections", []):
+        a = accts.setdefault(c["id"], {}); a["label"] = c.get("label", c["id"]); a["kind"] = c["kind"]
+        try:
+            a["connected"] = bool(store.secret(c["id"]))
+        except ValueError:
+            a["connected"] = False
+        a["ok"] = a["connected"] and not a.get("problem")
+    store.save_status(st)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="reelio")
     ap.add_argument("action", choices=["run", "diagnose", "analytics", "scan", "long"], help="what to do")
@@ -38,6 +51,7 @@ def main(argv=None):
         elif a.action == "diagnose":
             from . import diagnose
             r = diagnose.run(store); say(r["verdict"])
+            refresh_account_pills(store)
             store.sync("reelio: diagnose")
         elif a.action == "analytics":
             from . import analytics
