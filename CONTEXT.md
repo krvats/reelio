@@ -46,3 +46,6 @@ Instagram publish via Cloudinary from GitHub runners, Meta real rate limits, Goo
 
 ## Decisions made so far
 Public app repo + private data repo; any source to any target; vanilla JS no build; stdlib unittest (no pip access in the build sandbox); Cloudflare Workers for the license service (free, KV); Stripe + Razorpay; Phase A decision still open: Supabase vs Cloudflare D1 for multi-tenant (see ROADMAP).
+
+## Reliability layers (v1.7)
+GitHub's cron is best-effort (late or skipped runs). Three independent wake-ups, all safe to overlap because `concurrency: reelio` queues runs and the engine posts only slots that are due (passed slots minus posted today, so a late run catches up the same day): (1) `keepalive/` Cloudflare Worker (cron every 5 min for tick.yml, minute 7 hourly for long.yml; skips when a run is queued/working or started <4.5 min ago; re-enables a disabled workflow); (2) `.github/workflows/watchdog.yml` (starts tick.yml if the last run is 12+ min old); (3) `web/js/heal.js` (app open and status.json older than 15 min: dispatch once per 10 min). Not covered: slots of a previous day are not made up after midnight. Long tab (`v_long.js`) now lists `long-inbox/` and the latest long.yml run so a new request is visible instantly. Not tested live: Worker deployment, dispatch from Cloudflare, watchdog on GitHub.

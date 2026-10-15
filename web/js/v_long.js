@@ -5,6 +5,27 @@ const hms = (s) => { s = Math.round(s); return `${Math.floor(s / 3600)}:${String
 const PILL = { queued: ['Waiting', ''], running: ['Working', 'warn'], done: ['Finished', 'ok'], failed: ['Needs attention', 'bad'], cancelled: ['Stopped', ''] };
 const PART = { pending: 'Waiting', downloading: 'Downloading', uploading: 'Uploading', done: 'Uploaded', failed: 'Failed' };
 
+// ---- added: instant feedback while a request travels to the cloud worker ----
+const LOCAL = [];          // requests added from this screen: { id, label, at, stage: 'saving' | 'saved' | 'waiting' | 'read' | 'error', path, note }
+const RUNNING = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+let defaultRef = null;
+
+async function loadInbox(S) {
+  if (typeof S.data.list !== 'function') return null;                 // hosted mode: no inbox folder
+  const files = (await S.data.list('long-inbox')).filter((f) => f.name && f.name.endsWith('.json'));
+  const items = await Promise.all(files.slice(0, 8).map(async (f) => { const c = await S.data.read('long-inbox/' + f.name).catch(() => null); return { name: f.name, cmd: c || {} }; }));
+  return items;
+}
+
+async function latestLongRun(S) {
+  const res = await S.data.gh(`/repos/${S.repo.owner}/${S.repo.app}/actions/workflows/long.yml/runs?per_page=1`, { cache: 'no-store' });
+  if (!res.ok) return null;
+  return ((await res.json()).workflow_runs || [])[0] || null;
+}
+
+const describe = (c) => (c.channel && c.channel.handle ? `channel ${c.channel.handle}` : `${(c.links || []).length || 1} video link${(c.links || []).length === 1 ? '' : 's'}`);
+const spin = () => h('span', { class: 'spinner', 'aria-hidden': 'true' });
+
 async function loadJobs(S) {
   const res = await S.data.gh(S.data.base() + 'queues/long', { cache: 'no-store' });
   if (res.status === 404) return { jobs: [], state: {} };
@@ -17,18 +38,22 @@ async function loadJobs(S) {
 }
 
 async function startWorker(S) {
-  const res = await S.data.gh(`/repos/${S.repo.owner}/${S.repo.app}/actions/workflows/long.yml/dispatches`, { method: 'POST', body: JSON.stringify({ ref: 'main' }) });
+  if (!defaultRef) { try { const r = await S.data.gh(`/repos/${S.repo.owner}/${S.repo.app}`); defaultRef = r.ok ? (await r.json()).default_branch || 'main' : 'main'; } catch { defaultRef = 'main'; } }
+  const res = await S.data.gh(`/repos/${S.repo.owner}/${S.repo.app}/actions/workflows/long.yml/dispatches`, { method: 'POST', body: JSON.stringify({ ref: defaultRef }) });
   if (res.status === 404) throw new Error('long.yml was not found in your app repository. Add the file .github/workflows/long.yml first.');
   if (res.status === 403 || res.status === 401) throw new Error('Your GitHub key is not allowed to start runs. It needs the "Actions: read and write" permission.');
   if (!res.ok) throw new Error(`GitHub could not start the run (${res.status}). Is the workflow enabled in the Actions tab?`);
 }
 
 async function send(S, cmd) {
-  await S.data.put(`long-inbox/${Date.now()}-${uid()}.json`, cmd, 'Reelio long videos: ' + cmd.cmd);
+  const path = `long-inbox/${Date.now()}-${uid()}.json`;
+  await S.data.put(path, cmd, 'Reelio long videos: ' + cmd.cmd);
+  return path;
 }
 
 export async function longView(S, params, app) {
   let data;
+  const [inbox, lrun] = await Promise.all([loadInbox(S).catch(() => null), latestLongRun(S).catch(() => null)]);
   try { data = await loadJobs(S); } catch (e) { return h('div', { class: 'card' }, h('h1', null, 'Long videos'), h('p', null, e.message), h('button', { class: 'btn', onclick: () => app.rerender() }, 'Try again')); }
   const { jobs, state } = data;
   const googles = (S.cfg.connections || []).filter((c) => c.kind === 'google');
@@ -48,20 +73,31 @@ export async function longView(S, params, app) {
         field('How many of the newest to add', inp('max_videos', 'number', { min: 1, max: 50 }))]));
   }
   draw();
+  const goLabel = [icon('play'), 'Start'];
   const go = h('button', { class: 'btn primary', onclick: async (e) => {
+    const btn = e.currentTarget;                      // keep it: e.currentTarget is empty after the first await
     const links = f.links.split(/\s+/).map((x) => x.trim()).filter(Boolean);
     if (f.mode === 'links' && !links.length) return toast('Paste at least one video link.', 5000);
     if (f.mode === 'channel' && !f.handle.trim()) return toast('Type the channel name, like @yourchannel.', 5000);
     if (!googles.length) return toast('Connect Google first in Accounts.', 5000);
-    e.currentTarget.disabled = true;
+    const cmd = { cmd: 'add', links: f.mode === 'links' ? links : [], channel: f.mode === 'channel' ? { handle: f.handle.trim(), tab: f.tab, min_minutes: f.min_minutes, max_videos: f.max_videos } : null,
+      settings: { conn: f.conn, part_hours: f.part_hours, quality: f.quality, privacy: f.privacy, title_template: f.title_template, description: f.description } };
+    btn.disabled = true; btn.replaceChildren(spin(), ' Adding...');
+    const me = { id: uid(), label: describe(cmd), at: Date.now(), stage: 'saving' };
+    LOCAL.unshift(me); drawPending();                 // the card shows up at once, before anything travels over the internet
+    pendingBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     try {
-      await send(S, { cmd: 'add', links: f.mode === 'links' ? links : [], channel: f.mode === 'channel' ? { handle: f.handle.trim(), tab: f.tab, min_minutes: f.min_minutes, max_videos: f.max_videos } : null,
-        settings: { conn: f.conn, part_hours: f.part_hours, quality: f.quality, privacy: f.privacy, title_template: f.title_template, description: f.description } });
-      await startWorker(S);
-      toast('Started. The video appears below in about a minute.', 5000);
-      setTimeout(() => app.rerender(), 4000);
-    } catch (err) { toast(err.message, 7000); e.currentTarget.disabled = false; }
-  } }, icon('play'), 'Start');
+      me.path = await send(S, cmd); me.stage = 'saved'; drawPending();
+      try { await startWorker(S); me.stage = 'waiting'; me.note = ''; toast('Added. The cloud worker is starting.', 4000); }
+      catch (err) { me.stage = 'waiting'; me.note = `Saved, but the worker could not be started right now: ${err.message} It will still pick this up by itself within the hour.`; toast('Saved. ' + err.message, 8000); }
+      drawPending();
+      f.links = ''; draw();
+      setTimeout(() => app.rerender(), 5000);
+    } catch (err) {
+      me.stage = 'error'; me.note = err.message; drawPending();
+      toast(err.message, 7000);
+    } finally { btn.disabled = false; btn.replaceChildren(...goLabel); }
+  } }, goLabel);
 
   const adder = h('div', { class: 'card col' }, h('h2', { style: 'margin:0' }, 'Add long videos'),
     h('p', { class: 'muted', style: 'margin:0' }, 'Any length, even 24 hours. Reelio cuts each video into parts and uploads every part to your YouTube channel from the cloud. Nothing needs your computer. Only use videos you own or have permission to reuse.'),
@@ -101,8 +137,45 @@ export async function longView(S, params, app) {
       h('p', { class: 'small muted', style: 'margin:0' }, `Updated ${ago(j.updated)}.`));
   };
 
+  // ---- added: what is happening right now (requests on their way + the cloud worker itself) ----
+  const pendingBox = h('div', { class: 'col' });
+  const inboxNames = new Set((inbox || []).map((x) => 'long-inbox/' + x.name));
+  const stillWaiting = (inbox || []).filter((x) => x.cmd.cmd === 'add');
+  for (const l of LOCAL.slice()) {                    // a request that left the inbox was read by the worker
+    if (l.path && inbox && !inboxNames.has(l.path) && l.stage === 'waiting') { l.stage = 'read'; l.readAt = Date.now(); }
+    if (l.stage === 'read' && Date.now() - l.readAt > 5 * 60000) LOCAL.splice(LOCAL.indexOf(l), 1);
+    else if (Date.now() - l.at > 30 * 60000) LOCAL.splice(LOCAL.indexOf(l), 1);
+  }
+  function drawPending() {
+    const localPaths = new Set(LOCAL.map((l) => l.path).filter(Boolean));
+    const cards = LOCAL.map((l) => {
+      const bad = l.stage === 'error', read = l.stage === 'read';
+      const text = bad ? l.note : read ? 'The worker read this request. The video should be listed below. If it is not, open Activity to see the reason.'
+        : l.stage === 'saving' ? 'Saving your request...' : l.stage === 'saved' ? 'Saved. Starting the cloud worker...' : (l.note || 'Saved. Waiting for the cloud worker to pick it up. This usually takes 1 to 3 minutes.');
+      return h('div', { class: 'banner ' + (bad ? 'bad' : read ? 'ok' : 'info') }, bad || read ? null : spin(),
+        h('div', { class: 'grow' }, h('b', null, `Adding ${l.label}`), h('div', { class: 'small' }, text), read ? h('a', { class: 'small', href: '#/logs' }, 'Open Activity') : null));
+    });
+    for (const x of stillWaiting) {                   // requests made earlier or on another device
+      if (localPaths.has('long-inbox/' + x.name)) continue;
+      cards.push(h('div', { class: 'banner info' }, spin(), h('div', { class: 'grow' }, h('b', null, `Waiting to be added: ${describe(x.cmd)}`), h('div', { class: 'small' }, 'Saved. The cloud worker will read it on its next run.'))));
+    }
+    pendingBox.replaceChildren(...cards);
+  }
+  drawPending();
+
+  const runBusy = lrun && RUNNING.has(lrun.status);
+  const workerBanner = runBusy
+    ? h('div', { class: 'banner info' }, spin(), h('div', { class: 'grow' }, h('b', null, lrun.status === 'in_progress' ? 'Cloud worker is working' : 'Cloud worker is starting'),
+      h('div', { class: 'small' }, `Started ${ago(lrun.created_at)}. This page refreshes by itself. `, h('a', { href: lrun.html_url, target: '_blank', rel: 'noopener' }, 'Watch the run'))))
+    : (lrun && lrun.conclusion === 'failure' && Date.now() - Date.parse(lrun.created_at) < 24 * 3600000
+      ? h('div', { class: 'banner warn' }, h('div', { class: 'grow' }, h('b', null, 'The last worker run stopped with an error'),
+        h('div', { class: 'small' }, `${ago(lrun.created_at)}. Your videos are safe. `, h('a', { href: lrun.html_url, target: '_blank', rel: 'noopener' }, 'See what happened'), ' or tap Start again.')))
+      : null);
+
+  const livePoll = runBusy || stillWaiting.length || LOCAL.some((l) => ['saving', 'saved', 'waiting'].includes(l.stage));
+  if (livePoll) setTimeout(() => { if (location.hash === '#/long' && !document.hidden) app.rerender(); }, 6000);
   if (jobs.some((j) => ['running', 'queued'].includes(j.status))) setTimeout(() => { if (location.hash === '#/long' && !document.hidden) app.rerender(); }, 30000);
-  return h('div', { class: 'col' }, h('h1', null, 'Long videos'), paused,
+  return h('div', { class: 'col' }, h('h1', null, 'Long videos'), workerBanner, pendingBox, paused,
     jobs.length ? h('div', { class: 'col' }, jobs.map(jobCard)) : h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Nothing here yet. Add a video below.')),
     adder);
 }

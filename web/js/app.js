@@ -118,3 +118,5 @@ window.addEventListener('hashchange', () => route());
 document.addEventListener('visibilitychange', () => { if (!document.hidden && /home|^$/.test(location.hash.replace('#/', ''))) route(true); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 if (new URLSearchParams(location.search).get('code') || new URLSearchParams(location.search).get('error')) import('./v_accounts.js').then((m) => m.handleOAuth()).finally(route); else route();
+// Self-heal (added): starts a missed worker run when GitHub's schedule was late. Failure-proof, never blocks the app.
+setTimeout(() => import('./heal.js').then((m) => m.startHeal(S)).catch(() => {}), 5000);
