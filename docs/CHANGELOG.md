@@ -14,5 +14,4 @@
 - api/: multi-user backend skeleton with 10 tests (Phase B part 1)
 - v1.4: worker API mode (`serve`), hosted workflow, admin/teams/legal/Hindi/week plan (from parallel work), tutorial, fixes (translator shadowing in Home/Settings)
 - UPI manual payments (QR/link + UTR claim + owner approval page), 2 new license tests; tutorial rewritten for no-company path
-- Add-on: Video links source (paste Instagram/YouTube/any link; yt-dlp + public embed fallback), caption sidecars for uploads, post-first. 7 new tests (63 total pass). See docs/ADD_LINKS.md
-- Add-on: Page link source (list all videos of an Instagram page/YouTube channel, queue each as a video link; all-videos or only-new). 4 more tests (67 total). docs/ADD_LINKS.md
+- YouTube cookie pool (v1.5): many cookies in one box (choose or drop many files, auto-split), automatic switching to the next good cookie, per-cookie rest timers (blocked 30m/2h/6h/24h; logged-out 6h/24h/72h then parked), flow waits until the soonest cookie wakes instead of a fixed time, backup Drive folder stays the last path; no fake "account" for cookies; 14 new worker tests

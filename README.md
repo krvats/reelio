@@ -29,7 +29,7 @@ Rotate first: the access tokens, API keys and client secrets that were in your o
 ## Honest limits
 - GitHub's schedule runs about every 5 minutes (sometimes late). Instagram and Meta limit how fast apps can post, so more is not faster. The default of 50 a day per account is the high end; if Meta shows "Application request limit reached" Reelio waits and resumes by itself.
 - Instagram allows at most 100 API posts per 24 hours per account. YouTube's API allows only about 6 uploads a day for new projects.
-- YouTube may block downloads from cloud servers. Reelio then pauses only that flow and tells you to add cookies or use Drive instead.
+- YouTube may block downloads from cloud servers. Reelio then switches to your next saved cookie, rests the ones that fail (a blocked one comes back after its timer; a logged-out one does not), and only pauses that flow if every way fails, then it tells you to add cookies (Accounts > YouTube cookies, many at once) or use a backup Drive folder.
 - Only use videos you own or have permission to post.
 
 ## Developing

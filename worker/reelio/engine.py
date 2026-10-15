@@ -90,6 +90,11 @@ class Engine:
 
     def _finish(self, started, result, msg):
         self.build_status(started, result, msg)
+        try:
+            from .cookiepool import Pool
+            self.st["cookies"] = Pool(self.store).summary()
+        except Exception:
+            pass                                    # cookie summary is a nicety; never block the run summary
         self.store.save_status(self.st)
         self.store.flush_events()
         self.store.sync("reelio: run summary")
@@ -387,8 +392,6 @@ class Engine:
             cur = by.get(it["key"])
             if not cur:
                 cur = {"key": it["key"], "status": "pending", "fails": 0, "added_at": iso()}
-                if it.get("post_now"):
-                    cur["post_now"] = True          # "Post first" ticked when the link/video was added
                 q["items"].append(cur); by[it["key"]] = cur
             for f in ("name", "md5", "size", "created", "thumb", "meta", "duration", "rank"):
                 if it.get(f) is not None:
@@ -490,9 +493,6 @@ class Engine:
         try:
             src, out = os.path.join(tmp, "src"), os.path.join(tmp, "out.mp4")
             self.fetch_with_backup(route, it, src)
-            if route["source"]["type"] in ("links", "page"):      # the download may have found the original caption
-                cap, title = captions.build(route, it, n, now().astimezone(self.tz).strftime("%d %b %Y"))
-                ctx["journal"] = lambda d, it=it, cap=cap, title=title: self._journal(route, it, cap, title, d)
             logo = music = None
             edit = route.get("edit") or {}
             wm = edit.get("watermark") or {}
@@ -505,9 +505,8 @@ class Engine:
             res = get_target(route["target"]["type"]).post(ctx, it, out, cap)
             self._ledger(route, it, res, title)
             self._mark_posted(route, it["key"], res["media_id"], res.get("permalink"), q)
-            src_mod = get_source(route["source"]["type"])
-            if hasattr(src_mod, "cleanup"):
-                src_mod.cleanup(it, s, route)       # uploads and links free their space once posted
+            if route["source"]["type"] == "upload":
+                from .sources import upload; upload.cleanup(it, s, route)
             s.set_inflight(rid, None)
             self.posted_this_run += 1
             self.acct(conn["id"])["rate_hits"] = 0

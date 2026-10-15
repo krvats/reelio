@@ -107,12 +107,13 @@ def _clean_settings(raw):
 
 # ------------------------------------------------------------------ reading video info (no download)
 def _resolve(store, src, vid):
-    p = subprocess.run(ysrc._ytdlp() + ["--dump-json", "--no-playlist", "--skip-download", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"]
-                       + ysrc._net_args(store, src) + ysrc._cookie_args(store, src), capture_output=True, text=True, timeout=300)
+    p, notes = ysrc._pool_run(store, src, ysrc._ytdlp() + ["--dump-json", "--no-playlist", "--skip-download", "--no-warnings", f"https://www.youtube.com/watch?v={vid}"]
+                              + ysrc._net_args(store, src))
+    ysrc._say(store, None, notes)
     try:
         d = json.loads(p.stdout.splitlines()[0])
     except Exception:
-        ysrc.raise_for_failure(p.stderr or "could not read the video")
+        ysrc.raise_for_failure(p.stderr or "could not read the video", store, src)
     return {"id": vid, "title": d.get("title") or vid, "duration": int(d.get("duration") or 0), "upload_date": d.get("upload_date") or "",
             "live": d.get("live_status") in ("is_live", "is_upcoming")}
 
@@ -245,14 +246,15 @@ def _download(store, job, part, tmp, deadline):
                            "--fragment-retries", "10", "-o", os.path.join(tmp, "v.%(ext)s"), job["url"]]
     if len(job["parts"]) > 1:
         cmd += ["--download-sections", f"*{part['start']}-{part['end']}"]
-    cmd += ysrc._net_args(store, src) + ysrc._cookie_args(store, src)
+    cmd += ysrc._net_args(store, src)
     left = max(120, int((deadline - now()).total_seconds()))
     try:
-        p, files = ysrc._run_download(cmd, tmp, timeout=left)
+        (p, files), notes = ysrc.download_with_pool(store, src, cmd, tmp, timeout=left)
+        ysrc._say(store, None, notes)
     except subprocess.TimeoutExpired:
         raise ItemProblem("The download did not finish before this run ran out of time.", "Reelio tries again in the next run. Use shorter parts if it keeps happening.")
     if p.returncode != 0 or not files:
-        ysrc.raise_for_failure(p.stderr)
+        ysrc.raise_for_failure(p.stderr, store, src)
     return os.path.join(tmp, files[0])
 
 

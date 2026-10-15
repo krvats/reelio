@@ -42,6 +42,11 @@ Honest picture: for OTHER people's Instagram pages, Meta's App Review requires B
 Reference for later: Meta (developers.facebook.com, `instagram_business_content_publish`, Business Verification), Google (OAuth consent screen verification, YouTube API compliance audit). Use `privacy.html` / `terms.html` as starting points and have them checked. Details: `docs/PHASE_A.md`.
 (The old list is kept in PHASE_A.)
 
+## Cookies for YouTube downloads (only if YouTube blocks)
+1. Open a private window, sign in to YouTube with a spare Google account, export with the extension "Get cookies.txt LOCALLY", close the private window. Repeat for each spare account.
+2. In the app: Accounts > YouTube cookies > Add cookies > choose ALL the files at once > Add.
+3. Nothing else: flows use them automatically, skip the ones that fail, and use them again when they recover.
+
 ## Part 5: running it day to day
 - Admin screen: `admin.html` on your site (needs your ADMIN_SECRET): list users, suspend, set plan, stats.
 - Users invite teammates in Settings → Team (editor/viewer).

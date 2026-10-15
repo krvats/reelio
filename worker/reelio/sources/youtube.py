@@ -1,10 +1,11 @@
 """YouTube channel as a source. Listing: YouTube API when Google is connected, otherwise yt-dlp's public listing.
 Downloading ALWAYS goes through yt-dlp (the API only gives details, never the file) and into a temporary folder
 on the server that is deleted after each video. YouTube sometimes blocks cloud servers; cookies/proxy fix it."""
-import os, re, json, subprocess, tempfile, shutil
+import os, re, json, subprocess, tempfile, shutil, datetime
 from ..google import GoogleAuth
 from ..errors import SourceProblem, ItemProblem
 from ..util import http, env_base, scrub, HttpFail
+from ..cookiepool import Pool, run_with_pool
 
 API = lambda: env_base("YT_API", "https://www.googleapis.com/youtube/v3")
 
@@ -109,8 +110,8 @@ def _list_selected(src, store, gsec, route):
         raise SourceProblem("No videos picked yet.", "Open the flow and paste the YouTube video links you want.", cooldown_min=60, kind="source")
     out = []
     for v in ids:
-        p = subprocess.run(_ytdlp() + ["--dump-json", "--no-playlist", "--skip-download", "--no-warnings", f"https://www.youtube.com/watch?v={v}"] + _net_args(store, src) + _cookie_args(store, src),
-                           capture_output=True, text=True, timeout=300)
+        p, notes = _pool_run(store, src, _ytdlp() + ["--dump-json", "--no-playlist", "--skip-download", "--no-warnings", f"https://www.youtube.com/watch?v={v}"] + _net_args(store, src))
+        _say(store, route["id"], notes)
         try:
             d = json.loads(p.stdout.splitlines()[0])
         except Exception:
@@ -120,7 +121,7 @@ def _list_selected(src, store, gsec, route):
                     "duration": d.get("duration"), "thumb": f"https://i.ytimg.com/vi/{v}/mqdefault.jpg",
                     "live": d.get("live_status") in ("is_live", "is_upcoming"), "meta": {"title": d.get("title") or ""}})
     if not out:
-        raise SourceProblem("Could not read the picked videos.", _block_fix(""), cooldown_min=60, kind="blocked")
+        raise SourceProblem("Could not read the picked videos.", _block_fix("", store, src), cooldown_min=_wait("", store, src, 60), kind="blocked")
     # keep the order the user pasted them in
     for n, it in enumerate(out):
         it["created"] = f"2000-01-01T00:00:00Z~{n:05d}" if not it.get("created") else it["created"]
@@ -173,8 +174,9 @@ def _list_ytdlp(src, store, include):
     tabs = src.get("tabs") or {"shorts": ["/shorts"], "long": ["/videos", "/streams"], "all": ["/shorts", "/videos", "/streams"]}.get(include, ["/shorts"])
     out, seen, err = [], set(), ""
     for tab in tabs:
-        cmd = _ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings", base + tab] + _net_args(store, src) + _cookie_args(store, src)
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        cmd = _ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings", base + tab] + _net_args(store, src)
+        p, notes = _pool_run(store, src, cmd)
+        _say(store, None, notes)
         err += p.stderr or ""
         for line in p.stdout.splitlines():
             try:
@@ -192,7 +194,7 @@ def _list_ytdlp(src, store, include):
                         "thumb": f"https://i.ytimg.com/vi/{vid}/mqdefault.jpg", "live": d.get("live_status") in ("is_live", "is_upcoming"),
                         "meta": {"title": d.get("title") or ""}})
     if not out:
-        raise SourceProblem("Could not read the YouTube channel's video list.", _block_fix(err), cooldown_min=60, kind="blocked")
+        raise SourceProblem("Could not read the YouTube channel's video list.", _block_fix(err, store, src), cooldown_min=_wait(err, store, src, 60), kind="blocked")
     # yt-dlp lists newest first; give older ones a lower 'created' so 'oldest first' works
     n = len(out)
     for i, it in enumerate(out):
@@ -209,19 +211,38 @@ def _net_args(store, src):
     return args
 
 
-def _cookie_args(store, src):
-    sec = store.secret(src.get("net_conn", "youtube-net"))
-    if not sec.get("cookies"):
-        return []
-    path = os.path.join(tempfile.gettempdir(), "reelio_cookies_list.txt")
-    with open(path, "w") as f:
-        f.write(sec["cookies"])
-    os.chmod(path, 0o600)
-    return ["--cookies", path]
+def _pool_run(store, src, cmd, timeout=300):
+    """Run a yt-dlp command through the cookie pool: each ready cookie in turn, then no cookie. Returns (result, notes)."""
+    return run_with_pool(store, src, lambda ck: subprocess.run(cmd + ck, capture_output=True, text=True, timeout=timeout),
+                         lambda p: p.returncode == 0 and bool((p.stdout or "").strip()), lambda p: p.stderr or "")
 
 
-def _block_fix(stderr):
-    if "confirm you" in (stderr or "").lower() or "sign in" in (stderr or "").lower() or "bot" in (stderr or "").lower():
+def _say(store, route_id, notes):
+    if notes:
+        store.event("info", "YouTube cookies: " + "; ".join(notes), route_id)
+
+
+def _is_block(text):
+    low = (text or "").lower()
+    return "confirm you" in low or "sign in" in low or "bot" in low or "429" in low
+
+
+def _wait(text, store, src, default):
+    """How long this flow rests before trying again: until the soonest resting cookie wakes up (never a blind fixed time)."""
+    if store is None or not _is_block(text):
+        return default
+    return Pool(store, src).minutes_until_next(default)
+
+
+def _block_fix(stderr, store=None, src=None):
+    if _is_block(stderr):
+        if store is not None:
+            pool = Pool(store, src); n = pool.summary()
+            if n["total"]:
+                mins = pool.minutes_until_next()
+                when = (datetime.datetime.now().astimezone() + datetime.timedelta(minutes=mins)).strftime("%H:%M")
+                return (f"Reelio tried your {n['total']} saved cookie(s) and none worked right now ({n['resting']} resting, {n['parked']} logged out). "
+                        f"It will look again by itself around {when}. To fix it sooner: add a fresh cookie (Accounts > YouTube downloads), or put the file in your backup Drive folder.")
         return "YouTube is blocking this cloud server. Open Accounts > YouTube downloads and paste your browser cookies (guide inside), or put the original files in Google Drive instead."
     return "Usually temporary. If it keeps happening open Help > Why is it failing?"
 
@@ -261,12 +282,18 @@ def _run_download(cmd, tmpd, timeout=1800):
     return last
 
 
-def raise_for_failure(stderr):
+def download_with_pool(store, src, cmd, tmpd, timeout=1800):
+    """Download one video: every ready cookie in turn (each also tries YouTube's other player clients), then no cookie."""
+    return run_with_pool(store, src, lambda ck: _run_download(cmd + ck, tmpd, timeout=timeout),
+                         lambda r: r[0].returncode == 0 and bool(r[1]), lambda r: r[0].stderr or "")
+
+
+def raise_for_failure(stderr, store=None, src=None):
     """Turn yt-dlp's error text into a plain-language problem (used by clip downloads and by long videos)."""
     err = scrub((stderr or "")[-400:])
     low = err.lower()
     if "confirm you" in low or "sign in" in low or "bot" in low or "429" in low:
-        raise SourceProblem("YouTube blocked the download from this cloud server.", _block_fix(err), cooldown_min=180, kind="blocked")
+        raise SourceProblem("YouTube blocked the download from this cloud server.", _block_fix(err, store, src), cooldown_min=_wait(err, store, src, 180), kind="blocked")
     if "private" in low or "unavailable" in low or "removed" in low:
         raise ItemProblem("This video is private or removed on YouTube.", "Skip it.")
     if "no space left" in low:
@@ -283,21 +310,19 @@ def fetch(item, dest, store, route):
         a, b = rng.split("-")
         section = f"*{a}-{b}"
     tmpd = tempfile.mkdtemp(prefix="yt_")
-    cookie_file = None
     try:
         sec = store.secret(src.get("net_conn", "youtube-net"))
         cmd = _ytdlp() + ["-f", "bv*[height<=1080]+ba/b", "--merge-output-format", "mp4", "--no-playlist", "--no-warnings",
                           "-o", os.path.join(tmpd, "v.%(ext)s"), f"https://www.youtube.com/watch?v={vid}"]
         if section:
             cmd += ["--download-sections", section, "--force-keyframes-at-cuts"]
-        if sec.get("cookies"):
-            cookie_file = os.path.join(tmpd, "cookies.txt")
-            open(cookie_file, "w").write(sec["cookies"]); cmd += ["--cookies", cookie_file]
         if sec.get("proxy"):
             cmd += ["--proxy", sec["proxy"]]
-        p, files = _run_download(cmd, tmpd)
+        res, notes = download_with_pool(store, src, cmd, tmpd)
+        _say(store, route["id"], notes)
+        p, files = res
         if p.returncode != 0 or not files:
-            raise_for_failure(p.stderr)
+            raise_for_failure(p.stderr, store, src)
         shutil.move(os.path.join(tmpd, files[0]), dest)
     finally:
         shutil.rmtree(tmpd, ignore_errors=True)

@@ -1,5 +1,6 @@
 import { h, icon, toast, uid, slug, ago } from './core.js';
 import { S as GS, saveCfg, saveSecret, deleteSecret, readSecret, runNow } from './app.js';
+import { cookieStatus, openCookieDialog } from './cookies.js';
 
 const KINDS = {
   instagram: { name: 'Instagram', sub: 'Post Reels to your account', secret: ['access_token'] },
@@ -22,7 +23,7 @@ const val = (id) => document.getElementById(id).value.trim();
 export async function accounts(S, params, app) {
   const conns = S.cfg.connections || [], acc = (S.status.accounts || {});
   const needIG = !conns.some((c) => c.kind === 'instagram'), needCl = !conns.some((c) => c.kind === 'cloudinary');
-  const cards = conns.map((c) => {
+  const cards = conns.filter((c) => c.kind !== 'ytnet').map((c) => {
     const a = acc[c.id] || {}, k = KINDS[c.kind] || { name: c.kind };
     const pill = a.problem ? h('span', { class: 'pill ' + (['rate', 'quota'].includes(a.problem.kind) ? 'warn' : 'bad') }, a.problem.kind === 'token' ? 'Login expired' : 'Needs a look')
       : a.connected ? h('span', { class: 'pill ok' }, 'Connected') : h('span', { class: 'pill warn' }, 'Not connected yet');
@@ -33,11 +34,12 @@ export async function accounts(S, params, app) {
       h('div', { class: 'row' }, h('button', { class: 'btn small primary', onclick: () => connect(S, c.kind, c, app) }, a.connected ? 'Reconnect' : 'Connect'),
         h('button', { class: 'btn small danger right', onclick: async () => { if (!confirm(`Remove ${c.label || k.name}? Flows using it will stop until you connect another.`)) return; await saveCfg((cf) => { cf.connections = cf.connections.filter((x) => x.id !== c.id); }, 'Reelio: removed account'); await deleteSecret(c.id).catch(() => {}); app.rerender(); } }, 'Remove')));
   });
-  const addBtns = Object.entries(KINDS).map(([k, v]) => h('button', { type: 'button', onclick: () => connect(S, k, null, app) }, h('b', null, v.name), h('span', null, v.sub)));
+  const addBtns = Object.entries(KINDS).filter(([k]) => k !== 'ytnet').map(([k, v]) => h('button', { type: 'button', onclick: () => connect(S, k, null, app) }, h('b', null, v.name), h('span', null, v.sub)));
   return h('div', { class: 'col' }, h('h1', null, 'Accounts'),
     h('p', { class: 'muted' }, 'Connect the places Reelio reads from and posts to. Logins are locked with your passphrase and never shown again.'),
     (needIG || needCl) ? h('div', { class: 'banner info' }, h('div', null, h('b', null, 'To post to Instagram you need: '), [needIG ? 'an Instagram account' : null, needCl ? 'Cloudinary (a free temporary video host)' : null].filter(Boolean).join(' and '), '.')) : null,
     cards, h('div', { class: 'card col' }, h('h2', null, 'Add an account'), h('div', { class: 'choice' }, addBtns)),
+    h('div', { class: 'card col' }, h('h2', null, 'YouTube cookies'), h('p', { class: 'muted small', style: 'margin:0' }, 'Optional. Only if YouTube blocks downloads. Add as many as you like.'), cookieStatus(S, app)),
     h('div', { class: 'card col' }, h('h2', null, 'Is everything connected?'), h('p', { class: 'muted' }, 'Reelio logs in to each account and tells you exactly what to fix. It posts nothing.'),
       h('button', { class: 'btn', onclick: async () => { await runNow('diagnose'); location.hash = '#/help'; } }, icon('check'), 'Check all connections')));
 }
@@ -106,12 +108,7 @@ export async function connect(S, kind, existing, app) {
       await saveCfg((cf) => { cf.notify.telegram.enabled = true; }, 'Reelio: alerts on');
     } }, 'Save'), h('button', { class: 'btn', onclick: close }, 'Cancel')]);
   }
-  if (kind === 'ytnet') {
-    const body = h('div', { class: 'col' },
-      h('p', null, 'Only needed if YouTube says it is blocking downloads. Export your cookies from a browser where you are signed in (an extension such as "Get cookies.txt LOCALLY") and paste the file here. Treat them like a password.'),
-      h('label', { class: 'f' }, 'Cookies (Netscape format)', h('textarea', { id: 'f_ck' })), inp('f_px', 'Proxy address (optional)', { placeholder: 'http://user:pass@host:port' }));
-    return dlg('YouTube downloads', body, (close) => [h('button', { class: 'btn primary', onclick: () => { const ck = document.getElementById('f_ck').value.trim(), px = val('f_px'); if (!ck && !px) return toast('Paste cookies or a proxy.'); finish({ id: 'youtube-net', kind, label: 'YouTube downloads' }, { cookies: ck, proxy: px }, close); } }, 'Save'), h('button', { class: 'btn', onclick: close }, 'Cancel')]);
-  }
+  if (kind === 'ytnet') return openCookieDialog(S, app);
 }
 
 /** Runs once at page load when Google sends the person back with ?code=... */

@@ -10,7 +10,7 @@ DEFAULT_CONFIG = {
     "notify": {"telegram": {"enabled": False, "conn": "telegram", "events": {"posted": False, "failed": True, "limit": True, "token": True, "daily": True}}},
     "connections": [], "routes": [],
 }
-WORKER_FILES = ("ledger.json", "status.json", "diagnose.json", "analytics.json", "queues", "logs")
+WORKER_FILES = ("ledger.json", "status.json", "diagnose.json", "analytics.json", "cookie_health.json", "queues", "logs")
 
 
 class Store:
