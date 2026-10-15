@@ -205,3 +205,48 @@ export function chip(label, id) {
   const ini = String(label || '?').replace(/[^A-Za-z0-9 ]/g, '').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
   return h('span', { class: 'chip', style: `--h:${hue(id)}`, 'aria-hidden': 'true' }, ini);
 }
+
+/** Multi-user mode: same surface as Data, but talks to the Reelio API (log in with email and password instead of a GitHub key). */
+export class ApiData {
+  constructor(url, token) { this.url = url.replace(/\/$/, ''); this.token = token; this.cfgV = 0; }
+  async req(method, path, body, headers = {}) {
+    let res;
+    try { res = await fetch(this.url + path, { method, headers: { 'Content-Type': 'application/json', ...(this.token ? { Authorization: 'Bearer ' + this.token } : {}), ...headers }, body: body === undefined ? undefined : JSON.stringify(body) }); }
+    catch { throw new GhError('Cannot reach Reelio. Check your internet connection.', 0); }
+    const j = await res.json().catch(() => ({}));
+    if (res.status === 401 && this.token) { LS.del('apitoken'); throw new GhError('Please log in again.', 401); }
+    if (!res.ok) throw new GhError(j.message || `Something went wrong (${res.status}).`, res.status);
+    return j;
+  }
+  async read(path) {
+    if (path === 'config.json') { const c = await this.req('GET', '/v1/config'); this.cfgV = c.v; return c; }
+    if (path === 'status.json') return this.req('GET', '/v1/status');
+    if (path === 'ledger.json') return this.req('GET', '/v1/ledger');
+    const m = path.match(/^queues\/(.+)\.json$/); if (m) return this.req('GET', '/v1/queue/' + m[1]);
+    return null;
+  }
+  async readText() { return null; }
+  async put(path, content) {
+    if (path === 'config.json') { const c = await this.req('PUT', '/v1/config', { ...content, v: this.cfgV }); this.cfgV = c.v; return c; }
+    throw new GhError('This is not available in the hosted version yet.', 501);
+  }
+  async update(path, fn, msg, fallback = {}) {
+    for (let i = 0; i < 4; i++) {
+      const cur = await this.read(path); const next = await fn(cur ?? structuredClone(fallback));
+      try { await this.put(path, next); return { ...next, v: this.cfgV }; } catch (e) { if (e.status !== 409) throw e; }
+    }
+    throw new GhError('Your settings changed somewhere else. Reload and try again.', 409);
+  }
+  async remove() {}
+  async command(cmd) { await this.req('POST', '/v1/inbox', cmd); }
+  async dispatch() { /* the hosted worker runs by itself every few minutes */ }
+  async latestRun() { return null; }
+  async listSecretNames() { return (await this.req('GET', '/v1/secrets')).connected; }
+  async putSecret(id, fields) { await this.req('PUT', '/v1/secrets/' + id, { fields }); }
+  async deleteSecret(id) { await this.req('DELETE', '/v1/secrets/' + id); }
+  async me() { return this.req('GET', '/v1/me'); }
+  async check() { const me = await this.me(); return { login: me.email, hasConfig: true, plan: me.plan }; }
+}
+export async function apiAuth(url, kind, email, password) {
+  const d = new ApiData(url, ''); return d.req('POST', '/v1/auth/' + kind, { email, password });
+}

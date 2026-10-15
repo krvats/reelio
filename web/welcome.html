@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reelio: your videos, posted automatically</title>
+<meta name="description" content="Reelio posts your own videos to Instagram Reels and YouTube Shorts on a schedule, for as many pages and channels as you manage. Works while your phone and computer are off.">
+<meta name="theme-color" content="#5a4bff"><link rel="icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#141a3c;--ink2:#4a5078;--bg:#f6f7fd;--card:#fff;--line:#dfe4f2;--brand:#5a4bff;--soft:#ecebff;--mint:#2fd39b}
+@media(prefers-color-scheme:dark){:root{--ink:#eef0ff;--ink2:#a3aad6;--bg:#0b0e24;--card:#151a3d;--line:#262d63;--soft:#20245c}}
+*{box-sizing:border-box}body{margin:0;font:17px/1.55 Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;line-height:1.1;margin:0}
+.w{max-width:1040px;margin:0 auto;padding:0 18px}header{display:flex;align-items:center;gap:12px;padding:16px 0}header b{font:800 1.4rem 'Bricolage Grotesque'}header .sp{flex:1}
+a.btn,button.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 1rem Figtree;text-decoration:none;cursor:pointer}
+a.btn.p{background:var(--brand);border-color:var(--brand);color:#fff}
+.hero{background:#0f1330;color:#fff;border-radius:28px;padding:48px 28px;margin:8px 0 28px;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(2rem,6vw,3.6rem);max-width:15ch}.hero p{color:#b8bfe8;max-width:46ch;font-size:1.15rem}
+.film{display:flex;gap:4px;margin:26px 0 6px;flex-wrap:wrap}.film i{width:18px;height:28px;border-radius:5px;background:#2b3170}.film i.on{background:var(--mint)}.film i.nx{background:#f4b740;animation:p 1.6s infinite}@keyframes p{50%{opacity:.45}}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}.card h3{font-size:1.25rem;margin-bottom:6px}.card p{margin:0;color:var(--ink2)}
+section{margin:44px 0}section>h2{font-size:clamp(1.6rem,4vw,2.3rem);margin-bottom:8px}.sub{color:var(--ink2);margin:0 0 18px}
+.plan{position:relative}.plan.best{border:2px solid var(--brand)}.price{font:800 2.3rem 'Bricolage Grotesque'}.price small{font:500 1rem Figtree;color:var(--ink2)}
+.plan ul{padding-left:18px;color:var(--ink2);margin:10px 0 16px}.tag{position:absolute;top:-12px;right:14px;background:var(--brand);color:#fff;border-radius:99px;padding:2px 12px;font-size:.8rem;font-weight:700}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin:8px 0}summary{font-weight:700;cursor:pointer}details p{color:var(--ink2);margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--ink2);font-size:.95rem;display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--ink2)}
+[data-hi]{display:none}html.hi [data-en]{display:none}html.hi [data-hi]{display:revert}
+</style>
+</head>
+<body><div class="w">
+<header><b>Reelio</b><span class="sp"></span><button class="btn" id="lang" aria-label="Language">हिन्दी</button><a class="btn p" href="index.html">Open app</a></header>
+
+<div class="hero">
+  <h1 data-en>Your videos, posted for you. Every day.</h1><h1 data-hi>आपके वीडियो, हर दिन अपने-आप पोस्ट।</h1>
+  <p data-en>Reelio puts your own videos on Instagram Reels and YouTube Shorts at the times you choose, for as many pages and channels as you run. It keeps working when your phone and computer are off.</p>
+  <p data-hi>Reelio आपके अपने वीडियो आपकी चुनी हुई टाइमिंग पर इंस्टाग्राम रील्स और यूट्यूब शॉर्ट्स पर डालता है, जितने चाहें उतने पेज और चैनल के लिए। आपका फ़ोन या कंप्यूटर बंद हो तब भी चलता रहता है।</p>
+  <div class="film" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="nx"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="cta"><a class="btn p" href="index.html" data-en>Start now</a><a class="btn p" href="index.html" data-hi>अभी शुरू करें</a><a class="btn" href="#pricing" data-en>See plans</a><a class="btn" href="#pricing" data-hi>प्लान देखें</a></div>
+</div>
+
+<section><h2 data-en>Simple enough for anyone, strong enough for an agency</h2><h2 data-hi>सबके लिए आसान, एजेंसी के लिए भी दमदार</h2>
+<p class="sub" data-en>No technical setup. Big buttons, plain words, and a status line that tells you what is happening.</p><p class="sub" data-hi>कोई तकनीकी सेटअप नहीं। बड़े बटन, आसान भाषा और हर पल की स्थिति।</p>
+<div class="grid">
+<div class="card"><h3 data-en>Many pages, one screen</h3><h3 data-hi>कई पेज, एक स्क्रीन</h3><p data-en>See every Instagram page and YouTube channel together. Change many at once.</p><p data-hi>हर इंस्टाग्राम पेज और यूट्यूब चैनल एक साथ देखें। कई को एक साथ बदलें।</p></div>
+<div class="card"><h3 data-en>Control every detail</h3><h3 data-hi>हर चीज़ पर कंट्रोल</h3><p data-en>Posts per day, days of the week, days off, captions, hashtags, filters, watermark, first comment, cover frame.</p><p data-hi>रोज़ कितनी पोस्ट, कौन से दिन, छुट्टी, कैप्शन, हैशटैग, फ़िल्टर, वॉटरमार्क, पहला कमेंट, कवर।</p></div>
+<div class="card"><h3 data-en>Never twice, never lost</h3><h3 data-hi>न दोबारा, न गायब</h3><p data-en>A permanent record stops double posts. One bad video never stops the rest.</p><p data-hi>पक्का रिकॉर्ड दोबारा पोस्ट रोकता है। एक खराब वीडियो बाकी को नहीं रोकता।</p></div>
+<div class="card"><h3 data-en>Teams</h3><h3 data-hi>टीम</h3><p data-en>Invite editors and viewers. Everything is logged.</p><p data-hi>एडिटर और व्यूअर बुलाएँ। सब कुछ लॉग होता है।</p></div>
+<div class="card"><h3 data-en>Safe by design</h3><h3 data-hi>सुरक्षित</h3><p data-en>Your logins are encrypted and never shown again. Only official Instagram and YouTube connections are used.</p><p data-hi>आपके लॉगिन एन्क्रिप्टेड रहते हैं और दोबारा नहीं दिखते। सिर्फ़ आधिकारिक कनेक्शन।</p></div>
+<div class="card"><h3 data-en>Plain-language help</h3><h3 data-hi>आसान भाषा में मदद</h3><p data-en>If something fails, Reelio says why and what to tap to fix it.</p><p data-hi>कुछ गड़बड़ हो तो Reelio बताता है क्यों और क्या दबाना है।</p></div>
+</div></section>
+
+<section id="pricing"><h2 data-en>Plans</h2><h2 data-hi>प्लान</h2><p class="sub" data-en>Cancel any time. Prices shown in rupees; dollar billing is available too.</p><p class="sub" data-hi>कभी भी रद्द करें। कीमतें रुपये में; डॉलर में भी भुगतान संभव।</p>
+<div class="grid" id="plans"></div></section>
+
+<section><h2 data-en>Questions</h2><h2 data-hi>सवाल</h2>
+<details><summary data-en>Do I need to keep my phone or computer on?</summary><summary data-hi>क्या फ़ोन या कंप्यूटर चालू रखना होगा?</summary><p data-en>No. Reelio runs in the cloud and keeps posting by itself.</p><p data-hi>नहीं। Reelio क्लाउड पर चलता है और अपने-आप पोस्ट करता रहता है।</p></details>
+<details><summary data-en>Can I post any video?</summary><summary data-hi>क्या कोई भी वीडियो पोस्ट कर सकता हूँ?</summary><p data-en>Only videos you own or have permission to use. Reelio removes content after valid copyright complaints.</p><p data-hi>सिर्फ़ वे वीडियो जो आपके हैं या जिनकी अनुमति है। वैध कॉपीराइट शिकायत पर कंटेंट हटाया जाता है।</p></details>
+<details><summary data-en>How many posts a day?</summary><summary data-hi>रोज़ कितनी पोस्ट?</summary><p data-en>You choose. Instagram allows up to 100 API posts per account per day; YouTube limits uploads by its own quota.</p><p data-hi>आप चुनते हैं। इंस्टाग्राम हर अकाउंट पर रोज़ 100 तक; यूट्यूब अपने कोटे के हिसाब से।</p></details>
+<details><summary data-en>Is it allowed by Instagram and YouTube?</summary><summary data-hi>क्या यह इंस्टाग्राम और यूट्यूब की अनुमति में है?</summary><p data-en>Reelio uses their official publishing connections only. It does not scrape or use unofficial access.</p><p data-hi>Reelio सिर्फ़ उनके आधिकारिक पब्लिशिंग कनेक्शन इस्तेमाल करता है।</p></details>
+</section>
+<footer><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="dmca.html">Copyright / DMCA</a><span>© Reelio</span></footer>
+</div>
+<script>
+const L=localStorage.getItem('reelio.lang');let hi=L?JSON.parse(L)==='hi':/^hi/.test(navigator.language);
+const set=()=>{document.documentElement.classList.toggle('hi',hi);document.getElementById('lang').textContent=hi?'English':'हिन्दी';document.documentElement.lang=hi?'hi':'en'};
+document.getElementById('lang').onclick=()=>{hi=!hi;try{localStorage.setItem('reelio.lang',JSON.stringify(hi?'hi':'en'))}catch{}set()};set();
+const base=(window.REELIO_PLANS_URL||'');
+const fallback={starter:{name:'Starter',price_inr:499,accounts:3,posts_month:600,devices:2},pro:{name:'Pro',price_inr:1499,accounts:15,posts_month:6000,devices:5},agency:{name:'Agency',price_inr:4999,accounts:100,posts_month:60000,devices:15}};
+(async()=>{let plans=fallback;try{if(base){const j=await (await fetch(base)).json();plans=j.plans||fallback}}catch{}
+document.getElementById('plans').innerHTML=Object.entries(plans).map(([id,p])=>`<div class="card plan ${id==='pro'?'best':''}">${id==='pro'?'<span class="tag">★</span>':''}<h3>${p.name}</h3><div class="price">₹${p.price_inr}<small> / month</small></div><ul><li>${p.accounts} pages &amp; channels</li><li>${Number(p.posts_month).toLocaleString()} posts a month</li><li>${p.devices} devices</li></ul><a class="btn ${id==='pro'?'p':''}" href="index.html">Choose ${p.name}</a></div>`).join('')})();
+</script></body></html>

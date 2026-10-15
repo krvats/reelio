@@ -1,3 +1,4 @@
+import { t, lang, setLang } from './i18n.js';
 import { h, icon, toast, fmtTime, fmtDay, ago, LS } from './core.js';
 import { saveCfg, runNow, S as GS } from './app.js';
 
@@ -14,6 +15,7 @@ export async function schedule(S) {
       const slots = plan[r.id] || [];
       return h('div', { class: 'card col' }, h('h2', { style: 'margin:0' }, r.name), h('p', { class: 'muted', style: 'margin:0' }, `${r.schedule.per_day} a day between ${r.schedule.start} and ${r.schedule.end}`),
         slots.length ? h('div', { class: 'row gap-s' }, slots.map((s) => h('span', { class: 'pill ' + (s.state === 'done' ? 'ok' : s.state === 'due' ? 'warn' : '') }, fmtTime(s.at, S.tz) + (s.state === 'done' ? ' done' : '')))) : h('p', { class: 'muted' }, 'The plan appears after the next check.'),
+        weekStrip(S, r),
         h('a', { class: 'small', href: '#/flows/' + r.id }, 'Change this schedule'));
     }));
 }
@@ -53,7 +55,7 @@ export async function logs(S) {
 
 const ZONES = ['Asia/Kolkata', 'UTC', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Australia/Sydney'];
 export async function settings(S, params, app) {
-  const t = S.cfg.notify.telegram, ev = t.events || {};
+  const tg = S.cfg.notify.telegram, ev = tg.events || {};
   const zones = ZONES.includes(S.tz) ? ZONES : [S.tz, ...ZONES];
   const tgRow = (k, label) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!ev[k], onchange: async (e) => { await saveCfg((c) => { c.notify.telegram.events[k] = e.target.checked; }, 'Reelio: alerts'); } }), h('i'), label);
   const theme = (v) => { LS.set('theme', v); if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v; app.rerender(); };
@@ -65,11 +67,12 @@ export async function settings(S, params, app) {
   const sub = S.ent && S.ent.claims ? await (await import('./v_paywall.js')).subscriptionCard(S.ent) : null;
   return h('div', { class: 'col' }, h('h1', null, 'Settings'), sub,
     h('div', { class: 'card col' }, h('h2', null, 'Time zone'), h('select', { 'aria-label': 'Time zone', onchange: async (e) => { await saveCfg((c) => { c.timezone = e.target.value; }, 'Reelio: time zone'); toast('Saved.'); app.rerender(); } }, zones.map((z) => h('option', { value: z, selected: z === S.tz }, z)))),
+    h('div', { class: 'card col' }, h('h2', null, t('Language')), h('div', { class: 'row' }, [['en', 'English'], ['hi', 'हिन्दी']].map(([v, l]) => h('button', { class: 'btn small', 'aria-pressed': (lang() === v) + '', onclick: () => { setLang(v); app.rerender(); } }, l)))),
     h('div', { class: 'card col' }, h('h2', null, 'How it looks'),
       h('label', { class: 'f' }, 'Text size', h('input', { type: 'range', min: 15, max: 24, step: 1, value: LS.get('fs', 17), oninput: (e) => { LS.set('fs', +e.target.value); document.documentElement.style.setProperty('--fs', e.target.value + 'px'); } })),
       h('div', { class: 'row' }, [['auto', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => h('button', { class: 'btn small', 'aria-pressed': (LS.get('theme', 'auto') === v) + '', onclick: () => theme(v) }, l)))),
     h('div', { class: 'card col' }, h('h2', null, 'Alerts on Telegram'),
-      (S.cfg.connections || []).some((c) => c.kind === 'telegram') ? [h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!t.enabled, onchange: async (e) => { await saveCfg((c) => { c.notify.telegram.enabled = e.target.checked; }, 'Reelio: alerts'); } }), h('i'), 'Send me alerts'),
+      (S.cfg.connections || []).some((c) => c.kind === 'telegram') ? [h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!tg.enabled, onchange: async (e) => { await saveCfg((c) => { c.notify.telegram.enabled = e.target.checked; }, 'Reelio: alerts'); } }), h('i'), 'Send me alerts'),
         tgRow('posted', 'Every time something is posted'), tgRow('failed', 'When a video fails'), tgRow('limit', 'When Instagram or YouTube slows us down'), tgRow('token', 'When a login is about to expire'), tgRow('daily', 'A summary each evening')]
         : [h('p', { class: 'muted' }, 'Connect Telegram first.'), h('a', { class: 'btn', href: '#/accounts' }, 'Go to Accounts')]),
     h('div', { class: 'card col' }, h('h2', null, 'Backup'), h('p', { class: 'muted' }, 'Saves your flows, settings and the list of everything posted. Logins are not included; they stay locked in your private repository.'),
@@ -102,4 +105,14 @@ export async function help(S, params, app) {
     faq('My PC is off. Does it still work?', 'Yes. Everything runs on GitHub\'s servers. Your PC and phone only need to be on when you change settings.'),
     faq('The Instagram login expired.', 'Open Accounts, tap Reconnect on the Instagram account and paste a fresh token. Reelio renews tokens by itself every 3 weeks, so this is rare.'),
     faq('YouTube says it is blocking downloads.', 'YouTube sometimes refuses cloud servers. Add your browser cookies under Accounts, YouTube downloads, or keep the original files in Google Drive and use a Drive flow instead.'));
+}
+
+/** Seven small bars: how many posts are planned on each of the next 7 days. Days off show as rest. */
+function weekStrip(S, r) {
+  const wk = ((S.status.plan_week || {})[r.id]) || []; if (!wk.length) return null;
+  const max = Math.max(1, ...wk.map((d) => d.n));
+  return h('div', { class: 'week', role: 'img', 'aria-label': 'Posts planned for the next 7 days' }, wk.map((d) => {
+    const dt = new Date(d.date + 'T12:00:00');
+    return h('div', { class: 'wd' + (d.n ? '' : ' off') }, h('i', { style: `height:${d.n ? 8 + 44 * d.n / max : 4}px` }), h('b', null, d.n || '-'), h('span', null, dt.toLocaleDateString([], { weekday: 'short' })));
+  }));
 }

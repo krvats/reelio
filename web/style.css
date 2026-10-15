@@ -159,3 +159,10 @@ table.t{width:100%;border-collapse:collapse;font-size:.92rem} table.t td,table.t
 .skel{display:grid;gap:14px}.skel i{display:block;height:92px;border-radius:var(--r);background:linear-gradient(100deg,var(--line) 30%,color-mix(in srgb,var(--line) 40%,var(--card)) 50%,var(--line) 70%);background-size:200% 100%;animation:sk 1.2s linear infinite}
 @keyframes sk{to{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){.skel i,.meter i{animation:none;transition:none}}
+
+.daychip{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;min-height:40px}
+.daychip:has(input:checked){background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.daychip input{accent-color:var(--brand)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
+.wd{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.8rem}.wd i{width:100%;max-width:28px;border-radius:6px;background:linear-gradient(var(--brand),#9a8cff);transition:height .5s}
+.wd.off i{background:var(--line)}.wd b{font-size:.9rem}.wd span{color:var(--ink-2)}

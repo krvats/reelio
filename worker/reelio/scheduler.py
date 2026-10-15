@@ -23,8 +23,26 @@ def _hm(v, default):
         return default
 
 
+def day_allowed(sched, day):
+    """Days of the week the flow may post (0=Mon..6=Sun; empty/missing = every day) and blackout dates ('2026-12-25' or '2026-12-24..2026-12-26')."""
+    days = sched.get("days")
+    if days and day.weekday() not in {int(x) for x in days}:
+        return False
+    for b in sched.get("blackout") or []:
+        a, _, z = str(b).partition("..")
+        try:
+            lo = datetime.date.fromisoformat(a.strip()); hi = datetime.date.fromisoformat((z or a).strip())
+        except ValueError:
+            continue
+        if lo <= day <= hi:
+            return False
+    return True
+
+
 def day_slots(sched, tz, day, route_id=""):
-    """Slot datetimes (UTC) for local date `day`."""
+    """Slot datetimes (UTC) for local date `day` (none on days the flow must rest)."""
+    if not day_allowed(sched, day):
+        return []
     n = max(1, min(int(sched.get("per_day", 10) or 10), MAX_PER_DAY))
     a = _hm(sched.get("start", "10:00"), 600)
     b = _hm(sched.get("end", "22:00"), 1320)
@@ -64,4 +82,14 @@ def next_slot(sched, tz, now_utc, posted_today, route_id=""):
         return future[0]
     if pending:   # a post is due now
         return now_utc
-    return day_slots(sched, tz, day + datetime.timedelta(days=1), route_id)[0]
+    for k in range(1, 400):          # the next day that has slots (skips days off and blackout dates)
+        nxt = day_slots(sched, tz, day + datetime.timedelta(days=k), route_id)
+        if nxt:
+            return nxt[0]
+    return now_utc + datetime.timedelta(days=30)
+
+
+def week_plan(sched, tz, now_utc, route_id=""):
+    """Seven local days starting today: how many posts are planned on each (for the calendar view)."""
+    d0 = now_utc.astimezone(tz).date()
+    return [{"date": (d0 + datetime.timedelta(days=k)).isoformat(), "n": len(day_slots(sched, tz, d0 + datetime.timedelta(days=k), route_id))} for k in range(7)]

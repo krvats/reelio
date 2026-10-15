@@ -27,6 +27,8 @@ class World:
         self.drive = {}            # file id -> {name, bytes, created, md5}
         self.cdn = {}              # cloudinary public_id -> bytes
         self.ig_posts = []         # published
+        self.ig_comments = []      # (media id, text)
+        self.comment_fails = False
         self.ig_containers = {}    # cid -> dict
         self.ig_accounts = {"IGTOKA": "111", "IGTOKB": "222"}
         self.rate_limited_tokens = set()
@@ -185,6 +187,11 @@ class Handler(BaseHTTPRequestHandler):
             mid = f"M{len(W.ig_posts) + 1}"
             W.ig_posts.append({"id": mid, "uid": uid, "caption": c["caption"], "at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+0000"), "link": f"https://instagram.com/reel/{mid}", "url": c["url"]})
             return self._send(200, {"id": mid})
+        mm = re.match(r"^/(M\d+)/comments$", path)
+        if mm and m == "POST":
+            if W.comment_fails:
+                return self._send(400, {"error": {"message": "(#10) Application does not have permission for this action", "code": 10}})
+            W.ig_comments.append((mm[1], p.get("message"))); return self._send(200, {"id": "CM1"})
         mm = re.match(r"^/(C\d+)$", path)
         if mm:
             c = W.ig_containers[mm[1]]; c["polls"] += 1

@@ -14,8 +14,8 @@
 ## Next (in this order)
 - [x] Phase A written: `docs/PHASE_A.md` (Cloudflare-first, cost model, approvals checklist). Still to do: clickable multi-account prototype review; start Meta/Google applications (owner)
 - [x] Phase B part 1: `api/` (auth, per-tenant data, envelope-encrypted secrets, leases, exactly-once ledger; 10 tests)
-- [ ] Phase B part 2: Python worker `--api` mode (lease, fetch secrets, post, write ledger/queue via API); web app login + API data layer; plan link to license service; D1 + R2; email magic link/passkeys
-- [ ] Phase C: per-video and per-account full control (days of week, blackout dates, first comment, intro/outro, trim, subtitles), bulk CSV import, teams and roles
-- [ ] Phase D: billing live (Stripe + Razorpay), admin console, marketing site (landing, pricing, docs), Hindi translation
+- [x] Phase B part 2 (done in v1.4): Python worker `--api` mode (lease, fetch secrets, post, write ledger/queue via API); web app login + API data layer; plan link to license service; (still open: D1, R2, email magic link/passkeys)
+- [~] Phase C (partly done: days of week, blackout dates, first comment, week plan, teams/roles/audit; open: intro/outro, trim, subtitles, CSV bulk import): per-video and per-account full control (days of week, blackout dates, first comment, intro/outro, trim, subtitles), bulk CSV import, teams and roles
+- [~] Phase D (partly done: admin console, legal pages, welcome page, Hindi; open: live billing test, docs site): billing live (Stripe + Razorpay), admin console, marketing site (landing, pricing, docs), Hindi translation
 - [ ] Phase E: hardening, load test, security review, launch checklist
 - [ ] Verify live: Instagram publish via Cloudinary, Google OAuth redirect, yt-dlp on runner IPs, GitHub cron lag, Telegram CORS, Stripe/Razorpay webhooks

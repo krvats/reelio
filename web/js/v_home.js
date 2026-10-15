@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 import { h, icon, toast, fmtTime, ago } from './core.js';
 import { S as _S, saveCfg, runNow, loadCore } from './app.js';
 
@@ -29,9 +30,9 @@ export async function home(S, params, app) {
   const toggle = h('button', { class: 'bigtoggle ' + (S.cfg.paused ? 'off' : 'on'), onclick: async (e) => {
     e.target.disabled = true;
     try { await saveCfg((c) => { c.paused = !c.paused; }, 'Reelio: pause toggled'); toast(S.cfg.paused ? 'Paused. Nothing will be posted.' : 'Posting is on.'); app.rerender(); } catch (er) { toast(er.message, 6000); e.target.disabled = false; }
-  } }, S.cfg.paused ? 'Turn posting on' : 'Pause everything');
+  } }, t(S.cfg.paused ? 'Turn posting on' : 'Pause everything'));
 
-  const checkBtn = h('button', { class: 'btn small', onclick: async (e) => { e.currentTarget.disabled = true; await runNow('run'); setTimeout(() => app.rerender(), 1500); } }, icon('refresh'), 'Check now');
+  const checkBtn = h('button', { class: 'btn small', onclick: async (e) => { e.currentTarget.disabled = true; await runNow('run'); setTimeout(() => app.rerender(), 1500); } }, icon('refresh'), t('Check now'));
 
   const strips = routes.filter((r) => r.enabled !== false && (st.plan || {})[r.id]).map((r) => {
     const slots = st.plan[r.id]; const nextIdx = slots.findIndex((s) => s.state !== 'done');
@@ -61,21 +62,21 @@ export async function home(S, params, app) {
   const group = (k, title) => { const l = todo.filter((t) => t.kind === k); return l.length ? h('div', null, h('h3', null, title), h('ul', { style: 'margin:.25rem 0 0;padding-left:1.2rem' }, l.map((t) => h('li', null, t.text)))) : null; };
 
   const conns = S.cfg.connections || [];
-  const steps = [['Connect an Instagram page or YouTube channel', conns.some((c) => ['instagram', 'google'].includes(c.kind) && (st.accounts || {})[c.id] && st.accounts[c.id].connected), '#/accounts'],
-    ['Create a flow (where videos come from and go to)', routes.length > 0, '#/flows/new'],
-    ['Let Reelio check once', !!st.run, null],
-    ['Get your first post', Object.values(rs).some((r) => (r.posted_total || 0) > 0 || (r.today_posted || 0) > 0), '#/queue']];
+  const steps = [[t('Connect an Instagram page or YouTube channel'), conns.some((c) => ['instagram', 'google'].includes(c.kind) && (st.accounts || {})[c.id] && st.accounts[c.id].connected), '#/accounts'],
+    [t('Create a flow (where videos come from and go to)'), routes.length > 0, '#/flows/new'],
+    [t('Let Reelio check once'), !!st.run, null],
+    [t('Get your first post'), Object.values(rs).some((r) => (r.posted_total || 0) > 0 || (r.today_posted || 0) > 0), '#/queue']];
   const left = steps.filter((x) => !x[1]).length;
-  const onboard = left ? h('div', { class: 'card col' }, h('h2', null, `Getting started: ${steps.length - left} of ${steps.length}`),
+  const onboard = left ? h('div', { class: 'card col' }, h('h2', null, `${t('Getting started')}: ${steps.length - left} / ${steps.length}`),
     h('div', { class: 'meter' }, h('i', { style: `width:${100 * (steps.length - left) / steps.length}%` })),
-    steps.map(([t, ok, href]) => h('div', { class: 'row' }, h('span', { class: 'pill ' + (ok ? 'ok' : '') }, ok ? 'Done' : 'To do'), href && !ok ? h('a', { href }, t) : h('span', null, t)))) : null;
+    steps.map(([label, ok, href]) => h('div', { class: 'row' }, h('span', { class: 'pill ' + (ok ? 'ok' : '') }, t(ok ? 'Done' : 'To do')), href && !ok ? h('a', { href }, label) : h('span', null, label)))) : null;
 
   return h('div', { class: 'col' },
     hero, onboard, problems,
     routes.length ? h('div', { class: 'grid' },
-      h('div', { class: 'card stat' }, h('b', null, posted), h('span', null, 'posted today')),
-      h('div', { class: 'card stat' }, h('b', null, pending), h('span', null, 'waiting in line')),
-      h('a', { class: 'card stat', href: '#/queue', style: 'text-decoration:none;color:inherit' }, h('b', { style: failed ? 'color:var(--bad)' : '' }, failed), h('span', null, 'need a look')),
-      h('div', { class: 'card stat' }, h('b', null, rate), h('span', null, 'recent success'))) : null,
-    todo.length ? h('div', { class: 'card col' }, h('h2', null, 'What is happening'), group('action', 'To do'), group('done', 'Done'), group('pending', 'Coming up')) : null);
+      h('div', { class: 'card stat' }, h('b', null, posted), h('span', null, t('posted today'))),
+      h('div', { class: 'card stat' }, h('b', null, pending), h('span', null, t('waiting in line'))),
+      h('a', { class: 'card stat', href: '#/queue', style: 'text-decoration:none;color:inherit' }, h('b', { style: failed ? 'color:var(--bad)' : '' }, failed), h('span', null, t('need a look'))),
+      h('div', { class: 'card stat' }, h('b', null, rate), h('span', null, t('recent success')))) : null,
+    todo.length ? h('div', { class: 'card col' }, h('h2', null, t('What is happening')), group('action', 'To do'), group('done', 'Done'), group('pending', 'Coming up')) : null);
 }

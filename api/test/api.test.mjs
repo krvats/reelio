@@ -76,6 +76,7 @@ test('leases: a flow goes to one worker at a time, expires, and can be released'
   s.advance(61); const l2 = await (await s.call('POST', '/v1/internal/lease', { worker: 'w2' }, W)).json(); assert.ok(l2.lease);   // crashed worker: lease expired
   await s.call('POST', '/v1/internal/release', { tenant: a.tid, route: 'r1', lease: l2.lease }, W);
   assert.ok((await (await s.call('POST', '/v1/internal/lease', { worker: 'w3' }, W)).json()).lease);
+  const l4 = await (await s.call('POST', '/v1/internal/lease', { worker: 'w4', exclude: [[a.tid, 'r1']] }, W)).json(); assert.equal(l4.lease, null);   // excluded for this worker pass
 });
 
 test('paused tenants and disabled flows are never leased', async () => {
@@ -102,4 +103,27 @@ test('missing master key fails safely without leaking', async () => {
   const tok = (await r.json()).token;
   const r2 = await api(new Request('https://x.test/v1/secrets/x', { method: 'PUT', headers: { Authorization: 'Bearer ' + tok }, body: JSON.stringify({ fields: { a: 'b' } }) }));
   assert.equal(r2.status, 500); assert.ok(!(await r2.text()).includes('MASTER_KEY'));
+});
+
+test('state, inbox drain, status merge and plan change', async () => {
+  const s = setup(); const a = await s.user('a@x.com'); const c = await (await s.call('GET', '/v1/config', undefined, a.tok)).json();
+  await s.call('PUT', '/v1/config', { routes: [route('r1', 'ig1')], v: c.v }, a.tok);
+  await s.call('POST', '/v1/inbox', { cmd: 'skip', route: 'r1', key: 'drive:1' }, a.tok);
+  const st = await (await s.call('POST', '/v1/internal/state', { tenant: a.tid, route: 'r1' }, W)).json(); assert.equal(st.inbox.length, 1);
+  await s.call('POST', '/v1/internal/inbox-done', { tenant: a.tid, keys: st.inbox.map((x) => x._k) }, W);
+  assert.equal((await (await s.call('POST', '/v1/internal/state', { tenant: a.tid, route: 'r1' }, W)).json()).inbox.length, 0);
+  await s.call('POST', '/v1/internal/status', { tenant: a.tid, route: 'r1', status: { routes: { r1: { state: 'idle' }, other: { state: 'x' } }, recent: [{ at: 'a', msg: 'one' }] } }, W);
+  await s.call('POST', '/v1/internal/status', { tenant: a.tid, route: 'r2', status: { routes: { r2: { state: 'ok' } }, recent: [{ at: 'b', msg: 'two' }] } }, W);
+  const got = await (await s.call('GET', '/v1/status', undefined, a.tok)).json(); assert.deepEqual(Object.keys(got.routes).sort(), ['r1', 'r2']); assert.equal(got.recent.length, 2);
+  await s.call('POST', '/v1/internal/plan', { tenant: a.tid, plan: 'pro' }, W);
+  const c2 = await (await s.call('GET', '/v1/config', undefined, a.tok)).json();
+  assert.equal((await s.call('PUT', '/v1/config', { routes: [route('r1', 'a'), route('r2', 'b'), route('r3', 'c')], v: c2.v }, a.tok)).status, 200);   // pro = 3 accounts
+});
+
+test('release with a cooldown keeps a flow from running again right away', async () => {
+  const s = setup(); const a = await s.user('a@x.com'); const c = await (await s.call('GET', '/v1/config', undefined, a.tok)).json();
+  await s.call('PUT', '/v1/config', { routes: [route('r1', 'ig1')], v: c.v }, a.tok);
+  const l = await (await s.call('POST', '/v1/internal/lease', { worker: 'w1' }, W)).json();
+  await s.call('POST', '/v1/internal/release', { tenant: a.tid, route: 'r1', lease: l.lease, cooldown: 240 }, W);
+  assert.equal((await (await s.call('POST', '/v1/internal/lease', { worker: 'w2' }, W)).json()).lease, null);
 });

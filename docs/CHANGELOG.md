@@ -12,3 +12,4 @@
 - Merged owner's live edits from krvats/reelio (Oct 14, 2026): YouTube long videos/lives cut into clips, "selected videos" source, YouTube brand-channel Google login, newest yt-dlp + ffmpeg install in tick.yml, privacy.html
 - Backup Drive folder for YouTube/Instagram sources (used when a download fails; clip-aware), diagnose check; Phase A document; onboarding checklist on Home
 - api/: multi-user backend skeleton with 10 tests (Phase B part 1)
+- v1.4: worker API mode (`serve`), hosted workflow, admin/teams/legal/Hindi/week plan (from parallel work), tutorial, fixes (translator shadowing in Home/Settings)

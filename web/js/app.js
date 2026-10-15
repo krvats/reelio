@@ -1,12 +1,14 @@
+import { t } from './i18n.js';
 import { licenseOn, entitlement } from './license.js';
-import { $, h, LS, icon, toast, Data, GhError, repoInfo, DEFAULT_CONFIG, encryptJson, decryptJson } from './core.js';
+import { $, h, LS, icon, toast, Data, ApiData, GhError, repoInfo, DEFAULT_CONFIG, encryptJson, decryptJson } from './core.js';
 
-export const S = { ent: null, data: null, repo: repoInfo(), token: LS.get('token', ''), pass: LS.get('pass', ''), cfg: null, status: null, tz: 'UTC' };
+export const apiUrl = () => (window.REELIO_CONFIG || {}).apiUrl || '';
+export const S = { ent: null, data: null, repo: repoInfo(), token: apiUrl() ? LS.get('apitoken', '') : LS.get('token', ''), pass: apiUrl() ? 'api' : LS.get('pass', ''), cfg: null, status: null, tz: 'UTC' };
 export const app = { rerender: () => route() };
 
 // ---------- shared data helpers
 export async function loadCore(force) {
-  if (!S.data) S.data = new Data(S.repo, S.token);
+  if (!S.data) S.data = apiUrl() ? new ApiData(apiUrl(), S.token) : new Data(S.repo, S.token);
   const [cfg, st] = await Promise.all([S.data.read('config.json'), S.data.read('status.json')]);
   S.cfg = cfg ? { ...structuredClone(DEFAULT_CONFIG), ...cfg } : null;
   S.status = st || {};
@@ -17,6 +19,7 @@ export async function saveCfg(fn, msg) {
   S.tz = S.cfg.timezone || 'UTC'; return S.cfg;
 }
 export async function saveSecret(connId, fields) {
+  if (apiUrl()) return S.data.putSecret(connId, fields);
   await S.data.update('secrets.enc.json', async (blob) => {
     let all = {};
     if (blob && blob.ct) all = await decryptJson(blob, S.pass);
@@ -25,11 +28,13 @@ export async function saveSecret(connId, fields) {
   }, 'Reelio: saved login', {});
 }
 export async function deleteSecret(connId) {
+  if (apiUrl()) return S.data.deleteSecret(connId);
   await S.data.update('secrets.enc.json', async (blob) => {
     let all = blob && blob.ct ? await decryptJson(blob, S.pass) : {}; delete all[connId]; return encryptJson(all, S.pass);
   }, 'Reelio: removed login', {});
 }
 export async function readSecret(connId) {
+  if (apiUrl()) return {};      // hosted mode: logins are write-only for safety
   const blob = await S.data.read('secrets.enc.json'); if (!blob || !blob.ct) return {};
   return (await decryptJson(blob, S.pass))[connId] || {};
 }
@@ -49,12 +54,13 @@ let timer = null;
 /** Hand the signed token to the worker (through the private data repo) so posting also stops when the plan ends. */
 async function pushLicense() {
   try { if (!S.ent || !S.ent.token || !S.data) return; if (LS.get('ent_pushed') === S.ent.token) return;
+    if (apiUrl()) { await S.data.req('POST', '/v1/plan/sync', { token: S.ent.token }).catch(() => {}); LS.set('ent_pushed', S.ent.token); return; }
     await S.data.update('license.json', () => ({ token: S.ent.token, updated: new Date().toISOString() }), 'Reelio: plan updated', {}); LS.set('ent_pushed', S.ent.token); } catch {}
 }
 
 function shell(active, content) {
-  const link = ([id, label, ic], cls = '') => h('a', { href: '#/' + id, class: cls, 'aria-current': id === active ? 'page' : null }, icon(ic), label);
-  const mobileMore = h('a', { href: '#/more', 'aria-current': ['accounts', 'schedule', 'analytics', 'logs', 'settings', 'help', 'more'].includes(active) ? 'page' : null, class: 'less-only' }, icon('more'), 'More');
+  const link = ([id, label, ic], cls = '') => h('a', { href: '#/' + id, class: cls, 'aria-current': id === active ? 'page' : null }, icon(ic), t(label));
+  const mobileMore = h('a', { href: '#/more', 'aria-current': ['accounts', 'schedule', 'analytics', 'logs', 'settings', 'help', 'more'].includes(active) ? 'page' : null, class: 'less-only' }, icon('more'), t('More'));
   return h('div', { id: 'app' },
     h('nav', { class: 'tabs', 'aria-label': 'Main' },
       h('div', { class: 'brand' }, logo('logo'), 'Reelio'),
@@ -72,6 +78,7 @@ export async function route() {
   const root = $('#root');
   const hash = location.hash.replace(/^#\/?/, '') || 'home';
   const [page, ...params] = hash.split('/');
+  if (apiUrl() && !S.token) { const m = await import('./login.js'); root.replaceChildren(await m.render(S, app)); return; }
   if (!S.token || !S.pass || page === 'setup') {
     const m = await import('./setup.js'); root.replaceChildren(await m.render(S, app)); return;
   }

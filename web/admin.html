@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Reelio admin</title>
+<style>:root{--ink:#141a3c;--bg:#f1f4fb;--card:#fff;--line:#dfe4f2;--brand:#5a4bff}@media(prefers-color-scheme:dark){:root{--ink:#eef0ff;--bg:#0b0e24;--card:#151a3d;--line:#262d63}}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}main{max-width:980px;margin:0 auto;padding:18px}h1{margin:.2em 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}input,button{font:inherit;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}button{cursor:pointer;font-weight:700}button.p{background:var(--brand);color:#fff;border-color:var(--brand)}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;font-size:.95rem}.sus{color:#d6336c;font-weight:700}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stat{font:800 1.8rem system-ui}</style></head>
+<body><main><h1>Reelio admin</h1>
+<div class="card"><div class="row"><input id="url" placeholder="API address" size="34"><input id="key" type="password" placeholder="Admin key" size="24"><button class="p" id="go">Connect</button></div><p style="margin:.4em 0 0;opacity:.7">The key is kept only in this tab and is never saved.</p></div>
+<div id="out"></div></main>
+<script>
+const $=s=>document.querySelector(s);let API='',KEY='';
+const call=async(m,p,b)=>{const r=await fetch(API+p,{method:m,headers:{'Content-Type':'application/json',Authorization:'Bearer '+KEY},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.message||r.status);return j};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function load(){try{const [st,tt]=await Promise.all([call('GET','/v1/admin/stats'),call('GET','/v1/admin/tenants')]);
+$('#out').innerHTML=`<div class="card row"><div><div class="stat">${st.tenants}</div>workspaces</div><div><div class="stat">${st.paid}</div>on a plan</div><div><div class="stat">${st.suspended}</div>paused</div></div>
+<div class="card"><table><tr><th>Owner</th><th>Plan</th><th>Accounts</th><th>Flows</th><th></th></tr>${tt.tenants.map(t=>`<tr><td>${esc(t.owner)}${t.suspended?' <span class="sus">PAUSED</span>':''}</td><td>${esc(t.plan||'free')}</td><td>${t.accounts}</td><td>${t.flows}</td><td><button data-id="${esc(t.id)}" data-act="${t.suspended?'on':'off'}">${t.suspended?'Resume':'Pause'}</button> <button data-id="${esc(t.id)}" data-act="plan">Set plan</button></td></tr>`).join('')}</table></div>`;
+document.querySelectorAll('button[data-id]').forEach(b=>b.onclick=async()=>{try{if(b.dataset.act==='plan'){const p=prompt('Plan id (starter, pro, agency) or empty for free');if(p===null)return;await call('POST','/v1/admin/plan',{tenant:b.dataset.id,plan:p||null})}else{if(b.dataset.act==='off'&&!confirm('Pause this workspace? Posting stops at once.'))return;await call('POST','/v1/admin/suspend',{tenant:b.dataset.id,on:b.dataset.act==='off'})}load()}catch(e){alert(e.message)}})}catch(e){$('#out').innerHTML='<div class="card">'+esc(e.message)+'</div>'}}
+$('#go').onclick=()=>{API=$('#url').value.replace(/\/$/,'');KEY=$('#key').value;load()};
+</script></body></html>

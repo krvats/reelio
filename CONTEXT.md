@@ -29,6 +29,9 @@ Goal: no access until paid; each device silently proves itself; no "verify your 
 ## Multi-user backend (Phase B, in progress)
 `api/` is a Cloudflare Worker (KV now, D1 later) with the tenant model: users, per-tenant config/queue/ledger, envelope-encrypted secrets, worker leases, exactly-once ledger. Design in `docs/PHASE_A.md`. Self-host mode (GitHub) still works unchanged.
 
+## Hosted mode
+`apiUrl` in `web/app-config.js` switches the app to email login against `api/`; `python -m reelio serve` (workflow `tick-hosted.yml`, variable HOSTED=1) leases flows from the API, runs the normal engine on a temp copy of one user's data, and pushes results back. `docs/TUTORIAL.md` is the owner's step-by-step.
+
 ## Tests
 `cd worker && python -m unittest discover -s tests` (about 3 min; mock Instagram/Drive/Google/Cloudinary/YouTube/Telegram), `cd license && node --test test/*.test.mjs`, `cd api && npm test`. Python license tests mint tokens with the real Node code (cross-language). UI checked in headless Chromium via `tools/ui_demo.py` (`tools/screens.py` writes `docs/screens/`).
 

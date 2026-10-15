@@ -1,6 +1,6 @@
 {
  "python": {
-  "ran": 46,
+  "ran": 56,
   "ok": true
  },
  "license": {
@@ -8,7 +8,11 @@
   "ok": true
  },
  "api": {
-  "ran": 10,
+  "ran": 16,
+  "ok": true
+ },
+ "ui_smoke_hosted": {
+  "ran": 1,
   "ok": true
  },
  "at": "2026-10-15T00:00:00Z"

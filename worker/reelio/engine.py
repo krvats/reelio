@@ -248,7 +248,7 @@ class Engine:
         today = now().astimezone(self.tz).date()
         done_today = s.posted_today(rid, self.tz, today)
         allowed, slots = scheduler.due_count(sched, self.tz, now(), done_today, rid)
-        cap_day = min(int(sched.get("per_day", 10) or 10), scheduler.MAX_PER_DAY)
+        cap_day = len(slots)
         rs["today_posted"], rs["today_target"] = done_today, cap_day
         rs["next_slot"] = iso(scheduler.next_slot(sched, self.tz, now(), done_today, rid))
         cands = self.candidates(route, q)
@@ -264,7 +264,9 @@ class Engine:
         n = min(n, max(self.month_left, 0)) if n else n
         if n <= 0:
             rs["state"] = "waiting" if cands else "idle"
-            rs["message"] = "Next post at " + parse_iso(rs["next_slot"]).astimezone(self.tz).strftime("%H:%M") if cands else "Nothing waiting. Add videos to the source."
+            nx = parse_iso(rs["next_slot"]).astimezone(self.tz)
+            when = nx.strftime("%H:%M") if nx.date() == today else nx.strftime("%a %d %b, %H:%M")
+            rs["message"] = ("Resting today. Next post " if not slots else "Next post at ") + when if cands else "Nothing waiting. Add videos to the source."
             return
         if route["target"]["type"] == "instagram":
             n = min(n, self.quota_left(route, conn))
@@ -624,6 +626,7 @@ class Engine:
                 done = rs.get("today_posted", s.posted_today(r["id"], self.tz, today))
                 plan[r["id"]] = [{"at": iso(x), "state": "done" if k < done else ("due" if x <= now() else "later")} for k, x in enumerate(slots)]
         st["plan"] = plan
+        st["plan_week"] = {r["id"]: scheduler.week_plan(r.get("schedule") or {}, self.tz, now(), r["id"]) for r in self.cfg["routes"] if r.get("enabled", True)}
         for rid in list(st["routes"]):
             if not any(r["id"] == rid for r in self.cfg["routes"]):
                 st["routes"].pop(rid)

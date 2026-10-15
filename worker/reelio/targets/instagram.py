@@ -4,7 +4,7 @@ import time
 from ..errors import instagram_error, ItemProblem, AccountProblem, RunLimit
 from ..hosting import Cloudinary
 from .. import util
-from ..util import http, env_base, HttpFail, iso, now, parse_iso
+from ..util import scrub, http, env_base, HttpFail, iso, now, parse_iso
 
 GRAPH = lambda: env_base("IG_GRAPH", "https://graph.instagram.com")
 VER = "v21.0"
@@ -90,6 +90,10 @@ class Instagram:
     def publish(self, cid):
         return self._call("POST", f"{self.uid}/media_publish", data={"creation_id": cid}, timeout=(15, 120))["id"]
 
+    def comment(self, mid, text):
+        """First comment under the new Reel (needs the comments permission; a failure never loses the post)."""
+        return self._call("POST", f"{mid}/comments", data={"message": text})
+
     def permalink(self, mid):
         try:
             return self._call("GET", mid, params={"fields": "permalink"}).get("permalink", "")
@@ -126,6 +130,12 @@ def post(ctx, item, path, caption):
         ig.wait(cid, ctx.get("deadline"))
         ctx["journal"]({"stage": "ready", "src": item["key"], "pid": pid, "cid": cid, "at": iso()})
         mid = ig.publish(cid)
+        fc = ((route.get("comment") or {}).get("text") or "").strip() if (route.get("comment") or {}).get("enabled") else ""
+        if fc:
+            try:
+                ig.comment(mid, fc)
+            except Exception as e:
+                store.event("warn", f"Posted, but the first comment could not be added ({scrub(e)})", route["id"], "Reconnect Instagram and allow comments, or turn the first comment off.")
         return {"media_id": mid, "container_id": cid, "permalink": ig.permalink(mid)}
     finally:
         if pid:
