@@ -11,6 +11,9 @@
 - [ ] Still open from that list: week calendar (worker should emit `plan_week`), optimistic updates, count-up numbers, bulk actions on the Flows list
 - [x] Screenshots generator `tools/screens.py` and `docs/screens/`
 
+## Owner situation (important)
+No company/Stripe/Razorpay account. Payments run through manual UPI approval (done). Meta/Google reviews need a registered business, so the product runs in bring-your-own-keys mode until then.
+
 ## Next (in this order)
 - [x] Phase A written: `docs/PHASE_A.md` (Cloudflare-first, cost model, approvals checklist). Still to do: clickable multi-account prototype review; start Meta/Google applications (owner)
 - [x] Phase B part 1: `api/` (auth, per-tenant data, envelope-encrypted secrets, leases, exactly-once ledger; 10 tests)

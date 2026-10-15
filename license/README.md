@@ -21,3 +21,6 @@ Tiny service (Cloudflare Workers free tier, or any Node 20+) that answers one qu
 
 ## Honest limits
 Anyone running code on their own machine can patch it. This service stops casual sharing and makes paying the easy path; hard enforcement needs posting to run on your servers (roadmap Phase B).
+
+## UPI (no company needed)
+Set `UPI_VPA` (and `UPI_NAME`). Users pay by QR/link and submit the UTR (`POST /v1/upi/claim`); you approve in `web/upi-admin.html` (`/v1/admin/upi/pending|approve|reject`). Approval grants the chosen plan for 30 days; renewals stack. Duplicate UTRs are refused; max 3 pending per device.

@@ -10,6 +10,8 @@ id = "PASTE_KV_ID_HERE"   # npx wrangler kv namespace create LICENSE_KV
 GRACE_DAYS = "3"
 TRIAL_DAYS = "0"
 TOKEN_TTL_HOURS = "24"
+UPI_VPA = ""               # your UPI id, e.g. name@bank (turns on manual UPI payments)
+UPI_NAME = "Reelio"
 ALLOWED_ORIGINS = "*"      # set to your app address once known
 # Secrets (never put these in this file). Set each with: npx wrangler secret put NAME
 #   SIGNING_KEY_JWK  (output of: npm run keys)   ADMIN_SECRET

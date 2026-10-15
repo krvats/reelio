@@ -13,16 +13,17 @@ Tests passing when this zip was made: 56 worker, 16 license, 16 API, plus a brow
 4. Check Home shows "Getting started" (if new) or your strip, and Accounts still says connected.
 Nothing here turns on payment or multi-user mode. Your own use is unchanged.
 
-## Part 2: turn on payments (paywall) (30 minutes, free)
-1. Install Node from nodejs.org. Open a terminal in the `license` folder: `npm install -g wrangler`, then `wrangler login`.
-2. `npm run keys` → copy the public key line it prints; keep the private line secret.
-3. `wrangler kv namespace create LICENSE_KV` → paste the id into `wrangler.toml`.
-4. `wrangler secret put SIGNING_KEY_JWK` (paste private key), then `wrangler secret put ADMIN_SECRET` (any long random text).
-5. In Stripe (and/or Razorpay) create 3 monthly products (Starter, Pro, Agency). Put their price ids in the `PLANS` variable (see `license/README.md`). Add webhook URLs: `https://<your-worker>/v1/webhook/stripe` and `/razorpay`; then `wrangler secret put STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (and the Razorpay ones).
-6. `wrangler deploy`. Copy the worker address.
-7. In your repo edit `web/app-config.js`: set `licenseUrl: 'https://<your-worker>'`. Commit. Now the app asks people to pick a plan and unlocks by itself after payment.
-8. To use your own app free: call `POST /v1/admin/grant` with your device id (see license README) or temporarily leave `licenseUrl` empty.
-Use Stripe/Razorpay TEST mode first and buy once with a test card.
+## Part 2: get paid WITHOUT Stripe/Razorpay: UPI (no company needed to start)
+You do not need Stripe or Razorpay. The license service has a manual UPI mode: people scan a QR (or tap a button), pay, paste the UPI reference number (UTR); you check it in your payment app and tap Approve; their app unlocks by itself and renewals stack. Nothing unlocks before you approve.
+1. Install Node (nodejs.org). In the `license` folder: `npm install -g wrangler`, `wrangler login` (free Cloudflare account).
+2. `npm run keys` and keep the private key secret. `wrangler kv namespace create LICENSE_KV` and paste the id into `wrangler.toml`.
+3. `wrangler secret put SIGNING_KEY_JWK` (private key), `wrangler secret put ADMIN_SECRET` (long random text).
+4. Set two plain variables in `wrangler.toml` under `[vars]`: `UPI_VPA = "yourname@bank"` and `UPI_NAME = "Your name"`. Set prices in the `PLANS` variable (see license README).
+5. `wrangler deploy`; copy the address. In your repo edit `web/app-config.js`: `licenseUrl: 'https://<address>'`. Commit.
+6. To approve payments open `upi-admin.html` on your site (or on your phone), paste the address and ADMIN_SECRET, press Load, check the UTR in your UPI app, press Approve.
+7. Test with a Rs 1 payment from another phone before telling anyone.
+To delay all payments: leave `licenseUrl` empty. The app stays open and free, exactly as now.
+Use a normal bank UPI app for receiving money (FamPay is meant for teens; business-type payments there may break its rules). Money received is income: keep a record, and ask a local accountant about tax/GST thresholds. I am not a lawyer or tax advisor.
 
 ## Part 3: hosted multi-user mode (1 hour)
 1. In the `api` folder: `wrangler kv namespace create REELIO_KV`, paste the id into `wrangler.toml`.
@@ -33,11 +34,13 @@ Use Stripe/Razorpay TEST mode first and buy once with a test card.
 6. Keep a SECOND copy of the repo or a branch for your personal GitHub-mode setup if you still want it (hosted mode replaces the login for everyone on that site).
 Back up MASTER_KEY somewhere safe: without it, stored user logins cannot be read.
 
-## Part 4: legal and approvals (start today; they take weeks)
-- Meta: developers.facebook.com → create app → Instagram API with Instagram Login → App Review for `instagram_business_content_publish`; Business Verification; use `privacy.html` and `terms.html` as starting points (have a lawyer check them).
-- Google: Cloud console → OAuth consent screen → publish → verification for Drive and YouTube scopes (demo video needed); YouTube API compliance audit for more upload quota.
-- Until approved: users bring their own app/project (the app already supports pasting their own Google client id and Instagram token).
-Details: `docs/PHASE_A.md`.
+## Part 4: approvals, and what you can do without a company
+Honest picture: for OTHER people's Instagram pages, Meta's App Review requires Business Verification (a registered business), and Google's verification for Drive/YouTube needs a domain and privacy policy. Without a business you cannot get these. Realistic options that need no approval:
+- **Bring-your-own-keys (recommended now):** each user creates their own free Meta developer app (they are its admin, so no review is needed to post to their own accounts) and their own Google project (set to "In production" and accept the "unverified app" warning, or "Testing" with weekly re-login). Reelio already accepts their tokens/client ids. You sell the automation, scheduling and hosting, not Meta access. The Setup/Accounts screens guide them.
+- **Setup service:** you or a helper sets this up for a client's accounts, then you charge monthly.
+- **Later, when you have a business** (sole proprietorship with a current bank account is the usual first step in India, ask an accountant): do the Meta and Google reviews below.
+Reference for later: Meta (developers.facebook.com, `instagram_business_content_publish`, Business Verification), Google (OAuth consent screen verification, YouTube API compliance audit). Use `privacy.html` / `terms.html` as starting points and have them checked. Details: `docs/PHASE_A.md`.
+(The old list is kept in PHASE_A.)
 
 ## Part 5: running it day to day
 - Admin screen: `admin.html` on your site (needs your ADMIN_SECRET): list users, suspend, set plan, stats.

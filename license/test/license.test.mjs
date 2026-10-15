@@ -204,3 +204,30 @@ test('token carries worker-valid-until beyond the 24h exp, bounded by the paid p
   const j = await (await s.call('POST', '/v1/entitlement', await d.sign('entitlement'))).json();
   assert.ok(j.claims.wv > j.claims.exp); assert.ok(j.claims.wv <= s.now() + 14 * 86400);
 });
+
+test('UPI: claim with UTR, owner approves, device unlocks, renewal stacks, duplicates and abuse blocked', async () => {
+  const s = await setup({ env: { UPI_VPA: 'owner@fam', UPI_NAME: 'K1NG' } }); const d = await newDevice(s.call); const H = { Authorization: 'Bearer adm' };
+  const info = await (await s.call('GET', '/v1/upi/info')).json(); assert.equal(info.vpa, 'owner@fam'); assert.ok(info.plans.pro);
+  assert.equal((await s.call('POST', '/v1/entitlement', await d.sign('entitlement'))).status, 402);
+  assert.equal((await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: '123' })).status, 400);
+  const ok = await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: '412345678901' }); assert.equal(ok.status, 200);
+  assert.equal((await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: '412345678901' })).status, 409);       // same UTR twice
+  assert.equal((await s.call('POST', '/v1/entitlement', await d.sign('entitlement'))).status, 402);                                                // not unlocked before approval
+  assert.equal((await s.call('POST', '/v1/admin/upi/pending', {})).status, 401);
+  const pend = (await (await s.call('POST', '/v1/admin/upi/pending', {}, H)).json()).pending; assert.equal(pend.length, 1);
+  const ap = await (await s.call('POST', '/v1/admin/upi/approve', { id: pend[0].id, days: 30 }, H)).json(); assert.ok(ap.until > s.now());
+  const j = await (await s.call('POST', '/v1/entitlement', await d.sign('entitlement'))).json(); assert.equal(j.state, 'comped'); assert.equal(j.claims.plan, 'pro');
+  await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: '412345678902' });
+  const p2 = (await (await s.call('POST', '/v1/admin/upi/pending', {}, H)).json()).pending[0];
+  const ap2 = await (await s.call('POST', '/v1/admin/upi/approve', { id: p2.id, days: 30 }, H)).json(); assert.ok(ap2.until >= ap.until + 29 * 86400);   // renewal adds to remaining time
+  s.advance(70 * 86400); assert.equal((await s.call('POST', '/v1/entitlement', await d.sign('entitlement'))).status, 402);                          // lapses after the paid time
+  await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: 'AAAAAAAA0001' });
+  const p3 = (await (await s.call('POST', '/v1/admin/upi/pending', {}, H)).json()).pending[0]; await s.call('POST', '/v1/admin/upi/reject', { id: p3.id }, H);
+  assert.equal((await (await s.call('POST', '/v1/admin/upi/pending', {}, H)).json()).pending.length, 0);
+});
+
+test('UPI is off unless the owner sets UPI_VPA', async () => {
+  const s = await setup(); const d = await newDevice(s.call);
+  assert.equal((await (await s.call('GET', '/v1/upi/info')).json()).enabled, false);
+  assert.equal((await s.call('POST', '/v1/upi/claim', { ...(await d.sign('upi-claim')), plan: 'pro', utr: '412345678901' })).status, 501);
+});

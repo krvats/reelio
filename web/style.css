@@ -166,3 +166,4 @@ table.t{width:100%;border-collapse:collapse;font-size:.92rem} table.t td,table.t
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
 .wd{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.8rem}.wd i{width:100%;max-width:28px;border-radius:6px;background:linear-gradient(var(--brand),#9a8cff);transition:height .5s}
 .wd.off i{background:var(--line)}.wd b{font-size:.9rem}.wd span{color:var(--ink-2)}
+.qr{width:200px;max-width:100%;margin:0 auto;background:#fff;padding:8px;border-radius:12px}.qr svg{width:100%;height:auto;display:block}

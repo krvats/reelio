@@ -159,6 +159,7 @@ export function createApp({ store, env = {}, now = () => Math.floor(Date.now() /
     const url = new URL(request.url); const p = url.pathname; const m = request.method;
     if (m === 'GET' && p === '/v1/keys') { await key(); return json({ kid: cfg.kid, alg: 'EdDSA', x: publicX }); }
     if (m === 'GET' && p === '/v1/plans') return json({ plans: cfg.plans, trial_days: cfg.trialDays });
+    if (m === 'GET' && p === '/v1/upi/info') return json({ enabled: !!env.UPI_VPA, vpa: env.UPI_VPA || '', name: env.UPI_NAME || 'Reelio', plans: Object.fromEntries(Object.entries(cfg.plans).map(([k, v]) => [k, { name: v.name, price_inr: v.price_inr }])) });
     if (m === 'GET' && p === '/health') return json({ ok: true });
     if (m === 'POST' && p === '/v1/webhook/stripe') return stripeWebhook(request);
     if (m === 'POST' && p === '/v1/webhook/razorpay') return razorpayWebhook(request);
@@ -182,6 +183,15 @@ export function createApp({ store, env = {}, now = () => Math.floor(Date.now() /
         for (const k of accs) { const a = await store.get(k); if (access(null, a, now()).active) active++; }
         return json({ devices: devs.length, accounts: accs.length, active });
       }
+      if (p === '/v1/admin/upi/pending') { const out = []; for (const k of await store.keys('upi:')) { const c = await store.get(k); if (c && c.status === 'pending') out.push(c); } return json({ pending: out.sort((a, b) => a.at - b.at) }); }
+      if (p === '/v1/admin/upi/approve' || p === '/v1/admin/upi/reject') {
+        const c = await store.get(`upi:${b.id}`); if (!c || c.status !== 'pending') return err(404, 'not_found', 'No such pending payment.');
+        if (p.endsWith('reject')) { c.status = 'rejected'; await store.put(`upi:${c.id}`, c); return json({ ok: true }); }
+        const accId = (await getDevice(c.deviceId) || {}).account || `upi:${c.deviceId}`; await link(c.deviceId, accId);
+        const acc = (await getAccount(accId)) || { id: accId, devices: [], created: now() }; const base = acc.comp && acc.comp.until && acc.comp.until > now() ? acc.comp.until : now();
+        acc.comp = { plan: c.plan, until: base + (b.days || 30) * DAY, note: `UPI ${c.utr}` }; await store.put(`acc:${accId}`, acc);   // renewals stack on top of the remaining time
+        c.status = 'approved'; await store.put(`upi:${c.id}`, c); return json({ ok: true, until: acc.comp.until });
+      }
       return err(404, 'not_found', 'Unknown admin route.');
     }
     if (m !== 'POST') return err(404, 'not_found', 'No such route.');
@@ -204,6 +214,18 @@ export function createApp({ store, env = {}, now = () => Math.floor(Date.now() /
       const account = await accountOf(pr.dev); const a = access(pr.dev, account, now());
       if (!a.active) return json({ state: a.state, active: false, message: 'No active subscription.' }, 402);
       const { token, claims } = await issue(pr.dev, account, a); return json({ active: true, state: a.state, token, claims });
+    }
+    if (p === '/v1/upi/claim') {
+      if (!env.UPI_VPA) return err(501, 'provider_off', 'UPI payment is not turned on.');
+      const pr = await proof(body, 'upi-claim'); if (pr.error) return pr.error;
+      const utr = String(body.utr || '').trim().toUpperCase(); const plan = cfg.plans[body.plan];
+      if (!plan) return err(400, 'bad_plan', 'Pick a plan.');
+      if (!/^[A-Z0-9]{8,22}$/.test(utr)) return err(400, 'bad_utr', 'Enter the UPI reference number (UTR), 8 to 22 letters and digits, from your payment app.');
+      if (await store.get(`utr:${utr}`)) return err(409, 'used', 'That reference number was already submitted.');
+      const mine = (await store.keys('upi:')); let open = 0; for (const k of mine) { const c = await store.get(k); if (c && c.deviceId === pr.dev.id && c.status === 'pending') open++; }
+      if (open >= 3) return err(429, 'slow_down', 'You already have payments waiting for approval.');
+      const id = randomId(6); await store.put(`upi:${id}`, { id, deviceId: pr.dev.id, plan: body.plan, utr, amount: plan.price_inr, note: String(body.note || '').slice(0, 80), status: 'pending', at: now() }); await store.put(`utr:${utr}`, id);
+      return json({ ok: true, id, message: 'Thanks! We will unlock your plan as soon as the payment is checked (usually within a few hours).' });
     }
     if (p === '/v1/checkout' || p === '/v1/portal' || p === '/v1/link/create' || p === '/v1/link/redeem') {
       const purpose = p.slice(4).replace('/', '-'); const pr = await proof(body, purpose); if (pr.error) return pr.error;

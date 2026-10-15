@@ -64,3 +64,5 @@ export async function checkout(plan, provider) {
 export async function portal() { const r = await api('/v1/portal', await signed('portal', { return_url: location.href })); if (!r.url) throw new Error(r.message || 'No billing page yet.'); return r.url; }
 export async function linkCreate() { const r = await api('/v1/link/create', await signed('link-create')); if (!r.code) throw new Error(r.message || 'Could not make a code.'); return r.code; }
 export async function linkRedeem(code) { const r = await api('/v1/link/redeem', await signed('link-redeem', { code })); if (!r.ok) throw new Error(r.message || 'That code did not work.'); return true; }
+export const upiInfo = () => api('/v1/upi/info');
+export async function upiClaim(plan, utr) { const r = await api('/v1/upi/claim', await signed('upi-claim', { plan, utr })); if (!r.ok) throw new Error(r.message || 'Could not send that.'); return r.message; }

@@ -13,3 +13,4 @@
 - Backup Drive folder for YouTube/Instagram sources (used when a download fails; clip-aware), diagnose check; Phase A document; onboarding checklist on Home
 - api/: multi-user backend skeleton with 10 tests (Phase B part 1)
 - v1.4: worker API mode (`serve`), hosted workflow, admin/teams/legal/Hindi/week plan (from parallel work), tutorial, fixes (translator shadowing in Home/Settings)
+- UPI manual payments (QR/link + UTR claim + owner approval page), 2 new license tests; tutorial rewritten for no-company path
