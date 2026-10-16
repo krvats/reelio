@@ -36,12 +36,19 @@ jobs:
       - name: Install video converter
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Run Reelio
+        id: go
         working-directory: worker
         env:
           REELIO_KEY: ${{ secrets.REELIO_KEY }}
           ACTION: ${{ inputs.action || 'run' }}
           ROUTE: ${{ inputs.route }}
+          REELIO_LIVE: ${{ (inputs.action || 'run') == 'run' && '1' || '0' }}   # always-on mode: accounts in parallel, Post now within seconds
         run: python -m reelio "$ACTION" --data ../data --route "$ROUTE" --budget 50
+      - name: Start the next always-on run right away (no gap)
+        if: ${{ always() && steps.go.outputs.more == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.DATA_PAT }}
+        run: gh workflow run tick.yml -R "${{ github.repository }}" --ref "${{ github.ref_name }}" -f action=run || true
       - name: Keep the schedule alive (GitHub pauses idle public repos after 60 days)
         env:
           GH_TOKEN: ${{ secrets.DATA_PAT }}
