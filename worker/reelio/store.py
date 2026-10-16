@@ -230,3 +230,35 @@ class Store:
 def _parse(s):
     from .util import parse_iso
     return parse_iso(s)
+
+
+# ---------------------------------------------------------------- thread safety + live refresh (added v1.8)
+import threading as _threading
+_LOCK = _threading.RLock()
+
+
+def _refresh(self):
+    """Pull the newest data from GitHub (the always-on loop calls this every few seconds so app commands such as Post now arrive fast)."""
+    if os.environ.get("REELIO_NO_GIT") or not os.path.isdir(self.p(".git")):
+        return True
+    g = lambda *a: subprocess.run(["git", "-C", self.root, *a], capture_output=True, text=True)
+    if g("pull", "--rebase", "--autostash").returncode != 0:
+        g("rebase", "--abort"); return False
+    self._secrets = None
+    return True
+
+
+Store.refresh = _refresh
+
+
+def _locked(fn):
+    def wrapper(*a, **k):
+        with _LOCK:
+            return fn(*a, **k)
+    wrapper.__name__ = fn.__name__; wrapper.__doc__ = fn.__doc__
+    return wrapper
+
+
+for _n in ("secrets", "save_secret", "ledger", "posted_keys", "add_ledger", "backfill_md5", "save_ledger", "set_inflight", "posted_today", "posted_last_24h",
+           "queue", "save_queue", "status", "save_status", "event", "flush_events", "inbox_done", "sync", "refresh"):
+    setattr(Store, _n, _locked(getattr(Store, _n)))

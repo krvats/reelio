@@ -44,6 +44,16 @@ class World:
         self.status_polls = {}
         self.refresh_calls = 0
         self.publish_hook = None
+        self._cl = threading.Lock(); self._cn = 0
+
+
+def _next_cid(self):
+    with self._cl:
+        self._cn += 1
+        return f"C{self._cn}"
+
+
+World.next_cid = _next_cid
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -184,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"data": [{"quota_usage": used, "config": {"quota_total": 100}}]})
         if path == f"/{uid}/media" and m == "POST":
             url = p.get("video_url", "")
-            c = f"C{len(W.ig_containers) + 1}"
+            c = W.next_cid()
             data = None
             try:
                 import requests

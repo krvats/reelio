@@ -1,6 +1,6 @@
 """Instagram can only fetch a PUBLIC video URL, so each prepared file is parked on Cloudinary for a few
 minutes and deleted right after posting (even if posting failed)."""
-import os, re, hashlib, time
+import uuid, os, re, hashlib, time
 from .errors import AccountProblem, ItemProblem
 from .util import http, env_base, HttpFail
 
@@ -18,7 +18,7 @@ class Cloudinary:
             raise AccountProblem("Cloudinary is not connected.", "Open Accounts, tap Cloudinary and paste the three values from your Cloudinary dashboard.", kind="setup")
 
     def upload(self, path):
-        pid = "reelio_" + re.sub(r"[^A-Za-z0-9]", "", os.path.basename(path))[:24] + str(int(time.time()))
+        pid = "reelio_" + re.sub(r"[^A-Za-z0-9]", "", os.path.basename(path))[:24] + str(int(time.time())) + uuid.uuid4().hex[:10]   # unique even when several accounts upload in the same second
         ts = str(int(time.time()))
         p = {"public_id": pid, "timestamp": ts}
         try:

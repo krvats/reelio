@@ -1,5 +1,6 @@
 """The brain: one run = look at every flow, post what is due, remember everything, never crash."""
-import os, time, uuid, hashlib, shutil, tempfile, traceback, datetime
+import os, time, uuid, hashlib, shutil, tempfile, traceback, datetime, threading
+from concurrent.futures import ThreadPoolExecutor
 from . import media, captions, scheduler
 from .errors import Problem, ItemProblem, AccountProblem, SourceProblem, RunLimit
 from .notify import Notifier
@@ -14,8 +15,11 @@ STREAK_STOP = 3
 
 
 class Engine:
-    def __init__(self, store, budget_min=45, only_route=None, force_scan=False):
+    def __init__(self, store, budget_min=45, only_route=None, force_scan=False, live=False):
         self.store = store
+        self.live = bool(live)            # live = always-on loop: one post per account per pass, never sleeps between posts
+        self._lk = threading.RLock()      # accounts run in parallel threads; shared counters and alerts go through this lock
+        self.cmds_applied = 0
         self.cfg = store.config()
         self.tz = scheduler.tzinfo(self.cfg.get("timezone"))
         self.t0 = time.time()
@@ -30,11 +34,17 @@ class Engine:
             self.cfg_no_notify = True
             self.notify = Notifier(store, {"notify": {}})      # secrets can't be unlocked: run() reports that clearly
         self.notify.state = self.st["notified"]
+        _send = self.notify.send
+        self.notify.send = lambda *a, **k: self._locked(_send, *a, **k)
         self.posted_this_run = 0
         self.quota = {}          # account -> posts left today (cached per run)
         self.rate_slept = set()
 
     # ---------------------------------------------------------------- helpers
+    def _locked(self, fn, *a, **k):
+        with self._lk:
+            return fn(*a, **k)
+
     def ev(self, level, msg, route=None, fix=None):
         self.store.event(level, msg, route, fix)
 
@@ -72,23 +82,40 @@ class Engine:
             self.apply_inbox()
             self.recover()
             self.refresh_tokens()
-            for route in self.cfg["routes"]:
-                if self.only and route["id"] != self.only:
-                    continue
-                try:
-                    self.run_route(route)
-                except RunLimit:
-                    self.ev("info", "Time budget reached; the next run continues from here.", route["id"]); break
-                except Exception as e:     # a bug in one flow must never stop the others
-                    self.ev("error", f"Unexpected problem in flow '{route.get('name')}': {scrub(e)}", route["id"], "Reelio will try again on the next run.")
-                    print(scrub(traceback.format_exc()))
+            self._run_routes()
         finally:
             self.sweep()
             self.daily_summary()
             self._finish(started, "ok", "")
         return True
 
+    def _run_routes(self):
+        """Every account has its own lane: accounts post at the same time, flows that share an account go one after another
+        (so the pause Instagram needs between posts of ONE account never holds up the others)."""
+        routes = [r for r in self.cfg["routes"] if not (self.only and r["id"] != self.only)]
+        lanes = {}
+        for r in routes:
+            lanes.setdefault((r.get("target") or {}).get("conn") or r["id"], []).append(r)
+        if len(lanes) <= 1 or self.cfg.get("parallel") is False:
+            self._run_lane(routes); return
+        with ThreadPoolExecutor(max_workers=min(len(lanes), 16)) as ex:
+            list(ex.map(self._run_lane, lanes.values()))
+
+    def _run_lane(self, routes):
+        for route in routes:
+            try:
+                self.run_route(route)
+            except RunLimit:
+                self.ev("info", "Time budget reached; the next run continues from here.", route["id"]); break
+            except Exception as e:     # a bug in one flow must never stop the others
+                self.ev("error", f"Unexpected problem in flow '{route.get('name')}': {scrub(e)}", route["id"], "Reelio will try again on the next run.")
+                print(scrub(traceback.format_exc()))
+
     def _finish(self, started, result, msg):
+        if self.live and result == "ok" and not self.posted_this_run and not self.cmds_applied and not self.store._events \
+                and time.time() - getattr(self.store, "_last_status_write", 0) < 120:
+            return                       # nothing happened in this quick pass: do not spam the data repo with commits
+        self.store._last_status_write = time.time()
         self.build_status(started, result, msg)
         try:
             from .cookiepool import Pool
@@ -103,6 +130,7 @@ class Engine:
     def apply_inbox(self):
         s = self.store
         for c in s.inbox():
+            self.cmds_applied += 1
             try:
                 self._cmd(c)
             except Exception as e:
@@ -183,6 +211,10 @@ class Engine:
                 self._mark_posted(route, j["src"], found, "")
 
     def sweep(self):
+        if self.live:
+            if time.time() - getattr(self.store, "_last_sweep", 0) < 600:
+                return
+            self.store._last_sweep = time.time()
         for c in self.cfg["connections"]:
             if c["kind"] == "cloudinary" and not self.store.ledger()["inflight"]:
                 n = hosting.sweep(self.store.secret(c["id"]))
@@ -278,6 +310,11 @@ class Engine:
             if n <= 0:
                 rs["state"] = "cooldown"; rs["message"] = "Instagram's 24-hour limit is used up; resumes automatically."; return
         gap = max(int(sched.get("gap_seconds", 90) or 90), 60 if route["target"]["type"] == "instagram" else 10)
+        if self.live:                    # one post per pass; the pause between posts of an account is checked, never slept
+            n = min(n, 1)
+            lp = parse_iso(a.get("last_post_at"))
+            if lp and (now() - lp).total_seconds() < (5 if want_now else gap):
+                rs["state"] = "waiting"; rs["message"] = "Short pause between posts on this account."; return
         streak, recent = 0, []
         posted = 0
         for it in cands[:n + 8]:        # a few extra in case some fail and we move on
@@ -514,8 +551,10 @@ class Engine:
             if hasattr(src_mod, "cleanup"):
                 src_mod.cleanup(it, s, route)       # uploads and links free their space once posted
             s.set_inflight(rid, None)
-            self.posted_this_run += 1
+            with self._lk:
+                self.posted_this_run += 1
             self.acct(conn["id"])["rate_hits"] = 0
+            self.acct(conn["id"])["last_post_at"] = iso()
             if conn["id"] in self.quota: self.quota[conn["id"]] -= 1
             self.ev("ok", f"Posted '{it.get('name')}'", rid)
             self.notify.send("posted", f"Posted {it.get('name')} to {conn.get('label', conn['id'])}\n{res.get('permalink', '')}")
@@ -525,7 +564,7 @@ class Engine:
             s.set_inflight(rid, None); raise
         except AccountProblem as p:
             s.set_inflight(rid, None)
-            if p.kind == "rate" and conn["id"] not in self.rate_slept and self.time_left() > 20 * 60:
+            if p.kind == "rate" and not self.live and conn["id"] not in self.rate_slept and self.time_left() > 20 * 60:
                 self.rate_slept.add(conn["id"])
                 self.ev("warn", "Instagram asked us to slow down. Waiting 10 minutes, then trying again.", rid)
                 util.sleep(600)
@@ -588,7 +627,8 @@ class Engine:
     # ---------------------------------------------------------------- ledger
     def _ledger(self, route, it, res, title):
         s = self.store
-        self.month_left -= 1
+        with self._lk:
+            self.month_left -= 1
         s.add_ledger({"id": uuid.uuid4().hex[:12], "route": route["id"], "target": self.target_key(route), "src": it["key"], "md5": it.get("md5"),
                       "name": it.get("name"), "media_id": res.get("media_id"), "permalink": res.get("permalink", ""), "container_id": res.get("container_id", ""),
                       "title": title[:120], "at": iso(), "status": "posted" if res.get("media_id") else "unknown_id"})

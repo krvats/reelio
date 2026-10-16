@@ -18,24 +18,44 @@ export async function schedule(S) {
     }));
 }
 
-export async function analytics(S) {
+let statsSel = 'all';          // which account or flow the Stats page shows: all | acct:<id> | flow:<id>
+export async function analytics(S, params, app) {
   const a = (await S.data.read('analytics.json')) || {};
+  const routes = S.cfg.routes || [], conns = S.cfg.connections || [];
+  const connName = (id) => (conns.find((c) => c.id === id) || {}).label || id;
+  const [kind, pick] = statsSel.split(':');
+  const inSel = (r) => kind === 'all' || (kind === 'acct' && r.target.conn === pick) || (kind === 'flow' && r.id === pick);
+  const selRoutes = routes.filter(inSel), selIds = new Set(selRoutes.map((r) => r.id));
+  const selConns = new Set(selRoutes.map((r) => r.target.conn));
   const days = []; for (let i = 29; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5).toLocaleDateString('en-CA', { timeZone: S.tz }); days.push(d); }
-  const per = days.map((d) => Object.values(a.daily || {}).reduce((s, m) => s + (m[d] || 0), 0)), max = Math.max(1, ...per);
-  const accts = Object.values(a.accounts || {});
+  const daily = a.daily || {};
+  const per = days.map((d) => Object.entries(daily).reduce((s, [rid, m]) => s + ((selIds.has(rid) || (kind === 'all' && !routes.some((r) => r.id === rid))) ? (m[d] || 0) : 0), 0)), max = Math.max(1, ...per);
+  const accts = Object.entries(a.accounts || {}).filter(([id]) => kind === 'all' || selConns.has(id)).map(([, x]) => x);
   const posts = accts.flatMap((x) => x.posts || []).sort((p, q) => (q.reach || 0) - (p.reach || 0)).slice(0, 8);
   const tot = accts.reduce((s, x) => { for (const k of ['views', 'reach', 'likes', 'comments']) s[k] = (s[k] || 0) + ((x.totals || {})[k] || 0); return s; }, {});
   const best = accts.flatMap((x) => x.best_hours || []).slice(0, 3);
   const csv = async () => {
     const led = (await S.data.read('ledger.json')) || { entries: [] };
-    const rows = [['posted_at', 'flow', 'account', 'name', 'link']].concat(led.entries.map((e) => [e.at, e.route, e.target, e.name, e.permalink]));
+    const rows = [['posted_at', 'flow', 'account', 'name', 'link']].concat(led.entries.filter((e) => kind === 'all' || selIds.has(e.route)).map((e) => [e.at, e.route, e.target, e.name, e.permalink]));
     const text = rows.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' })); const el = h('a', { href: url, download: 'reelio-posts.csv' }); document.body.append(el); el.click(); el.remove();
   };
+  const today = days[days.length - 1];
+  const picker = h('select', { 'aria-label': 'Show stats for', onchange: (e) => { statsSel = e.target.value; app.rerender(); } },
+    h('option', { value: 'all', selected: statsSel === 'all' }, 'Everything (all accounts and flows)'),
+    h('optgroup', { label: 'One account' }, [...new Set(routes.map((r) => r.target.conn))].map((id) => h('option', { value: 'acct:' + id, selected: statsSel === 'acct:' + id }, connName(id)))),
+    h('optgroup', { label: 'One flow' }, routes.map((r) => h('option', { value: 'flow:' + r.id, selected: statsSel === 'flow:' + r.id }, `${r.name} (${connName(r.target.conn)})`))));
+  const table = routes.length ? h('div', { class: 'card' }, h('h2', null, 'Every flow at a glance'), h('div', { style: 'overflow-x:auto' }, h('table', { class: 't' },
+    h('thead', null, h('tr', null, ['Flow', 'Account', 'Today', 'Last 30 days'].map((x) => h('th', null, x)))),
+    h('tbody', null, routes.map((r) => { const m = daily[r.id] || {}; const n30 = days.reduce((s, d) => s + (m[d] || 0), 0);
+      return h('tr', { style: 'cursor:pointer', onclick: () => { statsSel = 'flow:' + r.id; app.rerender(); } }, h('td', null, r.name), h('td', null, connName(r.target.conn)), h('td', null, String(m[today] || 0)), h('td', null, String(n30))); }))))) : null;
+  const label = kind === 'all' ? 'all accounts' : kind === 'acct' ? connName(pick) : ((routes.find((r) => r.id === pick) || {}).name || 'this flow');
   return h('div', { class: 'col' }, h('div', { class: 'row' }, h('h1', { class: 'grow' }, 'Stats'), h('button', { class: 'btn small', onclick: csv }, 'Download list (CSV)'), h('button', { class: 'btn small', onclick: () => runNow('analytics') }, icon('refresh'), 'Refresh')),
-    h('div', { class: 'card col' }, h('h2', null, 'Posts per day, last 30 days'), h('div', { class: 'bars', role: 'img', 'aria-label': `Posts per day, total ${per.reduce((x, y) => x + y, 0)}` }, per.map((n, i) => h('div', { style: `height:${Math.max(2, (n / max) * 100)}%`, 'data-t': `${n} on ${days[i].slice(5)}` }))), h('div', { class: 'small muted' }, `Highest day: ${max === 1 && !per.some(Boolean) ? 0 : max}`)),
-    accts.length ? h('div', { class: 'grid' }, ['views', 'reach', 'likes', 'comments'].map((k) => h('div', { class: 'card stat' }, h('b', null, (tot[k] || 0).toLocaleString()), h('span', null, `${k} (last 30 posts)`)))) : h('div', { class: 'card' }, h('p', { class: 'muted' }, 'Instagram numbers show up after the first posts. Press Refresh to load them.')),
+    h('label', { class: 'col', style: 'gap:4px' }, h('b', null, 'Show'), picker),
+    h('div', { class: 'card col' }, h('h2', null, `Posts per day, last 30 days (${label})`), h('div', { class: 'bars', role: 'img', 'aria-label': `Posts per day, total ${per.reduce((x, y) => x + y, 0)}` }, per.map((n, i) => h('div', { style: `height:${Math.max(2, (n / max) * 100)}%`, 'data-t': `${n} on ${days[i].slice(5)}` }))), h('div', { class: 'small muted' }, `Highest day: ${max === 1 && !per.some(Boolean) ? 0 : max}`)),
+    accts.length ? h('div', { class: 'grid' }, ['views', 'reach', 'likes', 'comments'].map((k) => h('div', { class: 'card stat' }, h('b', null, (tot[k] || 0).toLocaleString()), h('span', null, `${k} (last 30 posts)`)))) : h('div', { class: 'card' }, h('p', { class: 'muted' }, kind === 'all' || selRoutes.some((r) => r.target.type === 'instagram') ? 'Instagram numbers show up after the first posts. Press Refresh to load them.' : 'Views and likes are only available for Instagram accounts. Posts per day above is counted for every flow.')),
     best.length ? h('div', { class: 'banner info' }, h('div', null, h('b', null, 'Best times to post: '), best.map((x) => `${((x + 11) % 12) + 1}${x < 12 ? ' am' : ' pm'}`).join(', '), '. Based on reach of your recent posts.')) : null,
+    kind === 'all' ? table : null,
     posts.length ? h('div', { class: 'card' }, h('h2', null, 'Top posts'), h('table', { class: 't' }, h('tbody', null, posts.map((p) => h('tr', null, h('td', null, h('a', { href: p.permalink, target: '_blank', rel: 'noopener' }, p.caption || 'Open')), h('td', null, `${p.reach} reach`), h('td', null, `${p.likes} likes`)))))) : null,
     accts.filter((x) => x.error).map((x) => h('div', { class: 'banner warn' }, h('div', null, h('b', null, x.label), ' ', x.error, ' ', x.fix))));
 }

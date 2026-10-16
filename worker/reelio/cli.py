@@ -39,6 +39,11 @@ def main(argv=None):
     try:
         if a.action in ("run", "scan"):
             from .engine import Engine
+            if a.action == "run" and os.environ.get("REELIO_LIVE") == "1":
+                from . import live
+                live.run(store, a.budget, a.route)          # always-on: all accounts in parallel, Post now within seconds
+                _maybe_analytics(store)
+                return 0
             eng = Engine(store, a.budget, a.route, force_scan=(a.action == "scan"))
             if a.action == "scan":
                 eng.cfg["paused"] = True      # list sources and update queues, but post nothing
