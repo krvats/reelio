@@ -30,7 +30,7 @@ def refresh_account_pills(store):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="reelio")
-    ap.add_argument("action", choices=["run", "diagnose", "analytics", "scan", "long"], help="what to do")
+    ap.add_argument("action", choices=["run", "diagnose", "analytics", "scan", "long", "grab"], help="what to do")
     ap.add_argument("--data", default=os.environ.get("REELIO_DATA", "data"), help="folder with the data repo")
     ap.add_argument("--route", default=os.environ.get("REELIO_ROUTE") or None)
     ap.add_argument("--budget", type=int, default=int(os.environ.get("REELIO_BUDGET_MIN", "45")), help="max minutes for this run")
@@ -53,6 +53,9 @@ def main(argv=None):
         elif a.action == "long":
             from . import longjob
             longjob.run(store, a.budget)
+        elif a.action == "grab":
+            from . import grab
+            grab.run(store, a.budget)
         elif a.action == "diagnose":
             from . import diagnose
             r = diagnose.run(store); say(r["verdict"])

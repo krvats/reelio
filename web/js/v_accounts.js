@@ -9,7 +9,7 @@ const KINDS = {
   telegram: { name: 'Telegram', sub: 'Alerts on your phone (optional)', secret: ['bot_token'] },
   ytnet: { name: 'YouTube downloads', sub: 'Cookies if YouTube blocks the server (optional)', secret: ['cookies'] },
 };
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
 const YT_ONLY_SCOPES = 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
 const redirectUri = () => location.origin + location.pathname;
 
@@ -124,7 +124,7 @@ export async function handleOAuth() {
     if (!j.refresh_token) throw new Error(j.error_description || 'Google did not return a long-lasting login. Remove the app under myaccount.google.com/permissions and connect again.');
     const { S, loadCore } = await import('./app.js'); if (!S.data) { const { Data: D } = await import('./core.js'); S.data = new D(S.repo, S.token); } await loadCore();
     await saveSecret(saved.id, { client_id: saved.cid, client_secret: saved.cs, refresh_token: j.refresh_token });
-    await saveCfg((c) => { const conn = { id: saved.id, kind: 'google', label: saved.label }; const i = c.connections.findIndex((x) => x.id === saved.id); if (i >= 0) c.connections[i] = { ...c.connections[i], ...conn }; else c.connections.push(conn); }, 'Reelio: connected Google');
+    await saveCfg((c) => { const conn = { id: saved.id, kind: 'google', label: saved.label, drive_write: String(j.scope || '').includes('/auth/drive.file') }; const i = c.connections.findIndex((x) => x.id === saved.id); if (i >= 0) c.connections[i] = { ...c.connections[i], ...conn }; else c.connections.push(conn); }, 'Reelio: connected Google');
     sessionStorage.removeItem('reelio.oauth'); toast('Google connected.'); runNow('diagnose');
   } catch (e) { toast(e.message, 9000); }
 }

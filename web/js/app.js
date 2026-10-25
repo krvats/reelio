@@ -39,16 +39,16 @@ export function runNow(action = 'run', routeId = '') {
 
 // ---------- shell + router
 const TABS = [['home', 'Home', 'home'], ['queue', 'Videos', 'queue'], ['flows', 'Flows', 'flows'], ['accounts', 'Accounts', 'accounts']];
-const MORE = [['schedule', 'Schedule', 'schedule'], ['analytics', 'Stats', 'chart'], ['long', 'Long videos', 'queue'], ['logs', 'Activity', 'log'], ['settings', 'Settings', 'settings'], ['help', 'Help', 'help']];
+const MORE = [['schedule', 'Schedule', 'schedule'], ['analytics', 'Stats', 'chart'], ['long', 'Long videos', 'queue'], ['grab', 'Save to Drive', 'queue'], ['logs', 'Activity', 'log'], ['settings', 'Settings', 'settings'], ['help', 'Help', 'help']];
 const VIEWS = {
   more: () => import('./v_more.js'), home: () => import('./v_home.js'), queue: () => import('./v_queue.js'), flows: () => import('./v_flows.js'), accounts: () => import('./v_accounts.js'),
-  long: () => import('./v_long.js'), schedule: () => import('./v_more.js'), analytics: () => import('./v_more.js'), logs: () => import('./v_more.js'), settings: () => import('./v_more.js'), help: () => import('./v_more.js'),
+  long: () => import('./v_long.js'), grab: () => import('./v_grab.js'), schedule: () => import('./v_more.js'), analytics: () => import('./v_more.js'), logs: () => import('./v_more.js'), settings: () => import('./v_more.js'), help: () => import('./v_more.js'),
 };
 let timer = null;
 
 function shell(active, content, animate) {
   const link = ([id, label, ic], cls = '') => h('a', { href: '#/' + id, class: cls, 'aria-current': id === active ? 'page' : null }, icon(ic), label);
-  const mobileMore = h('a', { href: '#/more', 'aria-current': ['schedule', 'analytics', 'long', 'logs', 'settings', 'help', 'more'].includes(active) ? 'page' : null, class: 'less-only' }, icon('more'), 'More');
+  const mobileMore = h('a', { href: '#/more', 'aria-current': ['schedule', 'analytics', 'long', 'grab', 'logs', 'settings', 'help', 'more'].includes(active) ? 'page' : null, class: 'less-only' }, icon('more'), 'More');
   return h('div', { id: 'app' },
     h('nav', { class: 'tabs', 'aria-label': 'Main' },
       h('div', { class: 'brand' }, logo('logo'), 'Reelio'),

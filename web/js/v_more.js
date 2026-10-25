@@ -2,7 +2,7 @@ import { h, icon, toast, fmtTime, fmtDay, ago, LS } from './core.js';
 import { saveCfg, runNow, S as GS } from './app.js';
 
 export async function more() {
-  const L = [['schedule', 'Schedule', 'When each post is planned today'], ['analytics', 'Stats', 'Views, likes and best times'], ['long', 'Long videos', 'Hours-long videos and live streams, cut into parts'], ['logs', 'Activity', 'What Reelio did, in plain words'], ['settings', 'Settings', 'Time zone, text size, alerts, backup'], ['help', 'Help', 'Why is it failing? Quick answers']];
+  const L = [['schedule', 'Schedule', 'When each post is planned today'], ['analytics', 'Stats', 'Views, likes and best times'], ['long', 'Long videos', 'Hours-long videos and live streams, cut into parts'], ['grab', 'Save to Drive', 'YouTube and Instagram videos saved into your Google Drive'], ['logs', 'Activity', 'What Reelio did, in plain words'], ['settings', 'Settings', 'Time zone, text size, alerts, backup'], ['help', 'Help', 'Why is it failing? Quick answers']];
   return h('div', { class: 'col' }, h('h1', null, 'More'), L.map(([k, t, d]) => h('a', { class: 'card', href: '#/' + k, style: 'text-decoration:none;color:inherit' }, h('h2', { style: 'margin:0' }, t), h('span', { class: 'muted' }, d))));
 }
 
