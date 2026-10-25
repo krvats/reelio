@@ -562,7 +562,7 @@ def run(store, budget_min=320):
             if cw and cw > now():
                 break
             ra = parse_iso(item.get("retry_after"))
-            if ra and ra > now():
+            if ra and ra > now() and os.environ.get("GITHUB_EVENT_NAME") != "workflow_dispatch":      # tapping Run (or Save to Drive) skips the wait
                 continue
             if (deadline - now()).total_seconds() < MIN_TIME_LEFT_MIN * 60:
                 more = True; break
