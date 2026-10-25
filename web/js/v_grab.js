@@ -57,10 +57,10 @@ export async function grabView(S, params, app) {
   let data;
   try { data = await loadJobs(S); } catch (e) { return h('div', { class: 'card' }, h('h1', null, 'Save to Drive'), h('p', null, e.message), h('button', { class: 'btn', onclick: () => app.rerender() }, 'Try again')); }
   const { jobs, state } = data;
-  const googles = (S.cfg.connections || []).filter((c) => c.kind === 'google');
+  const googles = (S.cfg.connections || []).filter((c) => c.kind === 'google_save');
   const instas = (S.cfg.connections || []).filter((c) => c.kind === 'instagram');
   const saved = LS.get('grab.form', {});
-  const f = { mode: 'links', links: '', ig: (instas[0] || {}).id || '', conn: (googles.find((g) => g.drive_write) || googles[0] || {}).id || 'google',
+  const f = { mode: 'links', links: '', ig: (instas[0] || {}).id || '', conn: (googles.find((g) => g.drive_write) || googles[0] || {}).id || '',
     quality: saved.quality || '1080', root_name: saved.root_name || 'Reelio Downloads', subfolders: saved.subfolders !== false, subs: !!saved.subs };
   const needPerm = !googles.length || !googles.some((g) => g.drive_write);
 
@@ -83,7 +83,7 @@ export async function grabView(S, params, app) {
     const links = f.links.split(/\s+/).map((x) => x.trim()).filter(Boolean);
     if (f.mode === 'links' && !links.length) return toast('Paste at least one link.', 5000);
     if (f.mode === 'ig' && !f.ig) return toast('Pick an Instagram account.', 5000);
-    if (!googles.length) return toast('Connect Google first in Accounts.', 5000);
+    if (!googles.length) return toast('Add the Google Drive login for Save to Drive in Accounts first.', 6000);
     LS.set('grab.form', { quality: f.quality, root_name: f.root_name, subfolders: f.subfolders, subs: f.subs });
     const settings = { conn: f.conn, quality: f.quality, root_name: f.root_name.trim() || 'Reelio Downloads', subfolders: f.subfolders, subs: f.subs };
     const cmd = f.mode === 'links' ? { cmd: 'add', links, settings } : { cmd: 'add_ig', conn: f.ig, settings };
@@ -103,9 +103,9 @@ export async function grabView(S, params, app) {
   } }, goLabel);
 
   const permBanner = needPerm
-    ? h('div', { class: 'banner warn' }, h('div', { class: 'grow' }, h('b', null, 'One-time step: let Reelio save into your Drive. '),
-      h('div', { class: 'small' }, 'Your Google login can only read Drive today. Open Accounts, tap Google, then Reconnect. The consent screen will now also ask for "see and create files this app made". Your flows keep working exactly as before.'),
-      h('a', { class: 'btn small', href: '#/accounts', style: 'margin-top:6px' }, 'Open Accounts')))
+    ? h('div', { class: 'banner warn' }, h('div', { class: 'grow' }, h('b', null, 'One-time step: add a Google Drive login for Save to Drive. '),
+      h('div', { class: 'small' }, 'Google does not allow this permission to be mixed with the YouTube login, so it is a separate small login that can only see and create the files Reelio saves. Your flows and YouTube login are not touched.'),
+      h('a', { class: 'btn small', href: '#/accounts', style: 'margin-top:6px' }, 'Open Accounts, then Add an account')))
     : null;
 
   const adder = h('div', { class: 'card col' }, h('h2', { style: 'margin:0' }, 'Save videos to your Drive'),
@@ -116,7 +116,7 @@ export async function grabView(S, params, app) {
       field('Main folder in Drive', h('input', { type: 'text', value: f.root_name, oninput: (e) => { f.root_name = e.target.value; } }), 'Reelio makes it for you the first time. You can rename or move it later.')),
     h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', checked: f.subfolders, onchange: (e) => { f.subfolders = e.target.checked; } }), h('span', null, 'Put playlists and channels in their own sub-folder')),
     h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', checked: f.subs, onchange: (e) => { f.subs = e.target.checked; } }), h('span', null, 'Also write English subtitles into the file (when the video has them)')),
-    googles.length > 1 ? field('Save into this Google account', h('select', { onchange: (e) => { f.conn = e.target.value; } }, googles.map((c) => h('option', { value: c.id, selected: c.id === f.conn }, c.label + (c.drive_write ? '' : ' (needs reconnect)'))))) : null,
+    googles.length > 1 ? field('Save into this Drive login', h('select', { onchange: (e) => { f.conn = e.target.value; } }, googles.map((c) => h('option', { value: c.id, selected: c.id === f.conn }, c.label + (c.drive_write ? '' : ' (needs reconnect)'))))) : null,
     h('div', { class: 'row' }, go),
     h('p', { class: 'small muted', style: 'margin:0' }, 'Reelio can only use folders it made itself. YouTube sometimes blocks cloud servers: if so, Reelio uses your saved cookies (Accounts > YouTube downloads) and waits by itself. Instagram links outside your own account usually need Instagram cookies and can put that account at risk, so prefer "My Instagram account".'));
 

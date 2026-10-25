@@ -7,9 +7,11 @@ const KINDS = {
   google: { name: 'Google', sub: 'Drive folders and YouTube', secret: ['refresh_token'] },
   cloudinary: { name: 'Cloudinary', sub: 'Temporary video host Instagram needs', secret: ['api_secret'] },
   telegram: { name: 'Telegram', sub: 'Alerts on your phone (optional)', secret: ['bot_token'] },
+  google_save: { name: 'Google Drive for Save to Drive', sub: 'A separate small login only used to save videos into your Drive', secret: ['refresh_token'] },
   ytnet: { name: 'YouTube downloads', sub: 'Cookies if YouTube blocks the server (optional)', secret: ['cookies'] },
 };
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
+const DRIVE_SAVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const YT_ONLY_SCOPES = 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
 const redirectUri = () => location.origin + location.pathname;
 
@@ -71,22 +73,23 @@ export async function connect(S, kind, existing, app) {
         await finish({ id, kind, label: user || 'Instagram', ig_user_id: uidv }, tok ? { access_token: tok, refreshed_at: null, expires_at: null } : {}, close);
       } }, 'Save'), h('button', { class: 'btn', onclick: close }, 'Cancel')]);
   }
-  if (kind === 'google') {
-    const prev = existing ? await readSecret(id).catch(() => ({})) : {};
+  if (kind === 'google' || kind === 'google_save') {
+    const saveOnly = kind === 'google_save';
+    const prev = existing ? await readSecret(id).catch(() => ({})) : (saveOnly ? await readSecret('google').catch(() => ({})) : {});
     const body = h('div', { class: 'col' },
       h('ol', { class: 'steps' },
         h('li', null, h('div', null, 'Open ', h('a', { href: 'https://console.cloud.google.com/apis/credentials', target: '_blank', rel: 'noopener' }, 'Google Cloud, Credentials'), '. Make a project if asked, then turn on the ', h('b', null, 'Google Drive API'), ' and ', h('b', null, 'YouTube Data API v3'), ' (search for them in the library).')),
         h('li', null, h('div', null, 'On the consent screen, add your own Google address as a test user, and later press ', h('b', null, 'Publish app'), ' so the login does not expire after 7 days.')),
         h('li', null, h('div', null, 'Create credentials, ', h('b', null, 'OAuth client ID'), ', type ', h('b', null, 'Web application'), '. Under Authorized redirect URIs add exactly:', h('div', { class: 'row' }, h('code', { style: 'word-break:break-all' }, redirectUri()), h('button', { class: 'btn small', onclick: () => navigator.clipboard.writeText(redirectUri()).then(() => toast('Copied')) }, 'Copy')))),
         h('li', null, h('div', null, 'Paste the client ID and client secret below, then press Connect.'))),
-      inp('f_label', 'A name', { value: existing ? existing.label : 'Google' }),
+      inp('f_label', 'A name', { value: existing ? existing.label : (saveOnly ? 'Drive saver' : 'Google') }),
       inp('f_cid', 'Client ID', { value: prev.client_id || '' }), inp('f_cs', 'Client secret', { type: 'password', value: prev.client_secret || '' }),
-      h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', id: 'f_yt' }), h('span', null, 'This is a YouTube brand channel (no Drive). Use this for Advayu, PK Pujari and similar channels.')));
-    return dlg(existing ? 'Reconnect Google' : 'Connect Google', body, (close) => [
+      saveOnly ? h('p', { class: 'small muted', style: 'margin:0' }, 'This login can only see and create files that Reelio itself makes in your Drive. It cannot read your other files and it is separate from your YouTube login. If you already connected Google, the client ID and secret are filled in for you.') : h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', id: 'f_yt' }), h('span', null, 'This is a YouTube brand channel (no Drive). Use this for Advayu, PK Pujari and similar channels.')));
+    return dlg(existing ? 'Reconnect Google' : (saveOnly ? 'Connect Google Drive for Save to Drive' : 'Connect Google'), body, (close) => [
       h('button', { class: 'btn primary', onclick: () => {
         const cid = val('f_cid'), cs = val('f_cs'); if (!cid || !cs) return toast('Paste both the client ID and the secret.');
-        const state = uid(); sessionStorage.setItem('reelio.oauth', JSON.stringify({ state, id, label: val('f_label') || 'Google', cid, cs }));
-        location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: cid, redirect_uri: redirectUri(), response_type: 'code', scope: (document.getElementById('f_yt') && document.getElementById('f_yt').checked) ? YT_ONLY_SCOPES : GOOGLE_SCOPES, access_type: 'offline', prompt: 'consent', state });
+        const state = uid(); sessionStorage.setItem('reelio.oauth', JSON.stringify({ state, id, kind, label: val('f_label') || (saveOnly ? 'Drive saver' : 'Google'), cid, cs }));
+        location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({ client_id: cid, redirect_uri: redirectUri(), response_type: 'code', scope: saveOnly ? DRIVE_SAVE_SCOPES : ((document.getElementById('f_yt') && document.getElementById('f_yt').checked) ? YT_ONLY_SCOPES : GOOGLE_SCOPES), access_type: 'offline', prompt: 'consent', state });
       } }, 'Connect with Google'), h('button', { class: 'btn', onclick: close }, 'Cancel')]);
   }
   if (kind === 'cloudinary') {
@@ -124,7 +127,7 @@ export async function handleOAuth() {
     if (!j.refresh_token) throw new Error(j.error_description || 'Google did not return a long-lasting login. Remove the app under myaccount.google.com/permissions and connect again.');
     const { S, loadCore } = await import('./app.js'); if (!S.data) { const { Data: D } = await import('./core.js'); S.data = new D(S.repo, S.token); } await loadCore();
     await saveSecret(saved.id, { client_id: saved.cid, client_secret: saved.cs, refresh_token: j.refresh_token });
-    await saveCfg((c) => { const conn = { id: saved.id, kind: 'google', label: saved.label, drive_write: String(j.scope || '').includes('/auth/drive.file') }; const i = c.connections.findIndex((x) => x.id === saved.id); if (i >= 0) c.connections[i] = { ...c.connections[i], ...conn }; else c.connections.push(conn); }, 'Reelio: connected Google');
+    await saveCfg((c) => { const conn = { id: saved.id, kind: saved.kind === 'google_save' ? 'google_save' : 'google', label: saved.label }; if (conn.kind === 'google_save') conn.drive_write = String(j.scope || '').includes('/auth/drive.file'); const i = c.connections.findIndex((x) => x.id === saved.id); if (i >= 0) c.connections[i] = { ...c.connections[i], ...conn }; else c.connections.push(conn); }, 'Reelio: connected Google');
     sessionStorage.removeItem('reelio.oauth'); toast('Google connected.'); runNow('diagnose');
   } catch (e) { toast(e.message, 9000); }
 }

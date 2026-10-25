@@ -16,10 +16,11 @@ Title, description, uploader, date, thumbnail and chapters are written inside th
 Everything lives in the repos you already have: `reelio` (app + worker) and `reelio-data` (private data).
 
 1. Copy the new/changed files into `reelio` (list in `GRAB_README.md`). Commit. The Pages build updates the app by itself.
-2. Google Cloud Console > your project > OAuth consent screen > Data access: add the scope `.../auth/drive.file` (it is the "see and create only the files this app made" permission; it does not need Google's review).
-   Keep the app on "Publish app" (not Testing) or the Google login expires every 7 days.
-3. In the Reelio app: Accounts > Google > Reconnect. Tick/accept the new Drive permission. Flows are not affected: the login keeps every permission it had and gains one.
+2. Google Cloud Console > your project > OAuth consent screen > Data access: add the scope `.../auth/drive.file` ("see and create only the files this app made"; it needs no Google review). Keep the app on "Publish app" (not Testing) or logins expire every 7 days.
+3. In the Reelio app: Accounts > Add an account > **Google Drive for Save to Drive**. The client ID and secret are filled in from your existing Google login. Accept the permission.
 4. More > Save to Drive > paste a link > Save to Drive.
+
+Why a separate login: Google refuses to put `drive.file` and the YouTube permissions in one sign-in ("scopes that cannot be requested together"). So your existing Google login (Drive read + YouTube) is left exactly as it was, and Save to Drive gets its own login (`kind: google_save`) that has only `drive.file`.
 
 ## Why the main folder is made by Reelio
 `drive.file` lets Reelio touch only files and folders it created itself. So Reelio creates "Reelio Downloads" in My Drive the first time. You may rename it or move it anywhere; Reelio keeps its access because it remembers the folder's ID. (Using an existing folder would need Google's full-Drive permission, which Google treats as restricted. The worker supports it through the `root_id` setting if you ever want it.)

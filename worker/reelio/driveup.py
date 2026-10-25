@@ -39,10 +39,10 @@ def drive_error(status, body):
     if reason in ("rateLimitExceeded", "userRateLimitExceeded", "dailyLimitExceeded") or status == 429:
         return AccountProblem("Google Drive asked Reelio to slow down.", "Nothing to do. Reelio waits a little and continues.", reason, 30, "quota")
     if status == 401 or reason in ("authError", "invalid_grant"):
-        return AccountProblem("Google says this login expired or was revoked.", "Open Accounts, tap Google, then Reconnect.", reason, 0, "token")
+        return AccountProblem("Google says this login expired or was revoked.", "Open Accounts and Reconnect the Google login used for Save to Drive.", reason, 0, "token")
     if status == 403 and (reason in ("insufficientPermissions", "ACCESS_TOKEN_SCOPE_INSUFFICIENT") or "scope" in low or "insufficient" in low):
         return AccountProblem("This Google login is not allowed to save files into Drive yet.",
-                              "Open Accounts, tap Google, then Reconnect and tick the Drive permission. Videos already in the list stay waiting.", reason, 0, "setup")
+                              "Open Accounts and add (or Reconnect) the 'Google Drive for Save to Drive' login. Videos already in the list stay waiting.", reason, 0, "setup")
     if status == 404:
         return ItemProblem("Drive could not find the target folder.",
                            "Reelio can only use folders it made itself. Leave the folder ID empty in the Save to Drive page so Reelio makes the folder, then tap Retry.", reason)

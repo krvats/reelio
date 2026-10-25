@@ -328,6 +328,16 @@ json.dump({{"id": vid, "title": "Title of " + vid}}, open(os.path.join(d, "v.inf
         self.assertIn("Reconnect", ev)
         self.assertEqual(len(self.w.files), 0)
 
+    def test_the_separate_drive_login_is_used_when_the_app_does_not_name_one(self):
+        cfg = util.read_json(os.path.join(self.data, "config.json"))
+        cfg["connections"].append({"id": "gsave", "kind": "google_save", "label": "Drive saver", "drive_write": True}); util.write_json(os.path.join(self.data, "config.json"), cfg)
+        sec = {"google": {"client_id": "c", "client_secret": "s", "refresh_token": "NOPE"}, "gsave": {"client_id": "c", "client_secret": "s", "refresh_token": "RT"}, "ig_a": {"access_token": "IGTOKA"}}
+        util.write_json(os.path.join(self.data, "secrets.enc.json"), crypto.encrypt(sec, "test-pass", iters=1000))
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/watch?v=SINGLE00001"]})
+        self.run_grab()
+        self.assertEqual(len(self.w.files), 1)
+        self.assertEqual(next(iter(self.jobs().values()))["settings"]["conn"], "gsave")
+
     def test_links_that_are_not_youtube_or_instagram_are_skipped_with_a_message(self):
         self.inbox({"cmd": "add", "links": ["https://example.com/video.mp4"]})
         self.run_grab()

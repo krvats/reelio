@@ -18,7 +18,9 @@ CHANGED (small edits; replace if you have not edited them yourself, otherwise ap
 
 ## Then do these 3 things
 1. Google Cloud Console > OAuth consent screen > Data access > add scope `https://www.googleapis.com/auth/drive.file`. Keep the app "Published" (not Testing).
-2. Reelio app > Accounts > Google > Reconnect (accept the new Drive permission). Your flows keep working.
+2. Reelio app > Accounts > Add an account > **Google Drive for Save to Drive** (a separate login; your YouTube/Drive-read login is not touched. Google does not allow the two permission sets in one sign-in).
 3. More > Save to Drive > paste a link > Save to Drive.
 
-Optional: for Instagram links that are not your own account, add a secret `instagram-net` with `cookies` (Netscape text) in the data repo's secrets. "My Instagram account" needs nothing.
+Changed files also include `worker/reelio/diagnose.py` (checks the new login) and `web/js/v_accounts.js` (new account type; main Google scopes are unchanged).
+
+Optional: for Instagram links that are not your own account, add a secret `instagram-net` with `cookies` (Netscape text). "My Instagram account" needs nothing.

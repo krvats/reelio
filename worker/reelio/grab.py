@@ -85,6 +85,14 @@ def _checkpoint(store, st, msg):
 
 
 # ------------------------------------------------------------------ settings and names
+def _default_conn(store):
+    """The Drive-saver login if there is one (kind google_save), else the plain 'google' login."""
+    for c in (store.config().get("connections") or []):
+        if c.get("kind") == "google_save":
+            return c["id"]
+    return "google"
+
+
 def clean_settings(raw):
     s = dict(DEFAULTS)
     s.update({k: v for k, v in (raw or {}).items() if v not in (None, "")})
@@ -211,7 +219,7 @@ def _merge(job, new_items):
 
 
 def _add(store, c):
-    s = clean_settings(c.get("settings"))
+    s = clean_settings(dict(c.get("settings") or {}, conn=(c.get("settings") or {}).get("conn") or _default_conn(store)))
     links = c.get("links") or []
     if isinstance(links, str):
         links = re.split(r"[\s,]+", links)
@@ -270,7 +278,7 @@ def _add(store, c):
 
 def _add_ig_own(store, c):
     """Every video on one of YOUR connected Instagram accounts, through the official API."""
-    s = clean_settings(c.get("settings"))
+    s = clean_settings(dict(c.get("settings") or {}, conn=(c.get("settings") or {}).get("conn") or _default_conn(store)))
     conn_id = c.get("conn") or s.get("ig_conn")
     conn = store.conn(conn_id) if conn_id else None
     if not conn or conn.get("kind") != "instagram":

@@ -47,6 +47,10 @@ def run(store):
                 except Exception:
                     detail += " · no YouTube channel found (fine if you only use Drive)"
                 add(cid, f"{label} (Google)", True, detail)
+            elif k == "google_save":
+                from .google import GoogleAuth
+                GoogleAuth(s).headers()
+                add(cid, f"{label} (Google Drive for Save to Drive)", True, "login works")
             elif k == "cloudinary":
                 add(cid, f"{label} (video host)", *_cloudinary(s))
             elif k == "telegram":
