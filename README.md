@@ -1,37 +1,67 @@
+<div align="center">
+
+<img src="web/icon.svg" width="72" alt="Reelio logo">
+
 # Reelio
 
-Your own videos, posted automatically to Instagram Reels and YouTube Shorts, from the cloud. Your PC can stay off.
-You manage everything from a phone-friendly web app. No code, no config files.
+**Your videos post themselves.**
+Schedule Instagram Reels and YouTube Shorts for every page and channel you run. It keeps going while your phone and laptop are off.
 
-## How it works (the short version)
-- **This repo (public)** holds the app (`web/`, shown on GitHub Pages) and the worker (`worker/`, run by GitHub Actions every 5 minutes).
-- **A second, private repo `reelio-data`** holds your settings, queue, the never-repost ledger and your logins (encrypted with your passphrase).
-- The app edits the private repo through GitHub's API. The worker reads it, posts what is due, and saves the result.
-- Instagram only accepts a public video address, so each video waits on Cloudinary for about a minute and is deleted right after posting.
+[Live demo](https://krvats.github.io/reelio/app.html?demo=1) · [Website](https://krvats.github.io/reelio/) · [Setup guide](docs/SETUP_CHECKLIST.md) · [Selling guide](docs/SELLING.md)
 
-Any source can feed any target, so you choose per "flow":
-Google Drive, a YouTube channel, your own Instagram, or files uploaded from the app, going to Instagram Reels or YouTube Shorts.
+<img src="docs/screens/desktop-home.png" alt="Reelio home screen" width="720">
 
-## One-time setup (about 15 minutes)
-Everything below is also shown, with buttons, inside the app's setup page.
+</div>
 
-1. **Create the public repo** `reelio` on GitHub and upload the contents of this folder (Add file, Upload files).
-2. **Turn on the app page:** repo Settings, Pages, Source = **GitHub Actions**. The page appears at `https://YOURNAME.github.io/reelio/`.
-3. **Create a private repo** `reelio-data` (empty is fine). If you are moving from the old tools, upload the files from `reelio-data-seed/` into it. That keeps your 7 posted Reels and 9 uploaded Shorts from ever being posted again.
-4. **Make a GitHub key:** github.com/settings/personal-access-tokens/new. Only select repositories: `reelio` and `reelio-data`. Permissions: Contents = Read and write, Actions = Read and write.
-5. **Add two secrets** in `reelio` > Settings > Secrets and variables > Actions: `DATA_PAT` = the key from step 4, `REELIO_KEY` = a passphrase you invent (write it down).
-6. **Open the app page**, paste the key and the same passphrase. The setup page checks every step.
-7. **Connect accounts** in the app: Instagram (token from the Meta developer dashboard), Cloudinary (free), Google (Drive and YouTube), and optionally Telegram for alerts.
-8. **Create or review your flows**, press Check now, then Help > Why is it failing? to confirm everything is connected.
+## What it does
 
-Rotate first: the access tokens, API keys and client secrets that were in your old zips and chats should be regenerated, then entered only in the app.
+- **Many pages, one screen.** Every Instagram page and YouTube channel with today's progress. Bulk pause, resume and posts-a-day.
+- **Any source to any target.** Google Drive, YouTube channels or chosen videos, Instagram pages, or uploads, going to Instagram Reels or YouTube Shorts.
+- **Full control per post.** Up to 100 posts a day, time windows, days of the week, days off, natural jitter, per-video captions, move, skip, post now.
+- **Captions and looks.** Fixed, random or table captions, hashtag sets, filters, blur/crop/pad fit, watermark, cover frame.
+- **Never twice, never lost.** A permanent ledger stops duplicates (by id and file hash). One bad video never blocks a queue.
+- **Long videos and Save to Drive.** Cut hour-long videos and live streams into clips; copy videos you may use into Drive.
+- **Keeps itself running.** Late GitHub schedules are detected and restarted; blocked YouTube downloads rotate through a pool of saved cookies.
+- **Plain-language help.** Every failure says why and what to tap. Telegram alerts. Stats with best posting hours.
+- **Private.** Logins are encrypted (AES-256-GCM, PBKDF2) in the browser before they are saved. Official APIs only.
+- **Made for phones.** Installable app, light and dark, text size, key screens in Hindi, command palette (Ctrl/Cmd+K).
+
+## Try it without signing in
+
+Open `app.html?demo=1` on the site. It runs the real screens on sample data in your browser. Nothing is saved or posted.
+
+## How it is built
+
+| Part | Where | Notes |
+|---|---|---|
+| Website | `web/index.html`, `site.css`, `site.js` | Static, no build, self-hosted fonts |
+| App | `web/app.html`, `web/js/` | Vanilla ES modules, PWA, demo mode |
+| Worker | `worker/reelio/` | Python 3.12, runs on GitHub Actions every 5 minutes |
+| Data | private repo `reelio-data` | Settings, queues, ledger, encrypted logins |
+| Optional services | `license/`, `api/`, `keepalive/` | Cloudflare Workers: access control, hosted accounts, extra wake-ups |
+
+## Setup (about 15 minutes, once)
+
+Follow [docs/SETUP_CHECKLIST.md](docs/SETUP_CHECKLIST.md) or the setup screen inside the app. In short: publish this repo with Pages set to GitHub Actions, create a private `reelio-data` repo, make a GitHub key, add the secrets `DATA_PAT` and `REELIO_KEY`, then connect your accounts in the app.
+
+The site's "Message us" buttons open an Instagram DM to @kr5na_ (set in `web/app-config.js`).
 
 ## Honest limits
-- GitHub's schedule runs about every 5 minutes (sometimes late). Instagram and Meta limit how fast apps can post, so more is not faster. The default of 50 a day per account is the high end; if Meta shows "Application request limit reached" Reelio waits and resumes by itself.
-- Instagram allows at most 100 API posts per 24 hours per account. YouTube's API allows only about 6 uploads a day for new projects.
-- YouTube may block downloads from cloud servers. Reelio then switches to your next saved cookie, rests the ones that fail (a blocked one comes back after its timer; a logged-out one does not), and only pauses that flow if every way fails, then it tells you to add cookies (Accounts > YouTube cookies, many at once) or use a backup Drive folder.
-- Only use videos you own or have permission to post.
 
-## Developing
-`cd worker && python -m unittest discover -s tests` runs 36 tests against fake Instagram, Drive, YouTube, Cloudinary and Telegram servers.
-`python tools/ui_demo.py` serves the app with demo data and a fake GitHub for testing the interface.
+- Instagram allows 100 API posts per 24 hours per account. New YouTube projects upload about 6 videos a day.
+- GitHub's schedule is best effort and can be late; Reelio catches up the same day.
+- Only post videos you own or have permission to use.
+
+## Development
+
+```
+cd worker && python -m unittest discover -s tests     # worker tests against fake Instagram/Drive/YouTube servers
+cd license && node --test test/                       # access service tests
+python tools/screens.py                                # regenerate screenshots and site images (needs Playwright)
+```
+
+For contributors and AI assistants: read [CLAUDE.md](CLAUDE.md) first.
+
+## Licence
+
+All rights reserved. The source is visible, but nobody may run, copy or sell it without written permission. See [LICENSE](LICENSE) and [docs/SELLING.md](docs/SELLING.md). Access: [Instagram @kr5na_](https://ig.me/m/kr5na_).
