@@ -2,7 +2,7 @@ import { h, icon, toast, fmtTime, fmtDay, ago, LS } from './core.js';
 import { saveCfg, runNow, S as GS } from './app.js';
 
 export async function more() {
-  const L = [['schedule', 'Schedule', 'When each post is planned today'], ['analytics', 'Stats', 'Views, likes and best times'], ['long', 'Long videos', 'Hours-long videos and live streams, cut into parts'], ['grab', 'Save to Drive', 'YouTube and Instagram videos saved into your Google Drive'], ['logs', 'Activity', 'What Reelio did, in plain words'], ['settings', 'Settings', 'Time zone, text size, alerts, backup'], ['help', 'Help', 'Why is it failing? Quick answers']];
+  const L = [['accounts', 'Accounts', 'Instagram, YouTube, Google, Cloudinary and Telegram logins'], ['schedule', 'Schedule', 'When each post is planned today'], ['analytics', 'Stats', 'Views, likes and best times'], ['long', 'Long videos', 'Hours-long videos and live streams, cut into parts'], ['grab', 'Save to Drive', 'YouTube and Instagram videos saved into your Google Drive'], ['logs', 'Activity', 'What Reelio did, in plain words'], ['settings', 'Settings', 'Time zone, text size, alerts, backup'], ['help', 'Help', 'Why is it failing? Quick answers']];
   return h('div', { class: 'col' }, h('h1', null, 'More'), L.map(([k, t, d]) => h('a', { class: 'card', href: '#/' + k, style: 'text-decoration:none;color:inherit' }, h('h2', { style: 'margin:0' }, t), h('span', { class: 'muted' }, d))));
 }
 
@@ -77,7 +77,7 @@ export async function settings(S, params, app) {
   const zones = ZONES.includes(S.tz) ? ZONES : [S.tz, ...ZONES];
   const tgRow = (k, label) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!ev[k], onchange: async (e) => { await saveCfg((c) => { c.notify.telegram.events[k] = e.target.checked; }, 'Reelio: alerts'); } }), h('i'), label);
   const theme = (v) => { LS.set('theme', v); if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v; app.rerender(); };
-  const accent = (v) => { LS.set('accent', v); if (v === 'violet') delete document.documentElement.dataset.accent; else document.documentElement.dataset.accent = v; app.rerender(); };
+  const accent = (v) => { LS.set('accent', v); if (v === 'teal') delete document.documentElement.dataset.accent; else document.documentElement.dataset.accent = v; app.rerender(); };
   const backup = async () => {
     const [cfg, led] = await Promise.all([S.data.read('config.json'), S.data.read('ledger.json')]);
     const url = URL.createObjectURL(new Blob([JSON.stringify({ reelio_backup: 1, config: cfg, ledger: led }, null, 1)], { type: 'application/json' }));
@@ -88,7 +88,7 @@ export async function settings(S, params, app) {
     h('div', { class: 'card col' }, h('h2', null, 'How it looks'),
       h('label', { class: 'f' }, 'Text size', h('input', { type: 'range', min: 15, max: 24, step: 1, value: LS.get('fs', 17), oninput: (e) => { LS.set('fs', +e.target.value); document.documentElement.style.setProperty('--fs', e.target.value + 'px'); } })),
       h('div', { class: 'row' }, [['auto', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => h('button', { class: 'btn small', 'aria-pressed': (LS.get('theme', 'auto') === v) + '', onclick: () => theme(v) }, l))),
-      h('div', { class: 'row', role: 'group', 'aria-label': 'Accent colour' }, [['violet', 'Violet'], ['ocean', 'Ocean'], ['mint', 'Mint'], ['sunset', 'Sunset'], ['rose', 'Rose']].map(([v, l]) => h('button', { class: 'btn small acc acc-' + v, 'aria-pressed': (LS.get('accent', 'violet') === v) + '', onclick: () => accent(v) }, l)))),
+      h('div', { class: 'row', role: 'group', 'aria-label': 'Accent colour' }, [['teal', 'Teal'], ['violet', 'Violet'], ['ocean', 'Ocean'], ['mint', 'Mint'], ['sunset', 'Sunset'], ['rose', 'Rose']].map(([v, l]) => h('button', { class: 'btn small acc acc-' + v, 'aria-pressed': (LS.get('accent', 'teal') === v) + '', onclick: () => accent(v) }, l)))),
     h('div', { class: 'card col' }, h('h2', null, 'Alerts on Telegram'),
       (S.cfg.connections || []).some((c) => c.kind === 'telegram') ? [h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!t.enabled, onchange: async (e) => { await saveCfg((c) => { c.notify.telegram.enabled = e.target.checked; }, 'Reelio: alerts'); } }), h('i'), 'Send me alerts'),
         tgRow('posted', 'Every time something is posted'), tgRow('failed', 'When a video fails'), tgRow('limit', 'When Instagram or YouTube slows us down'), tgRow('token', 'When a login is about to expire'), tgRow('daily', 'A summary each evening')]

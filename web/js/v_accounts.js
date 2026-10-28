@@ -13,7 +13,7 @@ const KINDS = {
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
 const DRIVE_SAVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const YT_ONLY_SCOPES = 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly';
-const redirectUri = () => location.origin + location.pathname;
+const redirectUri = () => location.origin + location.pathname.replace(/[^/]*$/, '');   // always the folder address (…/reelio/), so the Google redirect keeps working wherever the app page lives
 
 function dlg(title, body, actions) {
   const d = h('dialog', null, h('div', { class: 'body' }, h('h2', null, title), body, h('div', { class: 'row' }, actions(() => { d.close(); d.remove(); }))));

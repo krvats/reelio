@@ -3,20 +3,182 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Reelio</title>
-<meta name="description" content="Your videos, posted automatically to Instagram and YouTube.">
-<meta name="theme-color" content="#5a4bff">
-<link rel="manifest" href="manifest.webmanifest">
+<title>Reelio: your videos post themselves</title>
+<meta name="description" content="Reelio posts your own videos to Instagram Reels and YouTube Shorts on a schedule, for every page and channel you run. It keeps going while your phone and laptop are off.">
+<meta name="theme-color" content="#0c2a33">
+<meta property="og:title" content="Reelio: your videos post themselves">
+<meta property="og:description" content="Schedule Instagram Reels and YouTube Shorts for every page you run. Runs in the cloud.">
+<meta property="og:type" content="website">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="preload" href="fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+<script>try{var t=JSON.parse(localStorage.getItem('reelio.theme'));if(t&&t!=='auto')document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>
+/* Google sends people back to this address after "Connect Google"; hand that over to the app untouched. Installed copies open the app directly. */
+(function(){var q=location.search;if(/[?&](code|error)=/.test(q)){location.replace('app.html'+q+location.hash);return}
+if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone){location.replace('app.html'+location.hash)}})();
+</script>
 </head>
 <body>
-<div id="root"><p style="padding:24px">Loading Reelio...</p></div>
-<noscript>Reelio needs JavaScript.</noscript>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="./" aria-label="Reelio home"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="currentColor"/><g fill="var(--table)"><circle cx="32" cy="32" r="17" fill="none" stroke="var(--table)" stroke-width="4"/><circle cx="32" cy="32" r="4"/><circle cx="32" cy="21" r="3.2"/><circle cx="32" cy="43" r="3.2"/><circle cx="21" cy="32" r="3.2"/><circle cx="43" cy="32" r="3.2" fill="#e5352b"/></g></svg>Reelio</a>
+  <a class="l" href="#features" data-i="nav_features">Features</a>
+  <a class="l" href="#how" data-i="nav_how">How it works</a>
+  <a class="l" href="#demo" data-i="nav_demo">Demo</a>
+  <a class="l" href="#faq" data-i="nav_faq">FAQ</a>
+  <button class="icon-btn" id="theme" aria-label="Switch light or dark">Dark</button>
+  <button class="icon-btn" id="lang" aria-label="Language">हिन्दी</button>
+  <a class="btn sm solid" href="#access" data-i="get_access">Get access</a>
+</header>
+</div>
+
+<main id="main">
+<div class="wrap hero">
+  <h1 data-i="h1">Your videos post themselves.</h1>
+  <p class="lede" data-i="lede">Reelio sends your own videos to Instagram Reels and YouTube Shorts at the times you choose, for every page and channel you run. It keeps going while your phone and laptop are off.</p>
+  <div class="cta">
+    <a class="btn solid" href="app.html?demo=1" data-i="try_demo">Try the live demo</a>
+    <a class="btn" href="#access" data-i="get_access">Get access</a>
+  </div>
+</div>
+<div class="strip" aria-hidden="true"><div class="track" id="track"></div></div>
+<div class="wrap">
+  <p class="status" id="status" aria-live="off"><span data-i="today_label">Today on one page:</span> <b id="st_done">6 of 24</b> <span data-i="posted_word">posted.</span> <span id="st_next"></span></p>
+  <p class="works"><span data-i="works1">Posts to Instagram Reels and YouTube Shorts.</span> <span data-i="works2">Reads from Google Drive, YouTube, Instagram or your uploads.</span> <span data-i="works3">Tells you on Telegram when something needs you.</span></p>
+</div>
+
+<section class="wrap" id="why">
+  <h2 data-i="why_h">Posting by hand stops working at three pages.</h2>
+  <div class="cols">
+    <div><h3 data-i="by_hand">By hand</h3><ul>
+      <li data-i="bh1">Open each app, upload, write the caption, add hashtags.</li>
+      <li data-i="bh2">Do it again for every page, every day.</li>
+      <li data-i="bh3">Miss a day when you are busy.</li>
+      <li data-i="bh4">Post the same video twice and not notice.</li></ul></div>
+    <div><h3 data-i="with_r">With Reelio</h3><ul>
+      <li data-i="wr1">Drop videos in a Google Drive folder, or point at a YouTube channel.</li>
+      <li data-i="wr2">Say how many a day, and when.</li>
+      <li data-i="wr3">Reelio posts them on time with the right caption.</li>
+      <li data-i="wr4">Every post is recorded, so nothing goes out twice.</li></ul></div>
+  </div>
+</section>
+
+<section class="wrap" id="how">
+  <h2 data-i="how_h">Set it up once. Check in when you like.</h2>
+  <ol class="steps">
+    <li><h3 data-i="s1h">Connect your pages</h3><p data-i="s1p">Link Instagram, YouTube and Google Drive. Your logins are locked with a passphrase only you know.</p></li>
+    <li><h3 data-i="s2h">Make a flow</h3><p data-i="s2p">A flow moves videos from where you keep them to where you post them. Pick posts a day, the time window, the caption and the look.</p>
+      <div class="flowline" aria-hidden="true"><i>Google Drive</i><s></s><i>6 a day</i><s></s><i>Instagram Reels</i></div></li>
+    <li><h3 data-i="s3h">Leave it running</h3><p data-i="s3p">Reelio checks every five minutes and posts what is due. If something needs you, it says what and how to fix it, and can message you on Telegram.</p></li>
+  </ol>
+</section>
+
+<section class="wrap" id="features">
+  <div class="feat">
+    <header>
+      <h2 data-i="feat_h">Built for people who run many pages.</h2>
+      <p class="sub" data-i="feat_sub">Everything you would do by hand, plus the parts you would forget.</p>
+    </header>
+    <div>
+      <div class="list">
+        <article><h3 data-i="f1h">Many pages, one screen</h3><p data-i="f1p">See every Instagram page and YouTube channel with today's progress. Tick several and pause, resume or change posts a day for all of them at once.</p></article>
+        <article><h3 data-i="f2h">Any source to any target</h3><p data-i="f2p">Videos can come from Google Drive, a YouTube channel or chosen videos, an Instagram page, or files you upload. They can go to Instagram Reels or YouTube Shorts.</p></article>
+        <article><h3 data-i="f3h">Control every post</h3><p data-i="f3p">Up to 100 posts a day, a time window, days of the week, days off, and a little randomness so posting looks natural. Move, caption, skip or post any single video now.</p></article>
+        <article><h3 data-i="f4h">Captions and looks</h3><p data-i="f4p">Fixed, random or table captions, hashtag sets and variants. Filters, blur or crop to fit vertical, a watermark and a cover frame.</p></article>
+        <article><h3 data-i="f5h">Never twice, never lost</h3><p data-i="f5p">A permanent record of every post stops duplicates, even when a file is renamed. One bad video never blocks the rest of the queue.</p></article>
+        <article><h3 data-i="f6h">Long videos, cut for you</h3><p data-i="f6p">Turn an hour-long video or a live stream into Shorts-sized clips and queue them.</p></article>
+        <article><h3 data-i="f7h">Keeps itself running</h3><p data-i="f7p">Cloud schedules can run late. Reelio notices and starts a check on its own. When YouTube blocks downloads it rotates through your saved cookies and rests the ones that fail.</p></article>
+        <article><h3 data-i="f8h">Plain-language help</h3><p data-i="f8p">When something fails, Reelio says why and what to tap. One button checks that every account is connected.</p></article>
+        <article><h3 data-i="f9h">Stats that matter</h3><p data-i="f9p">Views, likes and best posting hours for each Instagram page.</p></article>
+        <article><h3 data-i="f10h">Private by design</h3><p data-i="f10p">Logins are encrypted with AES-256 in your browser before they are saved. Only the official Instagram and YouTube connections are used.</p></article>
+        <article><h3 data-i="f11h">Made for phones</h3><p data-i="f11p">Install it like an app. Big buttons, light and dark, adjustable text size, and key screens in Hindi.</p></article>
+      </div>
+      <div class="planner" id="planner">
+        <h3 data-i="pl_h">Plan a day</h3>
+        <div class="row"><label for="ppd" data-i="pl_label">Posts a day</label><input id="ppd" type="range" min="1" max="30" value="8"><output id="ppdv" for="ppd">8</output></div>
+        <div class="times" id="times" aria-live="polite"></div>
+        <small data-i="pl_note">Times shift by a few minutes every day, so posting never looks like a robot. This is a sample between 9:00 and 22:00.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="demo">
+  <h2 data-i="demo_h">Click around the real app.</h2>
+  <p class="sub" data-i="demo_sub">The demo runs the actual Reelio screens on made-up pages. Nothing is saved and nothing is posted.</p>
+  <div class="shots">
+    <div class="tabs" role="group" aria-label="Screens" id="shottabs">
+      <button aria-pressed="true" data-shot="home" data-i="t_home">Home</button>
+      <button aria-pressed="false" data-shot="pages" data-i="t_pages">Pages</button>
+      <button aria-pressed="false" data-shot="flows" data-i="t_flows">Flows</button>
+      <button aria-pressed="false" data-shot="schedule" data-i="t_schedule">Schedule</button>
+      <button aria-pressed="false" data-shot="stats" data-i="t_stats">Stats</button>
+    </div>
+    <div class="stage">
+      <div class="desk"><div class="bar"><i></i><i></i><i></i></div><img id="shotd" src="shots/home-d.webp" width="1280" height="820" alt="Reelio home screen on a computer" decoding="async"></div>
+      <div class="phone"><img id="shotm" src="shots/home-m.webp" width="390" height="844" alt="Reelio home screen on a phone" decoding="async" loading="lazy"></div>
+    </div>
+    <p class="cap"><a class="btn solid" href="app.html?demo=1" data-i="open_demo">Open the live demo</a></p>
+  </div>
+</section>
+
+<section class="wrap" id="limits">
+  <h2 data-i="lim_h">What to expect.</h2>
+  <ul class="limits">
+    <li data-i="lim1">Instagram allows up to 100 posts a day per account through its official connection. New YouTube projects can upload about six videos a day.</li>
+    <li data-i="lim2">Posting runs on GitHub's schedule, about every five minutes. It can run late; Reelio catches up the same day.</li>
+    <li data-i="lim3">Only post videos you own or have permission to use.</li>
+  </ul>
+</section>
+
+<section class="wrap" id="access">
+  <div class="access">
+    <div>
+      <h2 data-i="acc_h">Get Reelio.</h2>
+      <p class="sub" data-i="acc_sub">Reelio is set up with you personally, so tell us what you run.</p>
+      <ol>
+        <li data-i="a1">Message us how many Instagram pages and YouTube channels you manage.</li>
+        <li data-i="a2">We confirm what fits and send your access.</li>
+        <li data-i="a3">Open Reelio and connect your accounts. The app walks you through each step; it takes about 15 minutes.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3 data-i="card_h">Ready when you are</h3>
+      <p data-i="card_p">Plans and payment are agreed in the message. Nothing is charged on this site.</p>
+      <div class="cta">
+        <a class="btn solid" href="#access" data-contact data-i="msg_us">Message us on Instagram</a>
+        <a class="btn" href="app.html" data-i="have_access">I already have access</a>
+      </div>
+      <small data-i="card_small">Want to look first? The live demo needs no sign-up.</small>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="faq">
+  <h2 data-i="faq_h">Questions.</h2>
+  <div class="faq">
+    <details><summary data-i="q1">Do I need to keep my phone or computer on?</summary><p data-i="a_1">No. Reelio runs in the cloud and posts by itself.</p></details>
+    <details><summary data-i="q2">Which accounts work?</summary><p data-i="a_2">Instagram professional accounts (creator or business) and YouTube channels, through their official connections.</p></details>
+    <details><summary data-i="q3">Is it allowed by Instagram and YouTube?</summary><p data-i="a_3">Reelio uses their official publishing connections only. It does not scrape accounts or use unofficial logins. You are responsible for posting only videos you own or may use.</p></details>
+    <details><summary data-i="q4">Where are my logins kept?</summary><p data-i="a_4">They are encrypted with a passphrase only you know before they are saved, and they are never shown again in the app.</p></details>
+    <details><summary data-i="q5">How many posts a day can I schedule?</summary><p data-i="a_5">You choose, up to Instagram's limit of 100 a day per account. YouTube's own upload quota applies to YouTube.</p></details>
+    <details><summary data-i="q6">What if YouTube blocks the download?</summary><p data-i="a_6">Reelio tries your saved cookies in turn, rests the ones that fail, and falls back to a backup Drive folder. If everything fails it tells you exactly what to add.</p></details>
+    <details><summary data-i="q7">Can I try it first?</summary><p data-i="a_7">Yes. The live demo has no sign-up and uses sample data.</p></details>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap">
+  <span>© Reelio</span>
+  <a href="terms.html" data-i="f_terms">Terms</a><a href="privacy.html" data-i="f_priv">Privacy</a><a href="dmca.html" data-i="f_dmca">Copyright</a><a href="https://instagram.com/kr5na_" target="_blank" rel="noopener">Instagram</a><a href="https://x.com/kr5na_" target="_blank" rel="noopener">X</a><a href="https://www.reddit.com/user/kr5na_" target="_blank" rel="noopener">Reddit</a>
+  <a class="sp" href="app.html" data-i="open_app">Open the app</a>
+</div></footer>
+
 <script src="app-config.js"></script>
-<script type="module" src="js/app.js"></script>
+<script src="site.js"></script>
 </body>
 </html>
