@@ -84,5 +84,5 @@ class Hub(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     d = build(); Hub.root = d.data
     srv = ThreadingHTTPServer(("127.0.0.1", PORT), Hub)
-    print(f"READY http://127.0.0.1:{PORT}/?api=http://127.0.0.1:{PORT}/api&owner=krvats  data={d.data}", flush=True)
+    print(f"READY http://127.0.0.1:{PORT}/app.html?api=http://127.0.0.1:{PORT}/api&owner=krvats  data={d.data}", flush=True)
     srv.serve_forever()
