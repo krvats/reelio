@@ -1,21 +1,46 @@
 {
- "version": "1.1.0",
- "at": "2026-10-14T23:19:31Z",
+ "version": "1.9.0",
+ "at": "2026-10-30T20:47:33Z",
  "files": {
+  ".github/workflows/deploy-keepalive.yml": {
+   "sha": "9390578edf78295e",
+   "lines": 23,
+   "bytes": 551
+  },
+  ".github/workflows/grab.yml": {
+   "sha": "3525923a15752710",
+   "lines": 53,
+   "bytes": 2178
+  },
+  ".github/workflows/long.yml": {
+   "sha": "1fe781e93ead4ee4",
+   "lines": 51,
+   "bytes": 1982
+  },
   ".github/workflows/pages.yml": {
-   "sha": "82f43d3128ae659d",
-   "lines": 28,
-   "bytes": 619
+   "sha": "5986de9d154eded5",
+   "lines": 30,
+   "bytes": 784
   },
   ".github/workflows/tests.yml": {
    "sha": "d2c09d1ad5222a91",
    "lines": 12,
    "bytes": 312
   },
+  ".github/workflows/tick-hosted.yml": {
+   "sha": "15a15485d9d642ba",
+   "lines": 30,
+   "bytes": 1045
+  },
   ".github/workflows/tick.yml": {
-   "sha": "60d933914c3d2705",
-   "lines": 49,
-   "bytes": 1666
+   "sha": "a8ed6ceda0413f2a",
+   "lines": 56,
+   "bytes": 2129
+  },
+  ".github/workflows/watchdog.yml": {
+   "sha": "aecb501062bfb830",
+   "lines": 38,
+   "bytes": 1704
   },
   "CLAUDE.md": {
    "sha": "bc6d2391aba748e3",
@@ -23,64 +48,149 @@
    "bytes": 2084
   },
   "CONTEXT.md": {
-   "sha": "1295ea15121be565",
-   "lines": 43,
-   "bytes": 7233
+   "sha": "650ab9e72f4cc06b",
+   "lines": 68,
+   "bytes": 13006
+  },
+  "GRAB_README.md": {
+   "sha": "748214c361dcf65d",
+   "lines": 27,
+   "bytes": 1469
+  },
+  "LONG_VIDEOS_README.md": {
+   "sha": "51109c8e5a5daca3",
+   "lines": 32,
+   "bytes": 2045
   },
   "README.md": {
-   "sha": "07b8f85f5e7e9422",
-   "lines": 38,
-   "bytes": 3344
+   "sha": "656dc886041bd5c4",
+   "lines": 68,
+   "bytes": 3853
+  },
+  "UPDATE_1.9_README.md": {
+   "sha": "e3d11931c3ba3f0e",
+   "lines": 28,
+   "bytes": 3272
   },
   "api/README.md": {
-   "sha": "da15e1346b51baba",
-   "lines": 10,
-   "bytes": 1209
+   "sha": "a2f42a93253fe058",
+   "lines": 12,
+   "bytes": 1348
+  },
+  "api/dev-server.mjs": {
+   "sha": "5190d3dd89ea20f9",
+   "lines": 13,
+   "bytes": 1090
   },
   "api/package.json": {
    "sha": "283a5e6ce787eed1",
    "lines": 4,
    "bytes": 261
   },
+  "api/scripts/dev-server.mjs": {
+   "sha": "88304aaea8075953",
+   "lines": 11,
+   "bytes": 1043
+  },
   "api/src/index.js": {
-   "sha": "e1d400a7746a51a2",
-   "lines": 143,
-   "bytes": 10914
+   "sha": "4db3d34fe76e1144",
+   "lines": 217,
+   "bytes": 21143
   },
   "api/test/api.test.mjs": {
-   "sha": "f2874c50a9af34b6",
-   "lines": 106,
-   "bytes": 8677
+   "sha": "b47f3c5c96a60e1d",
+   "lines": 130,
+   "bytes": 11115
+  },
+  "api/test/team.test.mjs": {
+   "sha": "837fcc4bbe972ad4",
+   "lines": 73,
+   "bytes": 7215
   },
   "api/wrangler.toml": {
    "sha": "803970cfebfad63a",
    "lines": 8,
    "bytes": 295
   },
+  "docs/ADD_LINKS.md": {
+   "sha": "d37e0f9a62003bec",
+   "lines": 28,
+   "bytes": 3560
+  },
+  "docs/ADS.md": {
+   "sha": "138854eaf048f6ad",
+   "lines": 12,
+   "bytes": 1012
+  },
   "docs/CHANGELOG.md": {
-   "sha": "a4ef0307b193aa70",
-   "lines": 15,
-   "bytes": 1182
+   "sha": "59dbf21526ec87c8",
+   "lines": 31,
+   "bytes": 5287
+  },
+  "docs/COOKIES.md": {
+   "sha": "a84c1c4a20ae090f",
+   "lines": 28,
+   "bytes": 2787
+  },
+  "docs/GRAB.md": {
+   "sha": "0ead1134190c53b6",
+   "lines": 48,
+   "bytes": 4558
   },
   "docs/PHASE_A.md": {
    "sha": "100e9085e55a2a7b",
    "lines": 35,
    "bytes": 4412
   },
+  "docs/RELIABILITY.md": {
+   "sha": "6225afb6aed23bd0",
+   "lines": 25,
+   "bytes": 1614
+  },
   "docs/ROADMAP.md": {
-   "sha": "4a716888067c8494",
-   "lines": 22,
-   "bytes": 1862
+   "sha": "ef8deac05df25460",
+   "lines": 34,
+   "bytes": 3128
+  },
+  "docs/SELLING.md": {
+   "sha": "d58795b992ca28b3",
+   "lines": 25,
+   "bytes": 2394
   },
   "docs/SETUP_CHECKLIST.md": {
    "sha": "ee99f8cd81043d0f",
    "lines": 13,
    "bytes": 690
   },
+  "docs/TUTORIAL.md": {
+   "sha": "a22cc79d00d6c6eb",
+   "lines": 68,
+   "bytes": 7479
+  },
+  "keepalive/package.json": {
+   "sha": "d8009569dc640175",
+   "lines": 2,
+   "bytes": 149
+  },
+  "keepalive/src/index.js": {
+   "sha": "030424ce3c955773",
+   "lines": 61,
+   "bytes": 3494
+  },
+  "keepalive/test/decide.test.mjs": {
+   "sha": "8d180ee8df6f0e4e",
+   "lines": 14,
+   "bytes": 1139
+  },
+  "keepalive/wrangler.toml": {
+   "sha": "0e5bfe87b94e95c0",
+   "lines": 14,
+   "bytes": 365
+  },
   "license/README.md": {
-   "sha": "4ab94b908bad9140",
-   "lines": 24,
-   "bytes": 1889
+   "sha": "a616be047bb24306",
+   "lines": 27,
+   "bytes": 2206
   },
   "license/package.json": {
    "sha": "06cfa264013bab26",
@@ -108,9 +218,9 @@
    "bytes": 3492
   },
   "license/src/index.js": {
-   "sha": "7b3d72e414058f65",
-   "lines": 247,
-   "bytes": 18321
+   "sha": "5112bd438320e3d9",
+   "lines": 269,
+   "bytes": 21096
   },
   "license/src/store.js": {
    "sha": "68b95beaf24f66e7",
@@ -118,19 +228,74 @@
    "bytes": 1055
   },
   "license/test/license.test.mjs": {
-   "sha": "9c5b032a3528a2e6",
-   "lines": 207,
-   "bytes": 15153
+   "sha": "c84d8dab7b416592",
+   "lines": 234,
+   "bytes": 18099
   },
   "license/wrangler.toml": {
-   "sha": "aebde4f803f3d02e",
-   "lines": 17,
-   "bytes": 580
+   "sha": "93856744fb10879b",
+   "lines": 19,
+   "bytes": 688
+  },
+  "tools/ad_template.html": {
+   "sha": "42c4bef58c897292",
+   "lines": 27,
+   "bytes": 2677
+  },
+  "tools/cookie-sync/README.md": {
+   "sha": "5174c08b0fac3eed",
+   "lines": 21,
+   "bytes": 2225
+  },
+  "tools/cookie-sync/background.js": {
+   "sha": "11349d112cb26b3f",
+   "lines": 9,
+   "bytes": 471
+  },
+  "tools/cookie-sync/crypto.js": {
+   "sha": "a40f69f814eec4bc",
+   "lines": 20,
+   "bytes": 1528
+  },
+  "tools/cookie-sync/manifest.json": {
+   "sha": "79529ca05d9ea22a",
+   "lines": 11,
+   "bytes": 550
+  },
+  "tools/cookie-sync/pool.js": {
+   "sha": "08a94d88e0d8f807",
+   "lines": 26,
+   "bytes": 1365
+  },
+  "tools/cookie-sync/popup.html": {
+   "sha": "79e7bdbf028a247c",
+   "lines": 11,
+   "bytes": 644
+  },
+  "tools/cookie-sync/popup.js": {
+   "sha": "ff62ce2b679840c7",
+   "lines": 46,
+   "bytes": 3141
+  },
+  "tools/cookie-sync/sync.js": {
+   "sha": "7400e6917b750152",
+   "lines": 98,
+   "bytes": 6052
+  },
+  "tools/cookie-sync/test/sync.test.mjs": {
+   "sha": "970f16087d4fdf5c",
+   "lines": 46,
+   "bytes": 3652
   },
   "tools/handoff.py": {
    "sha": "f1c95dc6953c5272",
    "lines": 163,
    "bytes": 8494
+  },
+  "tools/make_ads.py": {
+   "sha": "f121a0d8000c253f",
+   "lines": 22,
+   "bytes": 1223
   },
   "tools/make_seed.py": {
    "sha": "fa61f3131ca432e7",
@@ -138,49 +303,104 @@
    "bytes": 6083
   },
   "tools/screens.py": {
-   "sha": "60506b6763ca3268",
-   "lines": 45,
-   "bytes": 2544
+   "sha": "dfae1f728339e7d4",
+   "lines": 47,
+   "bytes": 2683
+  },
+  "tools/ui_api_smoke.py": {
+   "sha": "95ea03fb31037b1f",
+   "lines": 46,
+   "bytes": 3190
+  },
+  "tools/ui_check.py": {
+   "sha": "bad10b989aa09d53",
+   "lines": 75,
+   "bytes": 5080
   },
   "tools/ui_demo.py": {
-   "sha": "86e031e670275ec6",
+   "sha": "1bc304338f0ef33b",
    "lines": 89,
-   "bytes": 5668
+   "bytes": 5676
+  },
+  "web/admin.html": {
+   "sha": "4c748f25a4396224",
+   "lines": 19,
+   "bytes": 3482
   },
   "web/app-config.js": {
-   "sha": "1a7d73cdf079c0f2",
-   "lines": 7,
-   "bytes": 258
+   "sha": "2c6f4ebd80f49930",
+   "lines": 14,
+   "bytes": 738
+  },
+  "web/app.html": {
+   "sha": "89105ade9864ee9c",
+   "lines": 28,
+   "bytes": 2012
+  },
+  "web/dmca.html": {
+   "sha": "184f843588be911b",
+   "lines": 13,
+   "bytes": 2451
   },
   "web/icon.svg": {
-   "sha": "f1fa3fa34ca6d18f",
-   "lines": 2,
-   "bytes": 418
+   "sha": "c7c9ab1b3212cb36",
+   "lines": 1,
+   "bytes": 520
   },
   "web/index.html": {
-   "sha": "c562e062b11f2e67",
-   "lines": 23,
-   "bytes": 1035
+   "sha": "3e051e11ae9db7fc",
+   "lines": 189,
+   "bytes": 13979
   },
   "web/js/app.js": {
-   "sha": "d6f3cf2bfe86de93",
-   "lines": 110,
-   "bytes": 7135
+   "sha": "502d883e4fec65d7",
+   "lines": 192,
+   "bytes": 12780
+  },
+  "web/js/cookies.js": {
+   "sha": "458f0aa90bff22e4",
+   "lines": 100,
+   "bytes": 8977
   },
   "web/js/core.js": {
-   "sha": "232b3baed747e831",
-   "lines": 208,
-   "bytes": 12160
+   "sha": "6cc06194b73e8ce4",
+   "lines": 253,
+   "bytes": 14962
+  },
+  "web/js/demo.js": {
+   "sha": "30b68811f4b2e452",
+   "lines": 159,
+   "bytes": 17456
+  },
+  "web/js/heal.js": {
+   "sha": "f0b33bc63ebf0bee",
+   "lines": 32,
+   "bytes": 1579
+  },
+  "web/js/i18n.js": {
+   "sha": "c5ffa64af0714a94",
+   "lines": 18,
+   "bytes": 3743
   },
   "web/js/license.js": {
-   "sha": "ed9e6a4c9cefab6a",
-   "lines": 67,
-   "bytes": 4471
+   "sha": "48095c35b42229e6",
+   "lines": 69,
+   "bytes": 4730
+  },
+  "web/js/links.js": {
+   "sha": "bb6a15a5f0f52d92",
+   "lines": 28,
+   "bytes": 1326
+  },
+  "web/js/login.js": {
+   "sha": "73570755d2c5503f",
+   "lines": 25,
+   "bytes": 2163
   },
   "web/js/palette.js": {
-   "sha": "f5b26d208dd3243e",
+   "sha": "1999dd9445d160f1",
    "lines": 36,
-   "bytes": 2770
+   "bytes": 2867
   },
   "web/js/setup.js": {
    "sha": "c7ab713496beb6fc",
@@ -188,24 +408,34 @@
    "bytes": 7698
   },
   "web/js/v_accounts.js": {
-   "sha": "d9c8407f087f35b2",
+   "sha": "f850687dc3a06aec",
    "lines": 134,
-   "bytes": 15260
+   "bytes": 15858
   },
   "web/js/v_flows.js": {
-   "sha": "45fe5f80fd8cb1a4",
-   "lines": 157,
-   "bytes": 19270
+   "sha": "4034ba247d08a164",
+   "lines": 175,
+   "bytes": 23398
+  },
+  "web/js/v_grab.js": {
+   "sha": "310b70c05e78a7d3",
+   "lines": 207,
+   "bytes": 20349
   },
   "web/js/v_home.js": {
-   "sha": "cbeb66a4a44b4456",
-   "lines": 82,
-   "bytes": 6799
+   "sha": "6dab657ad1e47afd",
+   "lines": 90,
+   "bytes": 7656
+  },
+  "web/js/v_long.js": {
+   "sha": "e03f072dd86bd4ea",
+   "lines": 183,
+   "bytes": 16361
   },
   "web/js/v_more.js": {
-   "sha": "fcb3784b951803dc",
-   "lines": 106,
-   "bytes": 14076
+   "sha": "66ac0862fe91f349",
+   "lines": 127,
+   "bytes": 17334
   },
   "web/js/v_pages.js": {
    "sha": "ca94b47560faeb19",
@@ -213,34 +443,69 @@
    "bytes": 4796
   },
   "web/js/v_paywall.js": {
-   "sha": "f72c00b59c7f3c56",
-   "lines": 50,
-   "bytes": 4101
+   "sha": "789679395b43b1c9",
+   "lines": 70,
+   "bytes": 6700
   },
   "web/js/v_queue.js": {
-   "sha": "a871373ac2d3edb8",
-   "lines": 94,
-   "bytes": 9194
+   "sha": "bd2dd08aee57428c",
+   "lines": 115,
+   "bytes": 11157
   },
   "web/manifest.webmanifest": {
-   "sha": "870961a3a3c7f402",
-   "lines": 2,
-   "bytes": 286
+   "sha": "b600fd126e386e06",
+   "lines": 45,
+   "bytes": 806
   },
   "web/privacy.html": {
-   "sha": "d8840ac82fb6d60e",
-   "lines": 20,
-   "bytes": 1445
+   "sha": "735edcf5700c6e8a",
+   "lines": 22,
+   "bytes": 2816
+  },
+  "web/promote.html": {
+   "sha": "1c25266dce46f986",
+   "lines": 49,
+   "bytes": 4919
+  },
+  "web/site-ads.js": {
+   "sha": "382a4009ab1c1b42",
+   "lines": 36,
+   "bytes": 3200
+  },
+  "web/site.css": {
+   "sha": "11d357571f96a3c9",
+   "lines": 198,
+   "bytes": 17143
+  },
+  "web/site.js": {
+   "sha": "4977a211e1713589",
+   "lines": 121,
+   "bytes": 20402
   },
   "web/style.css": {
-   "sha": "45cb4c88861bc236",
-   "lines": 162,
-   "bytes": 14593
+   "sha": "8096ffda1079d043",
+   "lines": 272,
+   "bytes": 24119
   },
   "web/sw.js": {
-   "sha": "8586bc92236143e5",
-   "lines": 11,
-   "bytes": 1053
+   "sha": "4bcee2542b1751aa",
+   "lines": 25,
+   "bytes": 1917
+  },
+  "web/terms.html": {
+   "sha": "959221decef0a601",
+   "lines": 20,
+   "bytes": 3631
+  },
+  "web/upi-admin.html": {
+   "sha": "1c2422a7ed8bb483",
+   "lines": 13,
+   "bytes": 2519
+  },
+  "web/welcome.html": {
+   "sha": "94df91f800e6c0d7",
+   "lines": 1,
+   "bytes": 159
   },
   "worker/reelio/__init__.py": {
    "sha": "f7b4864f754e9ff7",
@@ -257,15 +522,25 @@
    "lines": 44,
    "bytes": 2522
   },
+  "worker/reelio/apimode.py": {
+   "sha": "b2c4c0a0c1f7dc56",
+   "lines": 85,
+   "bytes": 4574
+  },
   "worker/reelio/captions.py": {
    "sha": "960e793393ca1cb8",
    "lines": 63,
    "bytes": 2421
   },
   "worker/reelio/cli.py": {
-   "sha": "9327568b3085f640",
-   "lines": 54,
-   "bytes": 2272
+   "sha": "ceed733406d296af",
+   "lines": 79,
+   "bytes": 3457
+  },
+  "worker/reelio/cookiepool.py": {
+   "sha": "c8cc5776077e218d",
+   "lines": 208,
+   "bytes": 9163
   },
   "worker/reelio/crypto.py": {
    "sha": "2fc8a9a455cf46fc",
@@ -273,14 +548,19 @@
    "bytes": 1189
   },
   "worker/reelio/diagnose.py": {
-   "sha": "6ce5a4ba15126b2c",
-   "lines": 115,
-   "bytes": 5814
+   "sha": "28dd22ab17b7e326",
+   "lines": 131,
+   "bytes": 7092
+  },
+  "worker/reelio/driveup.py": {
+   "sha": "a4d357aa72bfc46b",
+   "lines": 164,
+   "bytes": 9068
   },
   "worker/reelio/engine.py": {
-   "sha": "309b855737a0b90c",
-   "lines": 647,
-   "bytes": 34489
+   "sha": "9397a4f68212f512",
+   "lines": 701,
+   "bytes": 37857
   },
   "worker/reelio/errors.py": {
    "sha": "9cff67be03e31ee2",
@@ -292,15 +572,30 @@
    "lines": 38,
    "bytes": 2074
   },
+  "worker/reelio/grab.py": {
+   "sha": "431055f6684588a7",
+   "lines": 679,
+   "bytes": 32406
+  },
   "worker/reelio/hosting.py": {
-   "sha": "861ce53e5dbcc005",
+   "sha": "2c9ed9f876adfb27",
    "lines": 70,
-   "bytes": 3336
+   "bytes": 3430
   },
   "worker/reelio/license.py": {
    "sha": "54bdbd3c02d90891",
    "lines": 68,
    "bytes": 3217
+  },
+  "worker/reelio/live.py": {
+   "sha": "456e31261281ee7b",
+   "lines": 38,
+   "bytes": 1771
+  },
+  "worker/reelio/longjob.py": {
+   "sha": "58095ea8e0d94432",
+   "lines": 478,
+   "bytes": 23156
   },
   "worker/reelio/media.py": {
    "sha": "fdd22f029f929614",
@@ -313,39 +608,49 @@
    "bytes": 1683
   },
   "worker/reelio/scheduler.py": {
-   "sha": "615aa67e6cfd3173",
-   "lines": 68,
-   "bytes": 2593
+   "sha": "ba8ade18baf40b26",
+   "lines": 96,
+   "bytes": 3842
   },
   "worker/reelio/sources/__init__.py": {
-   "sha": "c62839ab91d40340",
+   "sha": "aa792fb265b1a30c",
    "lines": 32,
-   "bytes": 1398
+   "bytes": 1441
   },
   "worker/reelio/sources/drive.py": {
-   "sha": "d54632f8740e4cae",
-   "lines": 83,
-   "bytes": 3519
+   "sha": "8f11055ad6efceda",
+   "lines": 131,
+   "bytes": 5778
   },
   "worker/reelio/sources/instagram.py": {
    "sha": "633e95dfef386143",
    "lines": 32,
    "bytes": 1420
   },
+  "worker/reelio/sources/links.py": {
+   "sha": "da87840df829cae1",
+   "lines": 139,
+   "bytes": 6543
+  },
+  "worker/reelio/sources/page.py": {
+   "sha": "0ca81854fd50cb03",
+   "lines": 97,
+   "bytes": 4285
+  },
   "worker/reelio/sources/upload.py": {
-   "sha": "d675bd6407c8b1d0",
-   "lines": 34,
-   "bytes": 1317
+   "sha": "250b7b2076d1715d",
+   "lines": 46,
+   "bytes": 1835
   },
   "worker/reelio/sources/youtube.py": {
-   "sha": "09a2dbd61c6df8e6",
-   "lines": 297,
-   "bytes": 14468
+   "sha": "5c6fce8634285849",
+   "lines": 329,
+   "bytes": 16346
   },
   "worker/reelio/store.py": {
-   "sha": "81978f1a15c9415a",
-   "lines": 233,
-   "bytes": 9363
+   "sha": "d610d24aa15a6896",
+   "lines": 265,
+   "bytes": 10592
   },
   "worker/reelio/targets/__init__.py": {
    "sha": "eab99ffe2c226c09",
@@ -353,9 +658,9 @@
    "bytes": 123
   },
   "worker/reelio/targets/instagram.py": {
-   "sha": "fbe54f77c4821c75",
-   "lines": 133,
-   "bytes": 6384
+   "sha": "3e3f1acc13222252",
+   "lines": 143,
+   "bytes": 7032
   },
   "worker/reelio/targets/youtube.py": {
    "sha": "9fb19779c618dfb3",
@@ -378,24 +683,64 @@
    "bytes": 39
   },
   "worker/tests/helpers.py": {
-   "sha": "9f5238c087fcdec3",
-   "lines": 285,
-   "bytes": 15245
+   "sha": "079695fb7d05ad2f",
+   "lines": 315,
+   "bytes": 16895
+  },
+  "worker/tests/test_apimode.py": {
+   "sha": "04af731d1b7ddc44",
+   "lines": 72,
+   "bytes": 4153
+  },
+  "worker/tests/test_cookiepool.py": {
+   "sha": "f9e833fd8504dd20",
+   "lines": 147,
+   "bytes": 7270
+  },
+  "worker/tests/test_cookiesync.py": {
+   "sha": "8189422a8c9dd302",
+   "lines": 53,
+   "bytes": 2577
   },
   "worker/tests/test_e2e.py": {
-   "sha": "638cdddb11446ace",
-   "lines": 403,
-   "bytes": 20614
+   "sha": "ab751d9a61f10569",
+   "lines": 445,
+   "bytes": 23592
   },
   "worker/tests/test_git.py": {
    "sha": "ff9d8b455e3b8cc8",
    "lines": 47,
    "bytes": 2403
   },
+  "worker/tests/test_grab.py": {
+   "sha": "289aeb8e58d8930d",
+   "lines": 446,
+   "bytes": 26499
+  },
   "worker/tests/test_license.py": {
    "sha": "9539ffca29b728eb",
    "lines": 80,
    "bytes": 3780
+  },
+  "worker/tests/test_links.py": {
+   "sha": "3032d0df150e6ac9",
+   "lines": 189,
+   "bytes": 9904
+  },
+  "worker/tests/test_long.py": {
+   "sha": "04d55aae15344d49",
+   "lines": 167,
+   "bytes": 8566
+  },
+  "worker/tests/test_parallel.py": {
+   "sha": "6ac1f2b9de93e6e9",
+   "lines": 94,
+   "bytes": 4756
+  },
+  "worker/tests/test_phase_c.py": {
+   "sha": "da0e248b52c3f032",
+   "lines": 54,
+   "bytes": 3253
   },
   "worker/tests/test_units.py": {
    "sha": "df54ac7b5588e983",
