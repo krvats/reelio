@@ -58,3 +58,10 @@ GitHub's cron is best-effort (late or skipped runs). Three independent wake-ups,
 `web/index.html` is the marketing site (site.css, site.js); the app is `web/app.html` (manifest start_url, SW shell). Google OAuth redirect stays the FOLDER address (`…/reelio/`): index.html forwards `?code=` to app.html. Demo mode: `app.html?demo=1` (`js/demo.js`, in-memory sample data). `sw.js` has `__BUILD__` stamped by pages.yml. app.js caches last config/status in localStorage (`reelio.core_cache_v1`) and repaints Home only if the fresh data differs. Theme: light-table (teal brand, red only as the grease-pencil mark on the site). Not tested live: GitHub Pages deploy of the new layout, SW update toast on a real redeploy.
 
 Owner decisions (Oct 2026): contact = Instagram DM @kr5na_ (X and Reddit @kr5na_ in footer); legal pages brand-only, India; refunds: full before setup starts, none after delivery; licence All Rights Reserved; payments handled off-site, none on the website.
+
+
+## v1.9 notes
+- Theme: Jankari Patra look (tokens in `web/style.css` and `web/site.css`; `--bd` strong border, `--hs` hard shadow). Fonts: Bricolage Grotesque + Figtree (bundled). Space Grotesk could not be downloaded; swap = replace the font-family names.
+- Save to Drive (`grab`) is the single "download to Drive" feature; there is no separate Extract tab.
+- Share target + shortcuts in `web/manifest.webmanifest`; `app.js` `shareIn()` stores the link in sessionStorage `reelio.share`.
+- Ads: `web/promote.html`, `web/site-ads.js`, `web/ads/`, `docs/ADS.md`.

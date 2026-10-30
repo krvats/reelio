@@ -35,3 +35,13 @@ Why a separate login: Google refuses to put `drive.file` and the YouTube permiss
 ## Honest limits (not tested live)
 Real YouTube/Instagram downloads from GitHub runner IPs, Google's real Drive consent and upload, and the page in a real browser. The worker logic is tested against fakes (13 tests in `worker/tests/test_grab.py`).
 Rights: only save videos you own or may keep. Instagram links outside your own account need Instagram cookies and can get that account restricted; "My Instagram account" uses the official API and needs nothing extra.
+
+
+## New in 1.9
+- **Ownership tick**: Save to Drive refuses to add anything until "I own these videos or have permission to save them" is ticked. The worker checks it too.
+- **How many**: "Newest 10 / 25 / 50 / 100 / All" for channels and playlists.
+- **YouTube channel part**: Videos, Shorts, or both (no video saved twice).
+- **Clean links**: `youtu.be/ID?si=...`, `youtube.com/shorts/ID` and `watch?v=ID` are the same video; Instagram `?igsh=` junk is removed.
+- **Check for new videos**: a button on every finished list; saves only what is new.
+- **Share to Reelio**: after installing the app on a phone, share a link from YouTube or Instagram and pick Reelio; Save to Drive opens with the link filled in.
+- **Instagram of someone else**: Instagram does not let cloud tools list another account's reels. Paste the reel links (works with cookies), or use "My Instagram account" for your own.

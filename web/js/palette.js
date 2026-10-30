@@ -4,7 +4,7 @@ import { S, runNow, saveCfg, app } from './app.js';
 
 const go = (hash) => () => { location.hash = hash; };
 function commands() {
-  const base = [['Home', go('#/home')], ['Pages & channels', go('#/pages')], ['Videos', go('#/queue')], ['Flows', go('#/flows')], ['New flow', go('#/flows/new')], ['Accounts', go('#/accounts')], ['Schedule', go('#/schedule')], ['Stats', go('#/analytics')], ['Activity', go('#/logs')], ['Settings', go('#/settings')], ['Help', go('#/help')],
+  const base = [['Home', go('#/home')], ['Pages & channels', go('#/pages')], ['Videos', go('#/queue')], ['Flows', go('#/flows')], ['New flow', go('#/flows/new')], ['Accounts', go('#/accounts')], ['Save videos to Google Drive', go('#/grab')], ['Paste a link and save to Drive', go('#/grab')], ['Schedule', go('#/schedule')], ['Stats', go('#/analytics')], ['Activity', go('#/logs')], ['Settings', go('#/settings')], ['Help', go('#/help')],
     ['Check now (run everything)', () => runNow('run')],
     [S.cfg && S.cfg.paused ? 'Turn posting on' : 'Pause everything', async () => { await saveCfg((c) => { c.paused = !c.paused; }, 'Reelio: pause toggled'); toast('Done.'); app.rerender(); }]];
   for (const r of (S.cfg && S.cfg.routes) || []) { base.push([`Edit flow: ${r.name}`, go('#/flows/' + r.id)], [`Videos in: ${r.name}`, go('#/queue/' + r.id)], [`Run now: ${r.name}`, () => runNow('run', r.id)]); }

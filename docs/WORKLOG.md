@@ -9,3 +9,4 @@
 - 2026-10-15T05:19:16Z v1.1.0: v1.4: worker api mode, hosted workflow, tutorial, UI fixes (+15 added, ~20 changed, -0 removed)
 - 2026-10-15T05:19:21Z v1.1.0: tests json (+0 added, ~0 changed, -0 removed)
 - 2026-10-15T05:31:51Z v1.1.0: UPI payments, tutorial for no-company path (+1 added, ~10 changed, -0 removed)
+- 2026-10-30T20:47:33Z v1.9.0: v1.9 theme, grab merge, share, ads (+69 added, ~45 changed, -0 removed)

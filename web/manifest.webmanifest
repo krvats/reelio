@@ -1,1 +1,45 @@
-{"name":"Reelio","short_name":"Reelio","description":"Your videos, posted automatically to Instagram and YouTube.","start_url":"app.html","scope":".","display":"standalone","background_color":"#e8eef0","theme_color":"#0c2a33","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+ "name": "Reelio",
+ "short_name": "Reelio",
+ "description": "Your videos, posted automatically to Instagram and YouTube.",
+ "start_url": "app.html?src=pwa",
+ "scope": ".",
+ "display": "standalone",
+ "background_color": "#edebe7",
+ "theme_color": "#0c1a32",
+ "icons": [
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any"
+  },
+  {
+   "src": "icon.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "maskable"
+  }
+ ],
+ "share_target": {
+  "action": "app.html",
+  "method": "GET",
+  "params": {
+   "title": "title",
+   "text": "text",
+   "url": "url"
+  }
+ },
+ "shortcuts": [
+  {
+   "name": "Save to Drive",
+   "short_name": "Save",
+   "url": "app.html#/grab"
+  },
+  {
+   "name": "Queue",
+   "short_name": "Queue",
+   "url": "app.html#/queue"
+  }
+ ]
+}

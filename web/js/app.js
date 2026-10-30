@@ -93,7 +93,7 @@ function shell(active, content, animate) {
 }
 export function logo(cls = 'logo') {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 64 64'); s.setAttribute('class', cls); s.setAttribute('aria-hidden', 'true');
-  s.innerHTML = '<rect width="64" height="64" rx="14" fill="#0c2a33"/><circle cx="32" cy="32" r="17" fill="none" stroke="#fff" stroke-width="4"/><circle cx="32" cy="32" r="4" fill="#fff"/><circle cx="32" cy="21" r="3.2" fill="#fff"/><circle cx="32" cy="43" r="3.2" fill="#fff"/><circle cx="21" cy="32" r="3.2" fill="#fff"/><circle cx="43" cy="32" r="3.2" fill="#e5352b"/>';
+  s.innerHTML = '<rect x="5" y="5" width="54" height="54" rx="10" fill="#f3cd03" stroke="#0c1a32" stroke-width="4"/><circle cx="32" cy="32" r="15" fill="none" stroke="#0c1a32" stroke-width="4"/><circle cx="32" cy="32" r="3.6" fill="#0c1a32"/><circle cx="42" cy="32" r="3" fill="#dc3845"/>';
   return s;
 }
 
@@ -159,7 +159,7 @@ if (!conn.saveData && !/2g/.test(conn.effectiveType || '')) (window.requestIdleC
 // tapping the tab you are already on used to do nothing (the address does not change); now it refreshes
 document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (a && a.getAttribute('href') === location.hash) route(true); });
 
-function accent() { const a = LS.get('accent', 'teal'); if (a === 'teal') delete document.documentElement.dataset.accent; else document.documentElement.dataset.accent = a; }
+function accent() { const a = LS.get('accent', 'orange'); if (a === 'orange') delete document.documentElement.dataset.accent; else document.documentElement.dataset.accent = a; }
 accent();
 function theme() { const t = LS.get('theme', 'auto'); if (t !== 'auto') document.documentElement.dataset.theme = t; }
 theme();
@@ -175,6 +175,15 @@ if ('serviceWorker' in navigator && !DEMO) {
     document.body.append(bar);
   });
 }
+// A link shared from Instagram / YouTube ("Share" > Reelio) lands here: open Save to Drive with the link filled in.
+(function shareIn() {
+  try {
+    const link = (qs.get('url') || qs.get('text') || '').match(/https?:\/\/[^\s]+/);
+    if (!link) return;
+    sessionStorage.setItem('reelio.share', link[0]);
+    history.replaceState(null, '', location.pathname + '#/grab');
+  } catch {}
+})();
 const done = () => { try { const sp = document.getElementById('splash'); if (sp) sp.remove(); } catch {} };
 if (qs.get('code') || qs.get('error')) import('./v_accounts.js').then((m) => m.handleOAuth()).finally(() => route().finally(done)); else route().finally(done);
 // Command palette (Ctrl/Cmd+K or "/") and self-heal start quietly after the first screen.

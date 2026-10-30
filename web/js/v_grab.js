@@ -61,7 +61,8 @@ export async function grabView(S, params, app) {
   const instas = (S.cfg.connections || []).filter((c) => c.kind === 'instagram');
   const saved = LS.get('grab.form', {});
   const f = { mode: 'links', links: '', ig: (instas[0] || {}).id || '', conn: (googles.find((g) => g.drive_write) || googles[0] || {}).id || '',
-    quality: saved.quality || '1080', root_name: saved.root_name || 'Reelio Downloads', subfolders: saved.subfolders !== false, subs: !!saved.subs };
+    quality: saved.quality || '1080', max_items: saved.max_items || 0, yt_tab: saved.yt_tab || 'videos', confirm: false, root_name: saved.root_name || 'Reelio Downloads', subfolders: saved.subfolders !== false, subs: !!saved.subs };
+  try { const sh = sessionStorage.getItem('reelio.share'); if (sh) { f.links = sh; sessionStorage.removeItem('reelio.share'); } } catch {}
   const needPerm = !googles.length || !googles.some((g) => g.drive_write);
 
   const field = (label, input, hint) => h('label', { class: 'col', style: 'gap:4px' }, h('b', null, label), input, hint ? h('span', { class: 'small muted' }, hint) : null);
@@ -70,7 +71,9 @@ export async function grabView(S, params, app) {
   function draw() {
     modeBox.replaceChildren(...(f.mode === 'links'
       ? [field('Links', h('textarea', { rows: 4, placeholder: 'https://www.youtube.com/watch?v=...\nhttps://www.youtube.com/playlist?list=...', 'aria-label': 'Links', oninput: (e) => { f.links = e.target.value; } }, f.links),
-        'One per line. A video, a playlist or a channel from YouTube, or an Instagram post. Playlists go into their own folder.')]
+        'One per line. A video, Short, playlist or channel from YouTube, or an Instagram reel or post. Playlists and channels go into their own folder.'),
+        h('button', { class: 'btn small', type: 'button', onclick: async () => { try { const t = await navigator.clipboard.readText(); if (t) { f.links = (f.links ? f.links.trim() + '\n' : '') + t.trim(); draw(); } else toast('Nothing copied yet.', 3000); } catch { toast('Your browser did not allow pasting. Press and hold in the box, then Paste.', 5000); } } }, 'Paste copied link'),
+        h('p', { class: 'small muted', style: 'margin:0' }, 'Instagram: single reel links work. For someone else\'s whole account, paste the reel links; Instagram does not let cloud tools list another account.')]
       : [instas.length
         ? field('Instagram account', sel('ig', instas.map((c) => [c.id, c.label])), 'Saves every video from this account. Uses the official Instagram connection you already made, so no password or cookies are needed. Run it again later to pick up new videos.')
         : h('div', { class: 'banner warn' }, h('div', null, 'Connect an Instagram account first in ', h('a', { href: '#/accounts' }, 'Accounts'), '.'))]));
@@ -84,9 +87,10 @@ export async function grabView(S, params, app) {
     if (f.mode === 'links' && !links.length) return toast('Paste at least one link.', 5000);
     if (f.mode === 'ig' && !f.ig) return toast('Pick an Instagram account.', 5000);
     if (!googles.length) return toast('Add the Google Drive login for Save to Drive in Accounts first.', 6000);
-    LS.set('grab.form', { quality: f.quality, root_name: f.root_name, subfolders: f.subfolders, subs: f.subs });
-    const settings = { conn: f.conn, quality: f.quality, root_name: f.root_name.trim() || 'Reelio Downloads', subfolders: f.subfolders, subs: f.subs };
-    const cmd = f.mode === 'links' ? { cmd: 'add', links, settings } : { cmd: 'add_ig', conn: f.ig, settings };
+    if (!f.confirm) return toast('Tick the box that says you own these videos or have permission to save them.', 6000);
+    LS.set('grab.form', { max_items: f.max_items, yt_tab: f.yt_tab, quality: f.quality, root_name: f.root_name, subfolders: f.subfolders, subs: f.subs });
+    const settings = { conn: f.conn, max_items: Number(f.max_items) || 0, yt_tab: f.yt_tab, quality: f.quality, root_name: f.root_name.trim() || 'Reelio Downloads', subfolders: f.subfolders, subs: f.subs };
+    const cmd = f.mode === 'links' ? { cmd: 'add', links, settings, confirm: true } : { cmd: 'add_ig', conn: f.ig, settings };
     btn.disabled = true; btn.replaceChildren(spin(), ' Adding...');
     const me = { id: uid(), label: describe(cmd), at: Date.now(), stage: 'saving' };
     LOCAL.unshift(me); drawPending();
@@ -114,8 +118,12 @@ export async function grabView(S, params, app) {
     h('div', { class: 'grid' },
       field('Quality', sel('quality', [['480', '480p (smallest)'], ['720', '720p'], ['1080', '1080p (recommended)'], ['best', 'Best available (can be very large)']])),
       field('Main folder in Drive', h('input', { type: 'text', value: f.root_name, oninput: (e) => { f.root_name = e.target.value; } }), 'Reelio makes it for you the first time. You can rename or move it later.')),
+    h('div', { class: 'grid' },
+      field('How many newest videos', sel('max_items', [['0', 'All of them'], ['10', 'Newest 10'], ['25', 'Newest 25'], ['50', 'Newest 50'], ['100', 'Newest 100']]), 'For channels and playlists.'),
+      field('YouTube channel part', sel('yt_tab', [['videos', 'Videos'], ['shorts', 'Shorts'], ['both', 'Videos and Shorts']]))),
     h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', checked: f.subfolders, onchange: (e) => { f.subfolders = e.target.checked; } }), h('span', null, 'Put playlists and channels in their own sub-folder')),
     h('label', { class: 'row', style: 'gap:8px;align-items:center' }, h('input', { type: 'checkbox', checked: f.subs, onchange: (e) => { f.subs = e.target.checked; } }), h('span', null, 'Also write English subtitles into the file (when the video has them)')),
+    h('label', { class: 'row', style: 'gap:8px;align-items:flex-start' }, h('input', { type: 'checkbox', id: 'gr_confirm', checked: f.confirm, onchange: (e) => { f.confirm = e.target.checked; } }), h('b', null, 'I own these videos or have permission to save them')),
     googles.length > 1 ? field('Save into this Drive login', h('select', { onchange: (e) => { f.conn = e.target.value; } }, googles.map((c) => h('option', { value: c.id, selected: c.id === f.conn }, c.label + (c.drive_write ? '' : ' (needs reconnect)'))))) : null,
     h('div', { class: 'row' }, go),
     h('p', { class: 'small muted', style: 'margin:0' }, 'Reelio can only use folders it made itself. YouTube sometimes blocks cloud servers: if so, Reelio uses your saved cookies (Accounts > YouTube downloads) and waits by itself. Instagram links outside your own account usually need Instagram cookies and can put that account at risk, so prefer "My Instagram account".'));
@@ -147,10 +155,11 @@ export async function grabView(S, params, app) {
             i.last_error && i.status !== 'done' ? h('div', { class: 'muted' }, i.last_error.msg + ' ' + (i.last_error.fix || '')) : null))),
         j.items.length > rows.length ? h('div', { class: 'small muted' }, `and ${j.items.length - rows.length} more`) : null)) : null,
       h('div', { class: 'row gap-s' },
+        j.url && ['done', 'failed', 'cancelled'].includes(j.status) && (j.kind !== 'yt' || j.folder) ? h('button', { class: 'btn small', onclick: async () => { try { await send(S, { cmd: 'add', links: [j.url], settings: j.settings || {}, confirm: true }); await startWorker(S).catch(() => {}); toast('Checking for new videos.', 4000); setTimeout(() => app.rerender(), 3500); } catch (e) { toast(e.message, 6000); } } }, icon('refresh'), 'Check for new videos') : null,
         failed ? h('button', { class: 'btn small', onclick: () => act('retry', 'Trying the failed videos again.') }, icon('refresh'), 'Try failed videos again') : null,
         !['done', 'cancelled'].includes(j.status) ? h('button', { class: 'btn small', onclick: () => act('cancel', 'Stopped. Videos already in Drive stay there.') }, 'Stop') : null,
         ['done', 'cancelled', 'failed'].includes(j.status) ? h('button', { class: 'btn small danger', onclick: () => act('remove', 'Removed from this list. Files in Drive stay.') }, 'Remove from list') : null),
-      h('p', { class: 'small muted', style: 'margin:0' }, `Updated ${ago(j.updated)}.${j.kind !== 'yt' || j.folder ? ' To pick up new videos later, add the same link (or account) again.' : ''}`));
+      h('p', { class: 'small muted', style: 'margin:0' }, `Updated ${ago(j.updated)}.${j.kind !== 'yt' || j.folder ? ' To pick up new videos later, tap Check for new videos.' : ''}`));
   };
 
   const pendingBox = h('div', { class: 'col' });

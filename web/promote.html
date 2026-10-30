@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Promote Reelio</title><meta name="robots" content="noindex"><meta name="theme-color" content="#0c1a32">
+<link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="site.css">
+<style>.wrap2{max-width:860px;margin:0 auto;padding:20px}.g{display:grid;gap:16px}.two{grid-template-columns:1fr 1fr}@media(max-width:700px){.two{grid-template-columns:1fr}}
+label{font-weight:800;display:block;margin:10px 0 4px}select,input,textarea{width:100%;min-height:48px;border:3px solid var(--ink);border-radius:12px;padding:8px 12px;font:inherit;background:var(--mount);color:var(--ink)}textarea{min-height:120px}
+.ads{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}.ads a{text-decoration:none;font-weight:800;color:var(--ink)}.ads img{border:3px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);margin-bottom:8px;width:100%}
+#qr{background:#fff;width:200px;padding:8px;border:3px solid var(--ink);border-radius:12px}#qr svg{width:100%;height:auto;display:block}h2{font-size:1.5rem;margin:0 0 8px;max-width:none}.card{margin:0}</style></head>
+<body><div class="wrap2">
+<h1 style="font-size:2.2rem;margin:10px 0">Promote Reelio</h1>
+<p>Make a tracked link, copy a ready caption, download the pictures. Every person who messages you carries a short code, so you know which ad worked.</p>
+<div class="g">
+<div class="card"><h2>1. Make your link</h2>
+<label for="src">Where will you post it?</label>
+<select id="src"><option>instagram</option><option>whatsapp</option><option>youtube</option><option>facebook</option><option>telegram</option><option>poster</option><option>other</option></select>
+<label for="cmp">Campaign name (any short word)</label><input id="cmp" value="launch" maxlength="20">
+<label for="link">Your link</label><input id="link" readonly>
+<div class="cta" style="margin-top:12px"><button class="btn solid" id="copyLink">Copy link</button></div>
+<h2 style="margin-top:20px">QR code (for posters)</h2><div id="qr" role="img" aria-label="QR code"></div></div>
+<div class="card"><h2>2. Copy a caption</h2><div class="g two">
+<div><label for="cEn">English</label><textarea id="cEn" readonly></textarea><button class="btn sm" data-copy="cEn">Copy English</button></div>
+<div><label for="cHi">हिन्दी</label><textarea id="cHi" readonly></textarea><button class="btn sm" data-copy="cHi">Copy Hindi</button></div></div></div>
+<div class="card"><h2>3. Download pictures</h2><div class="ads">
+<a href="ads/post-en.png" download><img src="ads/post-en.png" alt="Post, English">Post, English</a>
+<a href="ads/post-hi.png" download><img src="ads/post-hi.png" alt="Post, Hindi">Post, Hindi</a>
+<a href="ads/story-en.png" download><img src="ads/story-en.png" alt="Story, English">Story, English</a>
+<a href="ads/story-hi.png" download><img src="ads/story-hi.png" alt="Story, Hindi">Story, Hindi</a></div>
+<p class="small" style="margin-top:12px">Instagram: put the link in your bio, or in a Story link sticker.</p></div>
+</div></div>
+<script src="app-config.js"></script>
+<script>
+var $=function(s){return document.querySelector(s)};
+var base=location.origin+location.pathname.replace(/promote\.html$/,'');
+function build(){
+  var c=($('#cmp').value||'ad').replace(/[^\w-]/g,'').slice(0,20)||'ad';
+  var u=base+'?utm_source='+encodeURIComponent($('#src').value)+'&utm_campaign='+encodeURIComponent(c);
+  $('#link').value=u;
+  $('#cEn').value='Tired of posting reels by hand?\nReelio posts your videos to Instagram Reels and YouTube Shorts on its own, even when your phone is off.\nTry the free demo: '+u;
+  $('#cHi').value='हर दिन रील खुद पोस्ट करने से थक गए?\nReelio आपके वीडियो Instagram Reels और YouTube Shorts पर अपने आप पोस्ट करता है, फ़ोन बंद हो तब भी।\nफ्री डेमो देखें: '+u;
+  qr(u);
+}
+function qr(u){try{var q=window.qrcode(0,'M');q.addData(u);q.make();$('#qr').innerHTML=q.createSvgTag({cellSize:4,margin:0,scalable:true})}catch(e){$('#qr').textContent='QR code needs internet.'}}
+function copy(t,b){try{navigator.clipboard.writeText(t)}catch(e){}var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1500)}
+['#src','#cmp'].forEach(function(s){$(s).addEventListener('input',build)});
+$('#copyLink').onclick=function(){copy($('#link').value,this)};
+document.querySelectorAll('[data-copy]').forEach(function(b){b.onclick=function(){copy(document.getElementById(b.dataset.copy).value,b)}});
+var sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';sc.onload=build;sc.onerror=build;document.head.appendChild(sc);build();
+</script></body></html>

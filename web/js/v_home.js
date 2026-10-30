@@ -71,8 +71,15 @@ export async function home(S, params, app) {
     h('div', { class: 'meter' }, h('i', { style: `width:${100 * (steps.length - left) / steps.length}%` })),
     steps.map(([label, ok, href]) => h('div', { class: 'row' }, h('span', { class: 'pill ' + (ok ? 'ok' : '') }, t(ok ? 'Done' : 'To do')), href && !ok ? h('a', { href }, label) : h('span', null, label)))) : null;
 
+  const quick = (() => {
+    const inp = h('input', { type: 'url', placeholder: 'Paste a YouTube or Instagram link', 'aria-label': 'Link to save to Drive', style: 'flex:1 1 220px' });
+    const go = () => { const v = inp.value.trim(); if (!v) { location.hash = '#/grab'; return; } try { sessionStorage.setItem('reelio.share', v); } catch {} location.hash = '#/grab'; };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    return h('div', { class: 'card col' }, h('h2', { style: 'margin:0' }, 'Save a video to Drive'),
+      h('div', { class: 'row' }, inp, h('button', { class: 'btn primary', onclick: go }, 'Next')));
+  })();
   return h('div', { class: 'col' },
-    hero, onboard, problems,
+    hero, quick, onboard, problems,
     routes.length ? h('div', { class: 'grid' },
       h('div', { class: 'card stat' }, h('b', null, posted), h('span', null, t('posted today'))),
       h('div', { class: 'card stat' }, h('b', null, pending), h('span', null, t('waiting in line'))),

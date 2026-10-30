@@ -24,3 +24,10 @@ No company/Stripe/Razorpay account. Payments run through manual UPI approval (do
 - [x] Cookie Sync add-on (v1.6); open: verify live in real Chrome; optional Chrome Web Store listing (needs a developer account) so no Developer mode step; optional hosted-mode support
 - [ ] Phase E: hardening, load test, security review, launch checklist
 - [ ] Verify live: Instagram publish via Cloudinary, Google OAuth redirect, yt-dlp on runner IPs, GitHub cron lag, Telegram CORS, Stripe/Razorpay webhooks
+
+## v1.9 (done)
+- [x] Jankari Patra theme across app, site, legal, admin
+- [x] Save to Drive merged with Extract ideas (confirm tick, newest N, Shorts, clean links, check for new)
+- [x] Share target, shortcuts, Home quick box, palette
+- [x] Ads page, ad pictures, ref-code message box, optional counter
+- [ ] Next: test Save to Drive live; add Telegram alert when a list finishes

@@ -5,7 +5,7 @@ const iso = (ms) => new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
 const hhmm = (ms) => { const d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
-const PALETTES = [['#ff9a62', '#7b2ff7'], ['#43e97b', '#0b6a84'], ['#f9d423', '#e5352b'], ['#6dd5ed', '#2b32b2'], ['#f857a6', '#ff5858'], ['#a8e063', '#056ba1'], ['#fbc2eb', '#6a82fb'], ['#ffd89b', '#19547b']];
+const PALETTES = [['#ff9a62', '#7b2ff7'], ['#43e97b', '#017b7b'], ['#f9d423', '#e5352b'], ['#6dd5ed', '#2b32b2'], ['#f857a6', '#ff5858'], ['#a8e063', '#056ba1'], ['#fbc2eb', '#6a82fb'], ['#ffd89b', '#19547b']];
 function thumb(i) {
   const [a, b] = PALETTES[i % PALETTES.length];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 92"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="64" height="92" fill="url(#g)"/><circle cx="${18 + (i * 7) % 28}" cy="26" r="9" fill="#fff" fill-opacity=".85"/><path d="M0 92V70l18-14 16 12 14-10 16 12v22z" fill="#000" fill-opacity=".28"/><path d="M26 40l14 8-14 8z" fill="#fff" fill-opacity=".0"/></svg>`;
@@ -20,6 +20,7 @@ const ACCOUNTS = [
   { id: 'yt_wander', kind: 'google', label: 'Wanderframe Shorts' },
   { id: 'yt_paws', kind: 'google', label: 'Pixel Paws' },
   { id: 'google', kind: 'google', label: 'Google (Drive + YouTube)' },
+  { id: 'drive_save', kind: 'google_save', label: 'Drive for saving videos', drive_write: true },
   { id: 'cloudinary', kind: 'cloudinary', label: 'Cloudinary' },
   { id: 'telegram', kind: 'telegram', label: 'Telegram' },
 ];
@@ -99,7 +100,30 @@ class DemoData {
   async read(p) { const v = this.f.get(p); if (v === undefined || typeof v === 'string') return null; return structuredClone(v); }
   async readText(p) { const v = this.f.get(p); return v == null ? null : (typeof v === 'string' ? v : JSON.stringify(v)); }
   async sha(p) { return this.f.has(p) ? 'demo' : null; }
-  async put(p, c) { this.f.set(p, structuredClone(c)); return {}; }
+  async put(p, c) {
+    this.f.set(p, structuredClone(c));
+    if (p.startsWith('grab-inbox/') && c && (c.cmd === 'add' || c.cmd === 'add_ig')) setTimeout(() => this._grabRead(p, c), 2500);
+    return {};
+  }
+  // Demo of Save to Drive: the "worker" reads the request after a moment and the list fills in.
+  _grabRead(p, c) {
+    this.f.delete(p);
+    const links = c.cmd === 'add_ig' ? [''] : (c.links || []);
+    links.forEach((u, k) => {
+      const n = /playlist|@|channel/.test(u) ? Math.min(c.settings?.max_items || 6, 6) : c.cmd === 'add_ig' ? 5 : 1;
+      const id = 'demo-' + Date.now().toString(36) + k;
+      const items = Array.from({ length: n }, (_, i) => ({ n: i, key: 'yt:D' + id + i, vid: 'D' + i, url: u, title: (n > 1 ? 'Sample video ' + (i + 1) : 'Sample video'), status: i < n - 1 ? 'done' : 'downloading', fails: 0, url_drive: '#' }));
+      this.f.set('queues/grab/' + id + '.json', { id, kind: n > 1 ? 'yt' : 'ig_link', url: u, title: n > 1 ? 'Sample playlist' : 'Sample video', folder: n > 1 ? 'Sample playlist' : '', settings: c.settings || {}, status: 'running', created: new Date().toISOString(), updated: new Date().toISOString(), items });
+    });
+  }
+  async gh(path, opts) {
+    const R = (status, body) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
+    if (/queues\/grab\/?$/.test(path)) return R(200, [...this.f.keys()].filter((k) => k.startsWith('queues/grab/')).map((k) => ({ name: k.slice(12) })));
+    if (/workflows\/grab\.yml\/runs/.test(path)) return R(200, { workflow_runs: [] });
+    if (/dispatches/.test(path)) return R(204, {});
+    return R(200, { default_branch: 'main' });
+  }
+  base() { return ''; }
   async update(p, fn, msg, fallback = {}) { const cur = this.f.has(p) ? structuredClone(this.f.get(p)) : structuredClone(fallback); const next = await fn(cur); this.f.set(p, structuredClone(next)); return next; }
   async remove(p) { this.f.delete(p); }
   async list(dir) { return [...this.f.keys()].filter((k) => k.startsWith(dir + '/')).map((k) => ({ name: k.slice(dir.length + 1), path: k })); }

@@ -6,6 +6,8 @@ window.REELIO_CONFIG = {
   contactUrl: 'https://ig.me/m/kr5na_',
   supportEmail: '',
   // Leave empty to run Reelio open (your own GitHub login). Set only if you deployed the hosted service (docs/TUTORIAL.md).
+  // Optional visitor counter for your ads (free, no cookies): make a name at goatcounter.com and type it here, e.g. goatcounter: 'reelio-krvats'
+  goatcounter: '',
   licenseUrl: '',
   apiUrl: '',
 };
