@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8">
+<style>
+@font-face{font-family:B;src:url(../web/fonts/bricolage-grotesque-latin-wght-normal.woff2);font-weight:200 800}
+@font-face{font-family:F;src:url(../web/fonts/figtree-latin-wght-normal.woff2);font-weight:300 900}
+*{box-sizing:border-box}body{margin:0;background:#edebe7;background-image:radial-gradient(#0c1a3224 2px,transparent 2.6px);background-size:36px 36px;font-family:F;color:#0c1a32;overflow:hidden}
+.f{position:relative;width:100vw;height:100vh;padding:5.5vmin;display:flex;flex-direction:column;justify-content:space-between}
+.tag{display:inline-block;border:.6vmin solid #0c1a32;background:#f3cd03;border-radius:99px;padding:.6vmin 2.4vmin;font-weight:800;text-transform:uppercase;font-size:3vmin;letter-spacing:.05em}
+h1{font-family:B;font-weight:800;text-transform:uppercase;font-size:11vmin;line-height:.98;margin:2vmin 0;letter-spacing:-.01em}
+h1 mark{background:#f3571f;color:#0c1a32;padding:0 1.4vmin;border:.6vmin solid #0c1a32;display:inline-block;box-shadow:1.2vmin 1.2vmin 0 #0c1a32}
+p{font-size:4vmin;font-weight:600;margin:0;max-width:30ch}
+.row{display:flex;gap:2vmin;flex-wrap:wrap}
+.b{border:.6vmin solid #0c1a32;border-radius:2vmin;padding:1.6vmin 3vmin;font-weight:800;font-size:3.4vmin;text-transform:uppercase;box-shadow:1vmin 1vmin 0 #0c1a32}
+.b1{background:#f3cd03}.b2{background:#017b7b;color:#fff}.b3{background:#dc3845;color:#fff}
+.url{font-weight:800;font-size:3.6vmin;background:#0c1a32;color:#f3cd03;padding:1.6vmin 3vmin;border-radius:2vmin;align-self:flex-start}
+.wide h1{font-size:8.6vmin}.wide p{font-size:3.2vmin}
+</style>
+<div class="f" id="f"><div><span class="tag" id="tag"></span><h1 id="h"></h1><p id="p"></p></div>
+<div><div class="row" style="margin-bottom:3vmin"><span class="b b1">Instagram</span><span class="b b2">YouTube</span><span class="b b3">Google Drive</span></div><div class="url" id="u"></div></div></div>
+<script>
+const q=new URLSearchParams(location.search),hi=q.get('lang')==='hi',url=q.get('url')||'';
+if(q.get('fmt')==='og')document.getElementById('f').classList.add('wide');
+document.getElementById('tag').textContent=hi?'क्लाउड पर चलता है':'Runs in the cloud';
+document.getElementById('h').innerHTML=hi?'आपके वीडियो <mark>खुद</mark> पोस्ट होते हैं':'Your videos <mark>post</mark> themselves';
+document.getElementById('p').textContent=hi?'Instagram Reels और YouTube Shorts अपने आप। फ़ोन बंद हो तब भी।':'Instagram Reels and YouTube Shorts on a schedule. Even when your phone is off.';
+document.getElementById('u').textContent=url;
+</script>

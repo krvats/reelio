@@ -135,7 +135,7 @@ class SaveToDrive(unittest.TestCase):
         self.w.reset(); self.w.video = self.plain_bytes
         self.t0 = datetime.datetime.now(datetime.timezone.utc).replace(hour=10, minute=0, second=0, microsecond=0)
         util.set_clock(lambda: self.t0)
-        os.environ.pop("FAKE_BAD", None); os.environ.pop("FAKE_MODE", None)
+        os.environ.pop("FAKE_BAD", None); os.environ.pop("FAKE_MODE", None); os.environ.pop("FAKE_EXTRA", None)
         self.data = tempfile.mkdtemp(prefix="data_", dir=self.tmp)
         self.log = os.path.join(self.data, "..", f"calls_{os.path.basename(self.data)}.txt")
         cfg = {"version": 1, "timezone": "UTC", "paused": False, "routes": [],
@@ -160,12 +160,20 @@ mode = os.environ.get("FAKE_MODE", "")
 if "--flat-playlist" in a:
     if mode == "blocked":
         sys.stderr.write("ERROR: Sign in to confirm you're not a bot"); sys.exit(1)
-    if "list=" in url or url.endswith("/videos"):
-        for i in (1, 2, 3):
-            print(json.dumps({{"id": "VID%08d" % i, "title": "Clip %d" % i, "playlist_title": "My List", "url": "https://www.youtube.com/watch?v=VID%08d" % i}}))
-        print(json.dumps({{"id": "LIVE0000001", "title": "Live", "playlist_title": "My List", "live_status": "is_upcoming"}}))
+    if mode == "igprofile" and "instagram.com" in url:
+        sys.stderr.write("ERROR: [Instagram] someone: Unable to extract data; please report this issue"); sys.exit(1)
+    rows = []
+    if url.endswith("/shorts"):
+        rows = [{{"id": "SHORT%06d" % i, "title": "Short %d" % i, "playlist_title": "Chan - Shorts", "url": "https://www.youtube.com/watch?v=SHORT%06d" % i}} for i in (1, 2)]
+    elif "list=" in url or url.endswith("/videos"):
+        rows = [{{"id": "VID%08d" % i, "title": "Clip %d" % i, "playlist_title": "My List", "url": "https://www.youtube.com/watch?v=VID%08d" % i}} for i in range(1, 4 + int(os.environ.get("FAKE_EXTRA", "0")))]
+        rows.append({{"id": "LIVE0000001", "title": "Live", "playlist_title": "My List", "live_status": "is_upcoming"}})
     else:
-        print(json.dumps({{"id": "SINGLE00001", "title": "Single Title", "url": url}}))
+        rows = [{{"id": "SINGLE00001", "title": "Single Title", "url": url}}]
+    if "--playlist-end" in a:
+        rows = rows[:int(a[a.index("--playlist-end") + 1])]
+    for r in rows:
+        print(json.dumps(r))
     sys.exit(0)
 vid = url[-11:]
 if mode == "blocked" or vid in os.environ.get("FAKE_BAD", ""):
@@ -178,6 +186,8 @@ json.dump({{"id": vid, "title": "Title of " + vid}}, open(os.path.join(d, "v.inf
         os.environ["REELIO_YTDLP"] = f"{sys.executable} {p}"
 
     def inbox(self, cmd, name="1.json"):
+        if cmd.get("cmd") == "add":
+            cmd = dict({"confirm": True}, **cmd)            # the app always sends the ownership tick; tests that leave it out say confirm=False
         os.makedirs(os.path.join(self.data, "grab-inbox"), exist_ok=True)
         json.dump(cmd, open(os.path.join(self.data, "grab-inbox", name), "w"))
 
@@ -355,6 +365,80 @@ json.dump({{"id": vid, "title": "Title of " + vid}}, open(os.path.join(d, "v.inf
         self.run_grab(minutes=5)
         self.assertEqual(self.jobs(), {})
         self.assertEqual(len(self.w.files), 3)                          # removing the list never deletes what is already in Drive
+
+    # ---- added in 1.9: ownership tick, newest N, Shorts tab, clean links, other people's Instagram accounts
+    def test_nothing_is_added_without_the_ownership_tick(self):
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/watch?v=SINGLE00001"], "confirm": False})
+        self.run_grab()
+        self.assertEqual(self.jobs(), {})
+        self.assertEqual(len(self.w.files), 0)
+        ev = Store(self.data).recent_events(20)
+        self.assertTrue(any("not ticked" in e["msg"] and "tick the box" in (e.get("fix") or "") for e in ev))
+
+    def test_newest_n_limits_a_channel_and_is_passed_to_yt_dlp(self):
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/@somechannel"], "settings": {"max_items": 2}})
+        self.run_grab()
+        self.assertIn("--playlist-end 2", self.calls())
+        self.assertEqual(len(self.w.files), 2)
+        job = next(iter(self.jobs().values()))
+        self.assertEqual(job["settings"]["max_items"], 2)
+
+    def test_shorts_tab_and_both_tabs(self):
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/@somechannel"], "settings": {"yt_tab": "shorts"}})
+        self.run_grab()
+        c = self.calls()
+        self.assertIn("https://www.youtube.com/@somechannel/shorts", c)
+        self.assertNotIn("@somechannel/videos", c)
+        self.assertEqual(len(self.w.files), 2)
+        self.w.reset(); self.w.video = self.plain_bytes
+        self.data = tempfile.mkdtemp(prefix="data_", dir=self.tmp); self.setUp_data_again()
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/@somechannel"], "settings": {"yt_tab": "both"}})
+        self.run_grab()
+        self.assertEqual(len(self.w.files), 5, "2 Shorts + 3 videos, none twice")
+
+    def setUp_data_again(self):
+        cfg = {"version": 1, "timezone": "UTC", "paused": False, "routes": [],
+               "connections": [{"id": "google", "kind": "google", "label": "Google"}, {"id": "ig_a", "kind": "instagram", "label": "mypage", "ig_user_id": "111"}]}
+        util.write_json(os.path.join(self.data, "config.json"), cfg)
+        sec = {"google": {"client_id": "c", "client_secret": "s", "refresh_token": "RT"}, "ig_a": {"access_token": "IGTOKA"}}
+        util.write_json(os.path.join(self.data, "secrets.enc.json"), crypto.encrypt(sec, "test-pass", iters=1000))
+        self.log = os.path.join(self.data, "..", f"calls_{os.path.basename(self.data)}.txt"); self.fake_ytdlp()
+
+    def test_the_same_video_pasted_with_tracking_junk_is_one_list_and_one_file(self):
+        self.inbox({"cmd": "add", "links": ["https://youtu.be/SINGLE00001?si=abc123", "https://www.youtube.com/watch?v=SINGLE00001&feature=share"]})
+        self.run_grab()
+        self.assertEqual(len(self.jobs()), 1)
+        self.assertEqual(len(self.w.files), 1)
+
+    def test_link_cleaning(self):
+        c = grab._clean_url
+        self.assertEqual(c("https://www.instagram.com/reel/AbC_1-x/?igsh=zzz"), "https://www.instagram.com/reel/AbC_1-x/")
+        self.assertEqual(c("instagram.com/someone/reel/QQQ/"), "https://www.instagram.com/reel/QQQ/")
+        self.assertEqual(c("https://www.instagram.com/p/XYZ/?utm_source=ig_web_copy_link"), "https://www.instagram.com/p/XYZ/")
+        self.assertEqual(c("https://www.instagram.com/Nasa/?hl=en"), "https://www.instagram.com/Nasa/")
+        self.assertEqual(c("https://www.youtube.com/@chan/"), "https://www.youtube.com/@chan")
+        self.assertEqual(c("https://www.youtube.com/playlist?list=PLabc&si=1"), "https://www.youtube.com/playlist?list=PLabc")
+        self.assertTrue(grab._ig_is_profile("https://www.instagram.com/nasa/") and not grab._ig_is_profile("https://www.instagram.com/reel/AbC/"))
+
+    def test_someone_elses_instagram_account_is_explained_and_does_not_pause_instagram(self):
+        os.environ["FAKE_MODE"] = "igprofile"
+        self.inbox({"cmd": "add", "links": ["https://www.instagram.com/nasa/"]})
+        self.run_grab()
+        self.assertEqual(self.jobs(), {})
+        ev = [e for e in Store(self.data).recent_events(20) if "someone else" in e["msg"]]
+        self.assertTrue(ev and "Paste the links of the reels" in ev[0]["fix"] and "My Instagram account" in ev[0]["fix"])
+        st = util.read_json(os.path.join(self.data, "queues", "grab", "_state.json"), {})
+        self.assertFalse((st.get("source_until") or {}).get("ig"), "reading a profile must not pause single-reel downloads")
+
+    def test_adding_the_same_playlist_again_saves_only_the_new_videos(self):
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/playlist?list=PLabc"]}, "1.json")
+        self.run_grab()
+        self.assertEqual(len(self.w.files), 3)
+        os.environ["FAKE_EXTRA"] = "1"
+        self.inbox({"cmd": "add", "links": ["https://www.youtube.com/playlist?list=PLabc"]}, "2.json")
+        self.run_grab(minutes=5)
+        self.assertEqual(len(self.w.files), 4)
+        self.assertEqual(len(self.jobs()), 1)
 
 
 if __name__ == "__main__":

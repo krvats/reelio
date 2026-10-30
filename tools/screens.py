@@ -6,7 +6,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 WEB = os.path.join(ROOT, "web"); OUT = os.path.join(ROOT, "docs", "screens"); SHOTS = os.path.join(WEB, "shots")
 PORT = 8791
-PAGES = [("home", "home"), ("pages", "pages"), ("flows", "flows"), ("queue", "videos"), ("accounts", "accounts"), ("schedule", "schedule"), ("analytics", "stats"), ("settings", "settings"), ("help", "help")]
+PAGES = [("home", "home"), ("grab", "save-to-drive"), ("pages", "pages"), ("flows", "flows"), ("queue", "videos"), ("accounts", "accounts"), ("schedule", "schedule"), ("analytics", "stats"), ("settings", "settings"), ("help", "help")]
 SITE = {"home", "pages", "flows", "schedule", "stats"}
 
 

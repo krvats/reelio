@@ -30,7 +30,7 @@ MIN_TIME_LEFT_MIN = 12
 MAX_ITEMS = 2000
 GRAPH = lambda: os.environ.get("IG_GRAPH", "https://graph.instagram.com").rstrip("/")
 DEFAULTS = {"conn": "google", "net_conn": "youtube-net", "quality": "1080", "root_name": "Reelio Downloads", "root_id": "",
-            "subfolders": True, "subs": False, "ig_conn": ""}
+            "subfolders": True, "subs": False, "ig_conn": "", "max_items": 0, "yt_tab": "videos"}
 MEDIA_EXT = (".mp4", ".mkv", ".webm", ".mov", ".m4v")
 MIME = {".mp4": "video/mp4", ".mkv": "video/x-matroska", ".webm": "video/webm", ".mov": "video/quicktime", ".m4v": "video/x-m4v"}
 
@@ -101,6 +101,11 @@ def clean_settings(raw):
     s["root_id"] = re.sub(r"[^\w-]", "", str(s.get("root_id") or ""))[:80]
     s["subfolders"] = bool(s.get("subfolders", True))
     s["subs"] = bool(s.get("subs", False))
+    try:                                      # 0 = every video; otherwise only the newest N of a channel, playlist or account
+        s["max_items"] = max(0, min(MAX_ITEMS, int(s.get("max_items") or 0)))
+    except (TypeError, ValueError):
+        s["max_items"] = 0
+    s["yt_tab"] = s["yt_tab"] if s.get("yt_tab") in ("videos", "shorts", "both") else "videos"
     return s
 
 
@@ -119,14 +124,57 @@ def _kind(url):
     return None
 
 
+_DROP = re.compile(r"^(igsh|igshid|si|feature|fbclid|ref|pp|utm_[a-z]+)$", re.I)
+_IG_POST = re.compile(r"instagram\.com/(?:[\w.]+/)?(reels?|p|tv)/([A-Za-z0-9_-]+)", re.I)
+_IG_USER = re.compile(r"instagram\.com/([A-Za-z0-9_.]+)/?(?:reels/?)?$", re.I)
+_IG_RESERVED = {"explore", "accounts", "direct", "stories", "reel", "reels", "p", "tv", "about", "developer", "legal", "web", "directory"}
+
+
+def _clean_url(url):
+    """The same video must always give the same link, so a shared link with tracking junk does not make a second list."""
+    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+    u = (url or "").strip()
+    if not re.match(r"^https?://", u, re.I):
+        u = "https://" + u
+    sp = urlsplit(u)
+    if "instagram.com" in sp.netloc.lower():
+        m = _IG_POST.search(u)
+        if m:
+            return f"https://www.instagram.com/{'reel' if m.group(1).lower().startswith('reel') else m.group(1).lower()}/{m.group(2)}/"
+        m = _IG_USER.search(u.split("?")[0].split("#")[0])
+        if m and m.group(1).lower() not in _IG_RESERVED:
+            return f"https://www.instagram.com/{m.group(1)}/"
+    host = sp.netloc.lower()
+    m = None
+    if host in ("youtu.be", "www.youtu.be"):
+        m = re.match(r"^/([\w-]{6,})", sp.path)
+    elif "youtube.com" in host:
+        m = re.match(r"^/(?:shorts|live|embed)/([\w-]{6,})", sp.path)
+        if not m and sp.path.rstrip("/") == "/watch":
+            v = dict(parse_qsl(sp.query)).get("v")
+            m = re.match(r"^([\w-]{6,})$", v or "")
+            if m and "list" not in dict(parse_qsl(sp.query)):
+                pass
+    if m and not (("list=" in sp.query) and sp.path.rstrip("/") == "/watch"):
+        return f"https://www.youtube.com/watch?v={m.group(1)}"
+    q = urlencode([(k, v) for k, v in parse_qsl(sp.query, keep_blank_values=True) if not _DROP.match(k)])
+    return urlunsplit((sp.scheme, sp.netloc, sp.path.rstrip("/") if sp.path != "/" else sp.path, q, ""))
+
+
+def _ig_is_profile(url):
+    return bool(_IG_USER.search((url or "").split("?")[0]) and not _IG_POST.search(url or ""))
+
+
 def _jid(prefix, text):
     return f"{prefix}-{hashlib.sha1(text.encode()).hexdigest()[:10]}"
 
 
-def _channel_tab(url):
-    """A bare channel link means 'its videos' (yt-dlp would otherwise list the tabs themselves)."""
+def _channel_tabs(url, tab="videos"):
+    """A bare channel link means 'its videos' (or Shorts, or both: the owner's choice). A link that already names a tab is used as it is."""
     m = re.match(r"^(https?://(?:www\.|m\.)?youtube\.com/(?:@[^/?#]+|channel/[^/?#]+|c/[^/?#]+|user/[^/?#]+))/?(?:[?#].*)?$", url)
-    return m.group(1) + "/videos" if m else url
+    if not m:
+        return [url]
+    return [m.group(1) + t for t in {"videos": ["/videos"], "shorts": ["/shorts"], "both": ["/shorts", "/videos"]}.get(tab, ["/videos"])]
 
 
 # ------------------------------------------------------------------ running yt-dlp for Instagram (no YouTube cookie pool)
@@ -150,8 +198,11 @@ def _run_plain(cmd, tmp, timeout):
     return p, files
 
 
-def _ig_failure(stderr):
+def _ig_failure(stderr, profile=False):
     err = scrub((stderr or "")[-400:]); low = err.lower()
+    if profile:
+        raise ItemProblem("Instagram does not let cloud tools list the reels of someone else's account.",
+                          "Paste the links of the reels you want (one per line). For your own account use 'My Instagram account': it needs no login or cookies.")
     if "login" in low or "log in" in low or "cookies" in low or "rate-limit" in low or "rate limit" in low or "429" in low or "empty media response" in low:
         raise SourceProblem("Instagram asked for a login before it would give this video.",
                             "Use 'My Instagram account' for your own reels (no login needed), or add Instagram cookies in Accounts > Instagram downloads. Use a spare account for cookies.",
@@ -164,25 +215,36 @@ def _ig_failure(stderr):
 
 
 # ------------------------------------------------------------------ adding
+def _limit(s):
+    return ["--playlist-end", str(s["max_items"])] if s.get("max_items") else []
+
+
 def _entries_yt(store, url, s):
     src = {"net_conn": s["net_conn"]}
-    cmd = ysrc._ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings", _channel_tab(url)] + ysrc._net_args(store, src)
-    p, notes = ysrc._pool_run(store, src, cmd, timeout=900)
-    ysrc._say(store, None, notes)
-    rows = _json_lines(p.stdout)
+    rows, seen, last_err = [], set(), ""
+    for tab_url in _channel_tabs(url, s.get("yt_tab", "videos")):
+        cmd = ysrc._ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings"] + _limit(s) + [tab_url] + ysrc._net_args(store, src)
+        p, notes = ysrc._pool_run(store, src, cmd, timeout=900)
+        ysrc._say(store, None, notes)
+        got = _json_lines(p.stdout)
+        if not got:
+            last_err = p.stderr or last_err
+        for r in got:                                  # a channel without a Shorts tab is normal; the same video is never listed twice
+            if r.get("id") not in seen:
+                seen.add(r.get("id")); rows.append(r)
     if not rows:
-        ysrc.raise_for_failure(p.stderr or "could not read the link", store, src)
+        ysrc.raise_for_failure(last_err or "could not read the link", store, src)
     return rows
 
 
-def _entries_ig(store, url):
+def _entries_ig(store, url, s=None):
     tmp = tempfile.mkdtemp(prefix="grabl_")
     try:
-        cmd = ysrc._ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings", url] + _ig_net(store, tmp)
+        cmd = ysrc._ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings"] + _limit(s or {}) + [url] + _ig_net(store, tmp)
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
         rows = _json_lines(p.stdout)
         if not rows:
-            _ig_failure(p.stderr or "could not read the link")
+            _ig_failure(p.stderr or "could not read the link", profile=_ig_is_profile(url))
         return rows
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -227,8 +289,12 @@ def _add(store, c):
     if not links:
         store.event("warn", "Save to Drive: no link was given, so nothing was added.")
         return 0
+    if not c.get("confirm"):
+        store.event("warn", "Save to Drive: nothing was added because the box 'I own these videos or have permission to save them' was not ticked.",
+                    fix="Open Save to Drive, tick the box and add the links again.")
+        return 0
     made = 0
-    for url in dict.fromkeys(links):
+    for url in dict.fromkeys(_clean_url(l) if _kind(l) else l for l in links):
         kind = _kind(url)
         if not kind:
             store.event("warn", f"Save to Drive: '{url[:80]}' is not a YouTube or Instagram link, so it was skipped.")
@@ -238,7 +304,7 @@ def _add(store, c):
             if vid1:       # one video: no need to ask YouTube anything now (so it still works while YouTube blocks the server)
                 rows = [{"id": vid1, "title": "", "url": f"https://www.youtube.com/watch?v={vid1}"}]
             else:
-                rows = _entries_yt(store, url, s) if kind == "yt" else _entries_ig(store, url)
+                rows = _entries_yt(store, url, s) if kind == "yt" else _entries_ig(store, url, s)
         except Problem as p:
             store.event("warn", f"Save to Drive could not read {url[:80]}: {p.msg}", fix=p.fix); continue
         folder = ""
