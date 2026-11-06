@@ -24,10 +24,13 @@ from .google import GoogleAuth
 from .sources import youtube as ysrc
 from .sources import instagram as isrc, download_url
 from . import driveup
+from . import igarchive
 
 MAX_TRIES = 3
 MIN_TIME_LEFT_MIN = 12
 MAX_ITEMS = 2000
+REFRESH_HOURS = 12            # how often a saved Instagram ACCOUNT is checked for new reels
+_ig_ytdlp = {"misses": 0}      # yt-dlp blocked this many reels in a row this run (then it is skipped: the other ways are tried first)
 GRAPH = lambda: os.environ.get("IG_GRAPH", "https://graph.instagram.com").rstrip("/")
 DEFAULTS = {"conn": "google", "net_conn": "youtube-net", "quality": "1080", "root_name": "Reelio Downloads", "root_id": "",
             "subfolders": True, "subs": False, "ig_conn": "", "max_items": 0, "yt_tab": "videos"}
@@ -238,6 +241,8 @@ def _entries_yt(store, url, s):
 
 
 def _entries_ig(store, url, s=None):
+    if _ig_is_profile(url):                    # an account (instagram.com/name): its reels, found by the multi-way ladder in igarchive.py
+        return igarchive.list_profile_reels(store, url, limit=(s or {}).get("max_items") or 0)
     tmp = tempfile.mkdtemp(prefix="grabl_")
     try:
         cmd = ysrc._ytdlp() + ["--flat-playlist", "--dump-json", "--no-warnings"] + _limit(s or {}) + [url] + _ig_net(store, tmp)
@@ -319,16 +324,21 @@ def _add(store, c):
             link = r.get("webpage_url") or r.get("url") or url
             if kind == "yt" and not str(link).startswith("http"):
                 link = f"https://www.youtube.com/watch?v={vid}"
-            items.append(_new_item(0, f"{'yt' if kind == 'yt' else 'ig'}:{vid}", vid, link, r.get("title")))
+            it = _new_item(0, f"{'yt' if kind == 'yt' else 'ig'}:{vid}", vid, link, r.get("title"))
+            it.update({k: r[k] for k in ("user", "media_url") if r.get(k)})
+            items.append(it)
         if not items:
             store.event("warn", f"Save to Drive: no videos were found at {url[:80]}."); continue
         is_list = len(rows) > 1 or bool(folder)
         jid = _jid(kind, url)
         path = os.path.join(_dir(store), f"{jid}.json")
         job = read_json(path, None)
+        watch = {"user": igarchive.user_of(url), "every_h": REFRESH_HOURS, "last": iso()} if kind == "ig_link" and _ig_is_profile(url) else None
         if job and isinstance(job.get("items"), list):
             n = _merge(job, items)
             job["settings"] = s
+            if watch:
+                job["watch"] = watch
             if not n:
                 store.event("info", f"'{job['title']}' is already in the list. Nothing new was found, so nothing was added."); continue
             store.event("info", f"Save to Drive: {n} new video(s) added to '{job['title']}'.")
@@ -336,6 +346,8 @@ def _add(store, c):
             title = folder or items[0]["title"]
             job = {"id": jid, "kind": kind, "url": url, "title": title, "folder": folder if is_list else "", "settings": s,
                    "created": iso(), "cancelled": False, "items": []}
+            if watch:
+                job["watch"] = watch                 # an account is checked again every few hours, so new reels arrive by themselves
             _merge(job, items)
             store.event("info", f"Save to Drive: '{title}' added ({len(job['items'])} video{'s' if len(job['items']) != 1 else ''}).")
         save_job(store, job); made += 1
@@ -456,6 +468,12 @@ def _dl_yt(store, job, item, tmp, deadline):
 
 
 def _dl_ig_link(store, job, item, tmp, deadline):
+    user = (job.get("watch") or {}).get("user") or item.get("user")
+    if _ig_ytdlp["misses"] >= 2 and user:           # yt-dlp keeps being blocked: go straight to the other ways instead of knocking again
+        got = igarchive.fallback_download(store, item, user, tmp)
+        if got:
+            return got
+    igarchive.polite_pause()
     cmd = ysrc._ytdlp() + ["--no-playlist", "--no-warnings", "--merge-output-format", "mp4", "--retries", "5"] + _embed_flags({}) \
         + ["-o", os.path.join(tmp, "v.%(ext)s"), item["url"]] + _ig_net(store, tmp)
     left = max(180, int((deadline - now()).total_seconds()))
@@ -465,7 +483,19 @@ def _dl_ig_link(store, job, item, tmp, deadline):
         raise ItemProblem("The download did not finish before this run ran out of time.", "Reelio tries again in the next run.")
     path = _pick(tmp, files)
     if p.returncode != 0 or not path:
-        _ig_failure(p.stderr)
+        try:
+            _ig_failure(p.stderr)
+        except Problem as orig:
+            if not (isinstance(orig, SourceProblem) or "failed" in orig.msg.lower()):
+                raise                                  # private / removed: no other way will find it either
+            _ig_ytdlp["misses"] += 1
+            got = igarchive.fallback_download(store, item, user, tmp)
+            if got:
+                store.event("info", f"'{item['title']}': yt-dlp was blocked, so another way was used.")
+                return got
+            raise
+    else:
+        _ig_ytdlp["misses"] = 0
     return path
 
 
@@ -588,6 +618,36 @@ def _recover(store, job, st):
     save_job(store, job)
 
 
+# ------------------------------------------------------------------ accounts are watched: new reels arrive without anyone doing anything
+def _refresh_watched(store):
+    """Every REFRESH_HOURS, look at each saved Instagram account for new reels and add only the new ones."""
+    for job in load_jobs(store):
+        w = job.get("watch")
+        if not w or job.get("cancelled") or job.get("kind") != "ig_link" or not w.get("user"):
+            continue
+        every = float(w.get("every_h") or REFRESH_HOURS)
+        last = parse_iso(w.get("last"))
+        if last and (now() - last).total_seconds() < every * 3600:
+            continue
+        try:
+            rows = igarchive.list_profile_reels(store, w["user"], limit=30)       # only the newest ones: older ones are already in the list
+        except Problem as p:
+            w["last"] = iso(now() - datetime.timedelta(hours=max(0.0, every - 2)))   # try again in about 2 hours
+            store.event("warn", f"Could not check @{w['user']} for new reels: {p.msg}", fix=p.fix)
+            save_job(store, job); continue
+        items = []
+        for r in rows:
+            it = _new_item(0, f"ig:{r['id']}", r["id"], r.get("url") or "", r.get("title"))
+            it.update({k: r[k] for k in ("user", "media_url") if r.get(k)})
+            items.append(it)
+        n = _merge(job, items)
+        w["last"] = iso()
+        if n:
+            job["notified"] = False
+            store.event("info", f"@{w['user']}: {n} new reel(s) found, saving them to Drive.")
+        save_job(store, job)
+
+
 # ------------------------------------------------------------------ the run
 def _until(st, group, key):
     return parse_iso(((st.get(group) or {}).get(key)))
@@ -608,6 +668,11 @@ def run(store, budget_min=320):
     if not isinstance(st.get("conn_until"), dict):
         st["conn_until"] = {}
     intake(store)
+    _ig_ytdlp["misses"] = 0
+    try:
+        _refresh_watched(store)
+    except Exception as e:                       # watching accounts must never stop the normal saving
+        store.event("warn", f"Checking Instagram accounts for new reels failed: {scrub(e)}")
     jobs = load_jobs(store)
     for j in jobs:
         _recover(store, j, st)

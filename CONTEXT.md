@@ -63,5 +63,6 @@ Owner decisions (Oct 2026): contact = Instagram DM @kr5na_ (X and Reddit @kr5na_
 ## v1.9 notes
 - Theme: Jankari Patra look (tokens in `web/style.css` and `web/site.css`; `--bd` strong border, `--hs` hard shadow). Fonts: Bricolage Grotesque + Figtree (bundled). Space Grotesk could not be downloaded; swap = replace the font-family names.
 - Save to Drive (`grab`) is the single "download to Drive" feature; there is no separate Extract tab.
+- Save to Drive also takes an Instagram ACCOUNT link (permission tick required): `worker/reelio/igarchive.py` lists its reels through a ladder of unofficial ways and provides download fallbacks; jobs carry `watch` and are re-checked every 12 h. Uses the existing `instagram-net` cookie secret; optional paid keys via GitHub secrets APIFY_TOKEN / RAPIDAPI_KEY. See docs/ARCHIVE.md.
 - Share target + shortcuts in `web/manifest.webmanifest`; `app.js` `shareIn()` stores the link in sessionStorage `reelio.share`.
 - Ads: `web/promote.html`, `web/site-ads.js`, `web/ads/`, `docs/ADS.md`.

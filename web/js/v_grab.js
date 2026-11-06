@@ -73,7 +73,7 @@ export async function grabView(S, params, app) {
       ? [field('Links', h('textarea', { rows: 4, placeholder: 'https://www.youtube.com/watch?v=...\nhttps://www.youtube.com/playlist?list=...', 'aria-label': 'Links', oninput: (e) => { f.links = e.target.value; } }, f.links),
         'One per line. A video, Short, playlist or channel from YouTube, or an Instagram reel or post. Playlists and channels go into their own folder.'),
         h('button', { class: 'btn small', type: 'button', onclick: async () => { try { const t = await navigator.clipboard.readText(); if (t) { f.links = (f.links ? f.links.trim() + '\n' : '') + t.trim(); draw(); } else toast('Nothing copied yet.', 3000); } catch { toast('Your browser did not allow pasting. Press and hold in the box, then Paste.', 5000); } } }, 'Paste copied link'),
-        h('p', { class: 'small muted', style: 'margin:0' }, 'Instagram: single reel links work. For someone else\'s whole account, paste the reel links; Instagram does not let cloud tools list another account.')]
+        h('p', { class: 'small muted', style: 'margin:0' }, 'Instagram: single reel links work. To save a whole account you have permission to use, paste its link (instagram.com/name). Reelio tries several ways to find its reels, saves them, then checks again every 12 hours for new ones by itself. It works best with a spare-account cookie in Accounts > Instagram downloads.')]
       : [instas.length
         ? field('Instagram account', sel('ig', instas.map((c) => [c.id, c.label])), 'Saves every video from this account. Uses the official Instagram connection you already made, so no password or cookies are needed. Run it again later to pick up new videos.')
         : h('div', { class: 'banner warn' }, h('div', null, 'Connect an Instagram account first in ', h('a', { href: '#/accounts' }, 'Accounts'), '.'))]));
@@ -126,7 +126,7 @@ export async function grabView(S, params, app) {
     h('label', { class: 'row', style: 'gap:8px;align-items:flex-start' }, h('input', { type: 'checkbox', id: 'gr_confirm', checked: f.confirm, onchange: (e) => { f.confirm = e.target.checked; } }), h('b', null, 'I own these videos or have permission to save them')),
     googles.length > 1 ? field('Save into this Drive login', h('select', { onchange: (e) => { f.conn = e.target.value; } }, googles.map((c) => h('option', { value: c.id, selected: c.id === f.conn }, c.label + (c.drive_write ? '' : ' (needs reconnect)'))))) : null,
     h('div', { class: 'row' }, go),
-    h('p', { class: 'small muted', style: 'margin:0' }, 'Reelio can only use folders it made itself. YouTube sometimes blocks cloud servers: if so, Reelio uses your saved cookies (Accounts > YouTube downloads) and waits by itself. Instagram links outside your own account usually need Instagram cookies and can put that account at risk, so prefer "My Instagram account".'));
+    h('p', { class: 'small muted', style: 'margin:0' }, 'Reelio can only use folders it made itself. YouTube sometimes blocks cloud servers: if so, Reelio uses your saved cookies (Accounts > YouTube downloads) and waits by itself. Instagram accounts that are not yours need a spare-account cookie (it can put that account at risk), so prefer "My Instagram account" for your own.'));
 
   const until = (s) => (s && new Date(s) > new Date() ? new Date(s) : null);
   const waits = [...Object.values(state.source_until || {}).map(until), ...Object.values(state.conn_until || {}).map(until)].filter(Boolean);

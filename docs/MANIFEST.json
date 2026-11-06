@@ -1,6 +1,6 @@
 {
  "version": "1.9.0",
- "at": "2026-10-30T20:47:33Z",
+ "at": "2026-11-06T07:38:07Z",
  "files": {
   ".github/workflows/deploy-keepalive.yml": {
    "sha": "9390578edf78295e",
@@ -8,9 +8,9 @@
    "bytes": 551
   },
   ".github/workflows/grab.yml": {
-   "sha": "3525923a15752710",
-   "lines": 53,
-   "bytes": 2178
+   "sha": "83da574989c850e6",
+   "lines": 56,
+   "bytes": 2384
   },
   ".github/workflows/long.yml": {
    "sha": "1fe781e93ead4ee4",
@@ -43,14 +43,14 @@
    "bytes": 1704
   },
   "CLAUDE.md": {
-   "sha": "bc6d2391aba748e3",
+   "sha": "e6fb46fce387ddca",
    "lines": 12,
-   "bytes": 2084
+   "bytes": 2302
   },
   "CONTEXT.md": {
-   "sha": "650ab9e72f4cc06b",
-   "lines": 68,
-   "bytes": 13006
+   "sha": "da6c22bea4f4a673",
+   "lines": 69,
+   "bytes": 13387
   },
   "GRAB_README.md": {
    "sha": "748214c361dcf65d",
@@ -122,10 +122,15 @@
    "lines": 12,
    "bytes": 1012
   },
+  "docs/ARCHIVE.md": {
+   "sha": "02b53e0fae6e3972",
+   "lines": 27,
+   "bytes": 2734
+  },
   "docs/CHANGELOG.md": {
-   "sha": "59dbf21526ec87c8",
-   "lines": 31,
-   "bytes": 5287
+   "sha": "3d47e456d6cfea0b",
+   "lines": 32,
+   "bytes": 5936
   },
   "docs/COOKIES.md": {
    "sha": "a84c1c4a20ae090f",
@@ -418,9 +423,9 @@
    "bytes": 23398
   },
   "web/js/v_grab.js": {
-   "sha": "310b70c05e78a7d3",
+   "sha": "a252f76a1119b5a9",
    "lines": 207,
-   "bytes": 20349
+   "bytes": 20523
   },
   "web/js/v_home.js": {
    "sha": "6dab657ad1e47afd",
@@ -573,14 +578,34 @@
    "bytes": 2074
   },
   "worker/reelio/grab.py": {
-   "sha": "431055f6684588a7",
-   "lines": 679,
-   "bytes": 32406
+   "sha": "8c51ae20589a0330",
+   "lines": 744,
+   "bytes": 36065
   },
   "worker/reelio/hosting.py": {
    "sha": "2c9ed9f876adfb27",
    "lines": 70,
    "bytes": 3430
+  },
+  "worker/reelio/ig_api.py": {
+   "sha": "bdfe6575273dc109",
+   "lines": 234,
+   "bytes": 9533
+  },
+  "worker/reelio/ig_common.py": {
+   "sha": "90d4e7ef87983ebd",
+   "lines": 232,
+   "bytes": 8472
+  },
+  "worker/reelio/ig_mirror.py": {
+   "sha": "8ef3599b2dd20999",
+   "lines": 395,
+   "bytes": 15219
+  },
+  "worker/reelio/igarchive.py": {
+   "sha": "d6e057a101ce9ea4",
+   "lines": 351,
+   "bytes": 15755
   },
   "worker/reelio/license.py": {
    "sha": "54bdbd3c02d90891",
@@ -713,9 +738,14 @@
    "bytes": 2403
   },
   "worker/tests/test_grab.py": {
-   "sha": "289aeb8e58d8930d",
-   "lines": 446,
-   "bytes": 26499
+   "sha": "1a6844eec2b5c8a7",
+   "lines": 436,
+   "bytes": 25783
+  },
+  "worker/tests/test_igarchive.py": {
+   "sha": "6c0e691d21428282",
+   "lines": 178,
+   "bytes": 9186
   },
   "worker/tests/test_license.py": {
    "sha": "9539ffca29b728eb",

@@ -420,16 +420,6 @@ json.dump({{"id": vid, "title": "Title of " + vid}}, open(os.path.join(d, "v.inf
         self.assertEqual(c("https://www.youtube.com/playlist?list=PLabc&si=1"), "https://www.youtube.com/playlist?list=PLabc")
         self.assertTrue(grab._ig_is_profile("https://www.instagram.com/nasa/") and not grab._ig_is_profile("https://www.instagram.com/reel/AbC/"))
 
-    def test_someone_elses_instagram_account_is_explained_and_does_not_pause_instagram(self):
-        os.environ["FAKE_MODE"] = "igprofile"
-        self.inbox({"cmd": "add", "links": ["https://www.instagram.com/nasa/"]})
-        self.run_grab()
-        self.assertEqual(self.jobs(), {})
-        ev = [e for e in Store(self.data).recent_events(20) if "someone else" in e["msg"]]
-        self.assertTrue(ev and "Paste the links of the reels" in ev[0]["fix"] and "My Instagram account" in ev[0]["fix"])
-        st = util.read_json(os.path.join(self.data, "queues", "grab", "_state.json"), {})
-        self.assertFalse((st.get("source_until") or {}).get("ig"), "reading a profile must not pause single-reel downloads")
-
     def test_adding_the_same_playlist_again_saves_only_the_new_videos(self):
         self.inbox({"cmd": "add", "links": ["https://www.youtube.com/playlist?list=PLabc"]}, "1.json")
         self.run_grab()
