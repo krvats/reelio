@@ -1,0 +1,4 @@
+# One Instagram username (or profile URL) per line. Lines starting with # are ignored.
+# Used by scheduled runs and when no instagram_username input is given.
+natgeo
+nasa

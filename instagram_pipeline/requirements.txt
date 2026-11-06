@@ -1,0 +1,8 @@
+# Instagram changes weekly - keep these floating (>=) so each run gets current extractors.
+instaloader>=4.14
+gallery-dl>=1.28
+yt-dlp[default]>=2025.1.1
+playwright>=1.45
+beautifulsoup4>=4.12
+lxml>=5.0
+requests>=2.31
