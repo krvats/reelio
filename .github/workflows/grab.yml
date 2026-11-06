@@ -40,6 +40,9 @@ jobs:
         working-directory: worker
         env:
           REELIO_KEY: ${{ secrets.REELIO_KEY }}
+          # optional: paid last-resort helpers for saving Instagram accounts (leave unset to skip them)
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         run: python -m reelio grab --data ../data --budget 320
       - name: Continue with the next videos
         if: steps.grab.outputs.more == 'true'
