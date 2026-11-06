@@ -1,0 +1,185 @@
+name: Instagram Reels Scraper
+
+on:
+  schedule:
+    - cron: "23 */12 * * *"          # every 12 h (UTC); each run is incremental
+  workflow_dispatch:
+    inputs:
+      instagram_username:
+        description: "Username(s), comma or space separated. Empty = read targets.txt"
+        required: false
+        default: ""
+      force_tier:
+        description: "Run only one tier (auto = full cascade)"
+        required: false
+        type: choice
+        default: auto
+        options: [auto, "1", "2", "3", "4", "4a", "4b"]
+      max_reels:
+        description: "Max reels per profile per run (0 = unlimited)"
+        required: false
+        default: "0"
+      dry_run:
+        description: "Validate secrets/rclone only, scrape nothing"
+        required: false
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [instagram-scrape]        # client_payload: {"instagram_username": "a,b", "force_tier": "auto", "max_reels": 0}
+
+# One run at a time: the cache/archive is a single shared state.
+concurrency:
+  group: instagram-scraper
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read                      # only to fetch the previous archive artifact if the cache was evicted
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+  RCLONE_VERSION: "v1.68.2"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355             # hard cap; orchestrator soft-deadline is 335 min
+    defaults:
+      run:
+        working-directory: instagram_pipeline   # all code + state lives in this folder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h / | tail -1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: instagram_pipeline/requirements.txt
+
+      - name: Set up Node (Playwright tooling)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Install rclone (pinned, checksum-verified)
+        run: |
+          set -euo pipefail
+          base="https://downloads.rclone.org/${RCLONE_VERSION}"
+          zip="rclone-${RCLONE_VERSION}-linux-amd64.zip"
+          if curl -fsSL --retry 3 -o "/tmp/$zip" "$base/$zip" && curl -fsSL --retry 3 -o /tmp/SHA256SUMS "$base/SHA256SUMS" \
+             && (cd /tmp && grep " $zip\$" SHA256SUMS | sha256sum -c -); then
+            unzip -q -o "/tmp/$zip" -d /tmp/rclone_unz
+            sudo install -m 0755 /tmp/rclone_unz/rclone-*/rclone /usr/local/bin/rclone
+          else
+            echo "::warning::pinned rclone download failed - falling back to apt"
+            sudo apt-get install -y -qq rclone
+          fi
+          rclone version | head -1
+
+      - name: Install Python dependencies (+ yt-dlp, gallery-dl, instaloader)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+          python -m yt_dlp --version
+          python -m gallery_dl --version
+          python -m instaloader --version
+
+      # ---------- state: cache first, artifact as fallback ----------
+      - name: Restore state cache (archive.txt, stamps, session)
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: instagram_pipeline/state
+          key: ig-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ig-state-
+
+      - name: Fallback - restore archive from latest artifact
+        if: steps.cache.outputs.cache-matched-key == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          mkdir -p restore_tmp
+          for id in $(gh run list --workflow instagram_scraper.yml --status completed --limit 15 \
+                        --json databaseId --jq '.[].databaseId'); do
+            if gh run download "$id" --pattern 'ig-archive-*' --dir restore_tmp 2>/dev/null \
+               && [ -n "$(find restore_tmp -name archive.txt -print -quit)" ]; then
+              echo "restored archive from run $id"; echo "RESTORE_FROM=restore_tmp" >> "$GITHUB_ENV"; found=1; break
+            fi
+          done
+          [ -n "${found:-}" ] || echo "::notice::no previous state found - first run will scrape full history"
+          exit 0
+
+      # ---------- secrets -> files (never echoed) ----------
+      - name: Decode rclone config
+        env:
+          RCLONE_CONFIG_DATA: ${{ secrets.RCLONE_CONFIG_DATA }}
+        run: |
+          set -euo pipefail
+          [ -n "${RCLONE_CONFIG_DATA:-}" ] || { echo "::error::secret RCLONE_CONFIG_DATA is empty (see SETUP_GUIDE.md)"; exit 1; }
+          umask 077
+          mkdir -p "$RUNNER_TEMP/rclone"
+          printf '%s' "$RCLONE_CONFIG_DATA" | base64 -d > "$RUNNER_TEMP/rclone/rclone.conf" \
+            || { echo "::error::RCLONE_CONFIG_DATA is not valid base64"; exit 1; }
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone/rclone.conf" rclone listremotes | grep -qx 'gdrive:' \
+            || { echo "::error::remote named 'gdrive' not found in rclone.conf"; exit 1; }
+
+      # ---------- run ----------
+      - name: Run multi-tier orchestrator
+        id: scrape
+        env:
+          # user-controlled values go through env, never inline into the shell script
+          INPUT_USERNAMES: ${{ inputs.instagram_username || github.event.client_payload.instagram_username || '' }}
+          INPUT_FORCE_TIER: ${{ inputs.force_tier || github.event.client_payload.force_tier || 'auto' }}
+          INPUT_MAX_REELS: ${{ inputs.max_reels || github.event.client_payload.max_reels || '0' }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          INSTAGRAM_SESSION_COOKIE: ${{ secrets.INSTAGRAM_SESSION_COOKIE }}
+          INSTAGRAM_USERNAME: ${{ secrets.INSTAGRAM_USERNAME }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          RAPIDAPI_HOST: ${{ vars.RAPIDAPI_HOST }}
+          RAPIDAPI_PATH: ${{ vars.RAPIDAPI_PATH }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          RCLONE_REMOTE_PATH: gdrive:Instagram_Reels
+        run: |
+          args=(--targets-file targets.txt --staging /tmp/ig_staging --state-dir state --artifact-dir state_artifact)
+          [ -n "${RESTORE_FROM:-}" ] && args+=(--restore-from "$RESTORE_FROM")
+          python -u orchestrator.py "${args[@]}"
+
+      # ---------- always persist state, even after failure/timeout ----------
+      - name: Save state cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: instagram_pipeline/state
+          key: ig-state-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload archive artifact (no session files)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ig-archive-${{ github.run_id }}-${{ github.run_attempt }}
+          path: instagram_pipeline/state_artifact/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Wipe runner (staging, credentials)
+        if: always()
+        run: |
+          rm -rf /tmp/ig_staging "$RUNNER_TEMP/ig_work" restore_tmp
+          shred -u "$RUNNER_TEMP/rclone/rclone.conf" 2>/dev/null || rm -f "$RUNNER_TEMP/rclone/rclone.conf"
