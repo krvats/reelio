@@ -1,7 +1,14 @@
 import { h, icon, toast, uid, slug, FILTERS } from './core.js';
 import { saveCfg, runNow } from './app.js';
 import { cookieStatus } from './cookies.js';
-import { mixBox, checkMix, pickCard, overlayCard } from './v_flowopts.js';
+// The extra flow cards live in their own file. If that file is missing (a half-copied update) the Flows page still opens, and says what to copy.
+let FO = null;
+try { FO = await import('./v_flowopts.js'); } catch (e) { FO = null; }
+const missing = () => h('div', { class: 'card' }, h('b', null, 'Part of the update is missing'), h('p', { class: 'small muted' }, 'Copy the file web/js/v_flowopts.js from the update zip into your repo, wait a minute, then open Reelio again.'));
+const mixBox = (...a) => (FO ? FO.mixBox(...a) : missing());
+const checkMix = (...a) => (FO ? FO.checkMix(...a) : '');
+const pickCard = (...a) => (FO ? FO.pickCard(...a) : null);
+const overlayCard = (...a) => (FO ? FO.overlayCard(...a) : missing());
 
 const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device'], ['links', 'Video links', 'Paste Instagram, YouTube or any video link'], ['page', 'Page link', 'One link to a page: Reelio finds every video on it'], ['multi', 'Mix of pages and links', 'Several pages and your own links in one flow']];
 const DST = [['instagram', 'Instagram Reels', 'Posts as a Reel'], ['youtube', 'YouTube Shorts', 'Uploads as a Short']];
@@ -74,7 +81,7 @@ async function editor(S, id, app) {
       kids.push(field('Page link', h('input', { type: 'url', value: r.source.url || '', placeholder: 'https://www.instagram.com/yourpage/', oninput: (e) => { r.source.url = e.target.value.trim(); } }), 'An Instagram page, YouTube channel or playlist. Reelio lists its videos, queues each one, and checks for new ones on every scan.'));
       kids.push(field('Which videos', h('select', { onchange: (e) => { r.source.backlog = e.target.value; } }, [['all', 'All videos on the page'], ['new', 'Only videos added from now on']].map(([v, l]) => h('option', { value: v, selected: (r.source.backlog || 'all') === v }, l)))));
       kids.push(field('Most videos to read', h('select', { onchange: (e) => { r.source.max_items = +e.target.value; } }, [25, 50, 100, 200, 500].map((v) => h('option', { value: v, selected: (r.source.max_items || 100) === v }, String(v))))));
-      kids.push(field('Post the videos in this order', h('select', { onchange: (e) => { r.order = e.target.value; } }, [['oldest', 'Oldest first'], ['views_high', 'Most views first (high to low)'], ['views_low', 'Fewest views first'], ['posted_new', 'Newest on the page first'], ['random', 'Random']].map(([v, l]) => h('option', { value: v, selected: (r.order || 'oldest') === v }, l)))), 'Views are read from the page when possible. More ways to sort and filter are further down.'));
+      kids.push(field('Post the videos in this order', h('select', { onchange: (e) => { r.order = e.target.value; } }, [['oldest', 'Oldest first'], ['views_high', 'Most views first (high to low)'], ['views_low', 'Fewest views first'], ['posted_new', 'Newest on the page first'], ['random', 'Random']].map(([v, l]) => h('option', { value: v, selected: (r.order || 'oldest') === v }, l))), 'Views are read from the page when possible. More ways to sort and filter are further down.'));
       kids.push(h('label', { class: 'row small' }, h('input', { type: 'checkbox', checked: !!r.source.rights, onchange: (e) => { r.source.rights = e.target.checked; } }), 'This page is mine, or I have permission to reuse its videos.'));
       kids.push(h('p', { class: 'small muted' }, 'Instagram needs a logged-in cookies.txt to list a page from a cloud server: Accounts > YouTube downloads (use a spare login). If it is refused, only this flow pauses and tells you.'));
     } else if (t === 'multi') {

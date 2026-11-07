@@ -99,8 +99,9 @@ export function logo(cls = 'logo') {
 
 let navId = 0, lastPage = null;
 function busy(on) { let b = document.getElementById('navbar'); if (!b) { b = h('div', { id: 'navbar' }); document.body.append(b); } b.className = on ? 'on' : ''; }
-function updateCard() {
+function updateCard(why) {
   return h('div', { class: 'card col' }, h('h2', null, 'Reelio just updated'), h('p', { class: 'muted' }, 'This page is running an older copy. One tap loads the new one.'),
+    why ? h('p', { class: 'small muted', style: 'word-break:break-word' }, 'If this keeps coming back, a file is missing or broken: ' + why) : null,
     h('button', { class: 'btn primary', onclick: async () => { try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch (e) {} location.reload(); } }, 'Load the new version'));
 }
 
@@ -140,7 +141,7 @@ export async function route(force) {
     const known = !!VIEWS[page], animate = page !== lastPage;
     let mod;
     try { mod = await (VIEWS[page] || VIEWS.home)(); }
-    catch (e) { if (!stale()) root.replaceChildren(shell(known ? page : 'home', updateCard(), true)); return; }
+    catch (e) { if (!stale()) root.replaceChildren(shell(known ? page : 'home', updateCard(String((e && e.message) || e).slice(0, 200)), true)); return; }
     if (stale()) return;
     const view = mod[page === 'more' ? 'more' : page] || mod.home;
     let node;
