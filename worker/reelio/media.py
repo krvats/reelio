@@ -1,6 +1,7 @@
 """ffmpeg: make every video a clean Reel/Short (H.264 + AAC, even size, sane bitrate) and apply the user's look."""
 import os, re, json, shutil, subprocess
 from .errors import ItemProblem, AccountProblem
+from . import layers as layers_mod
 
 
 def _warm(a, b, g, sat, con=1.0, br=0.0):
@@ -53,12 +54,17 @@ def probe(path):
     return {"video": v, "audio": a, "duration": dur, "fps": fps, "w": (v or {}).get("width"), "h": (v or {}).get("height")}
 
 
-def filter_chain(edit, info):
+def look_filter(edit):
     edit = edit or {}
     name = str(edit.get("filter", "none") or "none").strip()
     strength = float(edit.get("strength", 1.0) or 1.0)
     f = PRESETS.get(name.lower(), name)       # unknown name = raw ffmpeg expression
-    look = f(strength) if callable(f) else f
+    return f(strength) if callable(f) else f
+
+
+def filter_chain(edit, info):
+    edit = edit or {}
+    look = look_filter(edit)
     fit = edit.get("fit", "keep")
     chain = []
     if fit in ("blur", "crop", "pad"):
@@ -97,8 +103,9 @@ POS = {"top-left": "x=40:y=60", "top-right": "x=w-tw-40:y=60", "bottom-left": "x
 POS_IMG = {"top-left": "40:60", "top-right": "W-w-40:60", "bottom-left": "40:H-h-120", "bottom-right": "W-w-40:H-h-120", "center": "(W-w)/2:(H-h)/2"}
 
 
-def prepare(src, out, edit=None, logo_path=None, music_path=None):
-    """Re-encode `src` to `out`. Raises ItemProblem for bad files."""
+def prepare(src, out, edit=None, logo_path=None, music_path=None, assets=None, variables=None):
+    """Re-encode `src` to `out`. Raises ItemProblem for bad files.
+    assets = {layer id: local file} and variables = {title, n, date, ...} are for the overlay layers (layers.py)."""
     edit = edit or {}
     info = probe(src)
     if not info["video"]:
@@ -107,8 +114,13 @@ def prepare(src, out, edit=None, logo_path=None, music_path=None):
     if d is not None and not (3 <= d <= 900):
         raise ItemProblem(f"The video is {d:.0f} seconds long; Reels must be between 3 seconds and 15 minutes.", "Skip it, or trim it and re-upload.")
     fit = edit.get("fit", "keep")
+    spec, rbox = layers_mod.normalize(edit.get("layers")), layers_mod.reel_box(edit)
+    layered = bool(spec or rbox)
+    if layered and fit == "keep":
+        fit = "pad"; edit = dict(edit, fit="pad")           # overlays need a fixed 9:16 screen to be placed on
     chain = filter_chain(edit, info)
     wm = edit.get("watermark") or {}
+    rate_n = round(info["fps"]) if (info["fps"] and 23 <= info["fps"] <= 60) else 30
     args = [exe(), "-y", "-hide_banner", "-loglevel", "error", "-i", src]
     n_in = 1
     logo_idx = music_idx = None
@@ -123,11 +135,37 @@ def prepare(src, out, edit=None, logo_path=None, music_path=None):
                   "[fg]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos[f];[b][f]overlay=(W-w)/2:(H-h)/2[fit]")
         cur = "fit"
     pos = wm.get("position", "bottom-right")
+    wm_text = None
     if wm.get("text") and _font():
         op = max(0.1, min(float(wm.get("opacity", 0.7)), 1.0))
-        chain.append(f"drawtext=fontfile={_font()}:text='{_esc(wm['text'])}':fontsize=44:fontcolor=white@{op}:borderw=2:bordercolor=black@{op}:{POS.get(pos, POS['bottom-right'])}")
-    fc.append(f"[{cur}]{','.join(chain)}[v0]")
-    last = "v0"
+        wm_text = f"drawtext=fontfile={_font()}:text='{_esc(wm['text'])}':fontsize=44:fontcolor=white@{op}:borderw=2:bordercolor=black@{op}:{POS.get(pos, POS['bottom-right'])}"
+    if rbox:                                                # the reel sits inside a window on a coloured screen
+        bw, bh = round(1080 * rbox["w"] / 100 / 2) * 2, round(1920 * rbox["h"] / 100 / 2) * 2
+        cover = rbox["fit"] == "cover"
+        rv = [f"scale={bw}:{bh}:force_original_aspect_ratio={'increase' if cover else 'decrease'}:flags=lanczos"] + ([f"crop={bw}:{bh}"] if cover else [])
+        look = look_filter(edit)
+        if look:
+            rv.append(look)
+        rv += ["setsar=1", "format=yuv420p"]
+        cx, cy = 1080 * rbox["x"] / 100, 1920 * rbox["y"] / 100
+        dur_bg = (d or 60) + 1
+        fc.append(f"[{cur}]{','.join(rv)}[rv]")
+        fc.append(f"color=c={layers_mod.canvas_bg(edit)}:s=1080x1920:r={rate_n}:d={dur_bg:.2f},format=yuv420p[bgc]")
+        fc.append(f"[bgc][rv]overlay=x='{cx:.1f}-w/2':y='{cy:.1f}-h/2':shortest=1[v0]")
+        if wm_text:
+            fc.append(f"[v0]{wm_text}[v0w]"); last = "v0w"
+        else:
+            last = "v0"
+    else:
+        if wm_text:
+            chain.append(wm_text)
+        fc.append(f"[{cur}]{','.join(chain)}[v0]")
+        last = "v0"
+    if spec:
+        extra_args, parts, last = layers_mod.build(spec, last, n_in, assets or {}, os.path.dirname(os.path.abspath(out)), d, rate_n, variables or {})
+        args += extra_args
+        fc += parts
+        n_in += sum(1 for a in extra_args if a == "-i")
     if logo_idx is not None:
         op = max(0.1, min(float(wm.get("opacity", 0.8)), 1.0))
         fc.append(f"[{logo_idx}:v]scale=iw*min(1\\,200/iw):-1,format=rgba,colorchannelmixer=aa={op}[lg];[{last}][lg]overlay={POS_IMG.get(pos, POS_IMG['bottom-right'])}[v1]")

@@ -23,7 +23,7 @@ from typing import Any, Iterator, Optional
 
 import requests
 
-from .ig_common import Reel, SHORTCODE_RE, USERNAME_RE, get_logger, shortcode_from_url, unique
+from .ig_common import Reel, pick, to_int, to_iso, SHORTCODE_RE, USERNAME_RE, get_logger, shortcode_from_url, unique
 
 log = get_logger("api")
 
@@ -89,7 +89,10 @@ def parse_reels(payload: Any, source: str) -> list[Reel]:
         sc = _shortcode_of(node)
         if url and sc and sc not in seen and url.startswith("https://"):
             seen.add(sc)
-            reels.append(Reel(shortcode=sc, video_url=url, source=source))
+            reels.append(Reel(shortcode=sc, video_url=url, source=source,
+                              views=to_int(pick(node, "videoPlayCount", "playCount", "play_count", "videoViewCount", "video_view_count", "view_count", "views")),
+                              likes=to_int(pick(node, "likesCount", "like_count", "likes")),
+                              posted_at=to_iso(pick(node, "timestamp", "taken_at", "takenAtTimestamp", "date", "posted_at"))))
     return reels
 
 

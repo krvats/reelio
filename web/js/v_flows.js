@@ -1,8 +1,9 @@
 import { h, icon, toast, uid, slug, FILTERS } from './core.js';
 import { saveCfg, runNow } from './app.js';
 import { cookieStatus } from './cookies.js';
+import { mixBox, checkMix, pickCard, overlayCard } from './v_flowopts.js';
 
-const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device'], ['links', 'Video links', 'Paste Instagram, YouTube or any video link'], ['page', 'Page link', 'One link to a page: Reelio finds every video on it']];
+const SRC = [['drive', 'Google Drive folder', 'Videos you keep in Drive'], ['youtube', 'YouTube channel', 'Shorts, long videos and lives from a channel you own'], ['instagram', 'My Instagram', 'Videos already on your account'], ['upload', 'Upload here', 'Add videos from this device'], ['links', 'Video links', 'Paste Instagram, YouTube or any video link'], ['page', 'Page link', 'One link to a page: Reelio finds every video on it'], ['multi', 'Mix of pages and links', 'Several pages and your own links in one flow']];
 const DST = [['instagram', 'Instagram Reels', 'Posts as a Reel'], ['youtube', 'YouTube Shorts', 'Uploads as a Short']];
 
 export async function flows(S, params, app) {
@@ -75,6 +76,8 @@ async function editor(S, id, app) {
       kids.push(field('Most videos to read', h('select', { onchange: (e) => { r.source.max_items = +e.target.value; } }, [25, 50, 100, 200, 500].map((v) => h('option', { value: v, selected: (r.source.max_items || 100) === v }, String(v))))));
       kids.push(h('label', { class: 'row small' }, h('input', { type: 'checkbox', checked: !!r.source.rights, onchange: (e) => { r.source.rights = e.target.checked; } }), 'This page is mine, or I have permission to reuse its videos.'));
       kids.push(h('p', { class: 'small muted' }, 'Instagram needs a logged-in cookies.txt to list a page from a cloud server: Accounts > YouTube downloads (use a spare login). If it is refused, only this flow pauses and tells you.'));
+    } else if (t === 'multi') {
+      kids.push(mixBox(r, drawSrc));
     } else if (t === 'links') {
       r.source.net_conn = r.source.net_conn || 'youtube-net';
       kids.push(h('p', { class: 'muted' }, 'After saving, open Videos and press Add links. Reelio downloads each link just before posting and deletes it afterwards. Only use videos you own or have permission to reuse.'));
@@ -119,6 +122,7 @@ async function editor(S, id, app) {
   const saveBtn = h('button', { class: 'btn primary', onclick: async (e) => {
     if (!r.name.trim()) r.name = `${(SRC.find((s) => s[0] === r.source.type) || [])[1] || 'Videos'} to ${(DST.find((s) => s[0] === r.target.type) || [])[1]}`;
     if (!r.target.conn) return toast('Connect an account for the destination first.', 5000);
+    const mixErr = checkMix(r); if (mixErr) return toast(mixErr, 6000);
     if (r.source.type === 'page' && !/^https?:\/\//.test(r.source.url || '')) return toast('Paste the page link first.', 5000);
     if (r.source.type === 'page' && !r.source.rights) return toast('Please confirm you own this page or have permission to reuse its videos.', 6000);
     if (r.source.type === 'drive' && !(r.source.folders || []).length) return toast('Paste at least one Drive folder link.', 5000);
@@ -126,6 +130,7 @@ async function editor(S, id, app) {
     if (r.source.type === 'youtube' && r.source.include === 'selected' && !(r.source.videos_text || '').trim() && !(r.source.videos || []).length) return toast('Paste at least one video link.', 5000);
     if (r.source.clip && r.source.clip.seconds) r.source.clip.seconds = Math.max(15, Math.min(r.source.clip.seconds, 180));
     if (mins(r.schedule.end) <= mins(r.schedule.start)) return toast('The end time must be after the start time.', 5000);
+    if (r.edit && r.edit.layers) { r.edit.layers = r.edit.layers.filter((l) => !(l.type === 'text' && !(l.text || '').trim()) && !(l.type === 'image' && !l.src)).map(({ _open, fitReel, ...l }) => l); if (!r.edit.layers.length) delete r.edit.layers; }
     e.currentTarget.disabled = true;
     r.caption.hashtag_sets = (r.caption.hashtag_sets || []).filter(Boolean); r.schedule.gap_seconds = Math.max(+r.schedule.gap_seconds || 90, 60);
     try {
@@ -151,10 +156,12 @@ async function editor(S, id, app) {
       h('p', { class: 'small muted' }, `Times use your timezone: ${S.tz}. Change it in Settings.`),
       h('div', { class: 'col' }, h('b', null, 'Which days?'), h('div', { class: 'row gap-s' }, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => h('label', { class: 'daychip' }, h('input', { type: 'checkbox', checked: !r.schedule.days || r.schedule.days.length === 0 || r.schedule.days.includes(i), onchange: (e) => { const cur = (r.schedule.days && r.schedule.days.length ? r.schedule.days : [0, 1, 2, 3, 4, 5, 6]).filter((x) => x !== i); if (e.target.checked) cur.push(i); r.schedule.days = cur.length === 7 ? [] : cur.sort(); } }), h('span', null, d))))),
       field('Days off (optional)', h('textarea', { 'aria-label': 'Days off', placeholder: '2026-12-25\n2026-12-24..2026-12-26', oninput: (e) => { r.schedule.blackout = e.target.value.split('\n').map((x) => x.trim()).filter(Boolean); } }, (r.schedule.blackout || []).join('\n')), 'One date, or a range with two dots, per line. Nothing is posted on these days.'),
-      field('Which video first?', h('select', { onchange: (e) => { r.order = e.target.value; } }, [['oldest', 'Oldest first'], ['newest', 'Newest first'], ['random', 'Random'], ['manual', 'The order I set']].map(([v, l]) => h('option', { value: v, selected: r.order === v }, l)))),
+      null,
       h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: (r.schedule.jitter ?? 0.25) > 0, onchange: (e) => { r.schedule.jitter = e.target.checked ? 0.25 : 0; } }), h('i'), 'Vary the exact minutes so it looks natural')),
     r.target.type === 'instagram' ? h('div', { class: 'card col' }, h('h2', null, 'First comment'), h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: !!(r.comment && r.comment.enabled), onchange: (e) => { r.comment = { ...(r.comment || {}), enabled: e.target.checked }; } }), h('i'), 'Add a comment under every new Reel'),
       field('Comment text', h('input', { type: 'text', value: (r.comment || {}).text || '', placeholder: 'Follow for more!', oninput: (e) => { r.comment = { ...(r.comment || {}), text: e.target.value }; } }), 'Needs the comments permission on your Instagram token. If it is missing, the post still goes out.')) : null,
+    pickCard(r),
+    overlayCard(S, r),
     h('details', { class: 'card', open: true }, h('summary', null, h('b', null, 'Captions')),
       h('div', { class: 'col', style: 'margin-top:12px' },
         field('Caption style', h('select', { onchange: (e) => { r.caption.mode = e.target.value; } }, [['same', 'Same text for every video'], ['original', 'Use the original title and description'], ['filename', 'Use the file name']].map(([v, l]) => h('option', { value: v, selected: r.caption.mode === v }, l)))),

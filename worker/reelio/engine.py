@@ -2,6 +2,7 @@
 import os, time, uuid, hashlib, shutil, tempfile, traceback, datetime, threading
 from concurrent.futures import ThreadPoolExecutor
 from . import media, captions, scheduler
+from . import layers as layers_mod
 from .errors import Problem, ItemProblem, AccountProblem, SourceProblem, RunLimit
 from .notify import Notifier
 from .sources import get_source, download_url
@@ -432,7 +433,7 @@ class Engine:
                 if it.get("post_now"):
                     cur["post_now"] = True          # "Post first" ticked when the link/video was added
                 q["items"].append(cur); by[it["key"]] = cur
-            for f in ("name", "md5", "size", "created", "thumb", "meta", "duration", "rank"):
+            for f in ("name", "md5", "size", "created", "thumb", "meta", "duration", "rank", "views", "likes", "posted_at", "src_i"):
                 if it.get(f) is not None:
                     cur[f] = it[f]
             if it.get("md5"):
@@ -451,6 +452,54 @@ class Engine:
             if cur["key"] not in seen and cur["status"] in ("pending", "failed"):
                 cur["status"] = "missing"
 
+    def _passes(self, route, i):
+        """Filters the owner set on the flow ('only videos with 10k+ views from the last 30 days')."""
+        f = route.get("filters") or {}
+        if not f:
+            return True
+        def num(k):
+            try:
+                return float(f.get(k)) if f.get(k) not in (None, "") else None
+            except (TypeError, ValueError):
+                return None
+        skip_unknown = (f.get("unknown") or "allow") == "skip"
+        checks = [("views", num("min_views"), num("max_views")), ("likes", num("min_likes"), None)]
+        for fld, lo, hi in checks:
+            if lo is None and hi is None:
+                continue
+            v = i.get(fld)
+            if v is None:
+                if skip_unknown:
+                    return False
+                continue
+            if lo is not None and v < lo or hi is not None and v > hi:
+                return False
+        when = parse_iso(i.get("posted_at"))
+        d_from, d_to = parse_iso(f.get("date_from")), parse_iso(f.get("date_to"))
+        within, older = num("within_days"), num("older_than_days")
+        if any(x is not None for x in (d_from, d_to, within, older)):
+            if when is None:
+                if skip_unknown:
+                    return False
+            else:
+                age = (now() - when).total_seconds() / 86400
+                if d_from and when < d_from or d_to and when > d_to + datetime.timedelta(days=1):
+                    return False
+                if within is not None and age > within or older is not None and age < older:
+                    return False
+        dur = i.get("duration")
+        lo, hi = num("min_seconds"), num("max_seconds")
+        if dur is not None and (lo is not None and dur < lo or hi is not None and dur > hi):
+            return False
+        text = " ".join(str(x) for x in (i.get("name"), (i.get("meta") or {}).get("caption"), (i.get("meta") or {}).get("title")) if x).lower()
+        inc = [w.strip().lower() for w in str(f.get("include") or "").split(",") if w.strip()]
+        exc = [w.strip().lower() for w in str(f.get("exclude") or "").split(",") if w.strip()]
+        if inc and not any(w in text for w in inc):
+            return False
+        if exc and any(w in text for w in exc):
+            return False
+        return True
+
     def candidates(self, route, q):
         order = (route.get("order") or "oldest")
         t = now()
@@ -461,17 +510,49 @@ class Engine:
             ra = parse_iso(i.get("retry_after"))
             if ra and ra > t and not i.get("post_now"):
                 continue
+            if not i.get("post_now") and not self._passes(route, i):
+                continue
             ok.append(i)
 
+        def when(i):
+            return i.get("posted_at") or ""
         def keyf(i):
             manual = i.get("order")
-            base = {"oldest": i.get("created") or "", "newest": "", "random": hashlib.md5((route["id"] + i["key"]).encode()).hexdigest(),
-                    "manual": ""}.get(order, i.get("created") or "")
+            created = i.get("created") or ""
+            base = {"oldest": created, "newest": "", "random": hashlib.md5((route["id"] + i["key"]).encode()).hexdigest(),
+                    "manual": ""}.get(order, created)
+            lead = (0 if i.get("post_now") else 1, 0 if manual is not None else 1, manual if manual is not None else 0)
             if order == "newest":
-                return (0 if i.get("post_now") else 1, 0 if manual is not None else 1, manual if manual is not None else 0,
-                        tuple(-ord(c) for c in (i.get("created") or "")))
-            return (0 if i.get("post_now") else 1, 0 if manual is not None else 1, manual if manual is not None else 0, base)
+                return lead + (tuple(-ord(c) for c in created),)
+            # sorting by numbers: videos without the number go last, so they never block the good ones
+            if order in ("views_high", "views_low", "likes_high"):
+                fld = "likes" if order == "likes_high" else "views"
+                v = i.get(fld)
+                return lead + ((1, 0) if v is None else (0, -v if order != "views_low" else v), created)
+            if order in ("posted_new", "posted_old"):
+                w = when(i)
+                if not w:
+                    return lead + ((1, ()), created)
+                return lead + ((0, tuple(-ord(c) for c in w) if order == "posted_new" else tuple(ord(c) for c in w)), created)
+            return lead + (base,)
         ok.sort(key=keyf)
+        if order == "mix":                       # take turns between the pages: one from each, then again
+            urgent = [i for i in ok if i.get("post_now")]
+            rest = [i for i in ok if not i.get("post_now")]
+            pools = {}
+            for i in sorted(rest, key=lambda x: (x.get("created") or "")):
+                pools.setdefault(i.get("src_i", -1), []).append(i)
+            keys = sorted(pools)
+            last = (q.get("last_src") if isinstance(q.get("last_src"), int) else None)
+            if last in keys:                      # carry on after the page used last time
+                k = keys.index(last) + 1
+                keys = keys[k:] + keys[:k]
+            mixed = []
+            while any(pools.values()):
+                for k in keys:
+                    if pools[k]:
+                        mixed.append(pools[k].pop(0))
+            ok = urgent + mixed
         return ok
 
     # ---------------------------------------------------------------- backup Drive folder
@@ -532,7 +613,7 @@ class Engine:
         try:
             src, out = os.path.join(tmp, "src"), os.path.join(tmp, "out.mp4")
             self.fetch_with_backup(route, it, src)
-            if route["source"]["type"] in ("links", "page"):      # the download may have found the original caption
+            if route["source"]["type"] in ("links", "page", "multi"):      # the download may have found the original caption
                 cap, title = captions.build(route, it, n, now().astimezone(self.tz).strftime("%d %b %Y"))
                 ctx["journal"] = lambda d, it=it, cap=cap, title=title: self._journal(route, it, cap, title, d)
             logo = music = None
@@ -542,11 +623,20 @@ class Engine:
                 logo = os.path.join(tmp, "logo"); download_url(wm["image"], logo)
             if (edit.get("audio") or {}).get("mode") == "music" and edit["audio"].get("music_url"):
                 music = os.path.join(tmp, "music"); download_url(edit["audio"]["music_url"], music)
-            media.prepare(src, out, edit, logo, music)
+            assets, vars_ = {}, {}
+            if layers_mod.wants_layers(edit):
+                assets = layers_mod.resolve_assets(edit, s, tmp, download_url)
+                m = it.get("meta") or {}
+                vars_ = {"title": it.get("name") or "", "n": n, "date": now().astimezone(self.tz).strftime("%d %b %Y"),
+                         "author": m.get("author") or m.get("from") or "", "views": it.get("views") if it.get("views") is not None else "",
+                         "likes": it.get("likes") if it.get("likes") is not None else ""}
+            media.prepare(src, out, edit, logo, music, assets=assets, variables=vars_)
             os.remove(src)
             res = get_target(route["target"]["type"]).post(ctx, it, out, cap)
             self._ledger(route, it, res, title)
             self._mark_posted(route, it["key"], res["media_id"], res.get("permalink"), q)
+            if isinstance(it.get("src_i"), int):
+                q["last_src"] = it["src_i"]
             src_mod = get_source(route["source"]["type"])
             if hasattr(src_mod, "cleanup"):
                 src_mod.cleanup(it, s, route)       # uploads and links free their space once posted

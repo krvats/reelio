@@ -229,3 +229,39 @@ class Reel:
     video_url: str
     source: str                     # mirror name or API provider
     referer: Optional[str] = None
+    views: Optional[int] = None     # best effort: only some ways of listing know these
+    likes: Optional[int] = None
+    posted_at: Optional[str] = None  # ISO 8601 UTC
+
+
+def to_int(v):
+    try:
+        return int(float(str(v).replace(",", ""))) if v not in (None, "", False) else None
+    except (TypeError, ValueError):
+        return None
+
+
+def to_iso(v):
+    """Epoch seconds / milliseconds, 'YYYY-MM-DD HH:MM:SS' or ISO text -> 'YYYY-MM-DDTHH:MM:SSZ' (UTC), or None."""
+    import datetime as _dt
+    if v in (None, "", 0):
+        return None
+    try:
+        if isinstance(v, (int, float)) or re.fullmatch(r"\d{9,13}(\.\d+)?", str(v)):
+            x = float(v)
+            x = x / 1000.0 if x > 1e11 else x
+            return _dt.datetime.fromtimestamp(x, _dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        t = str(v).strip().replace(" ", "T").replace("+00:00", "Z")
+        d = _dt.datetime.fromisoformat(t.replace("Z", "+00:00"))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=_dt.timezone.utc)
+        return d.astimezone(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (ValueError, OverflowError, OSError):
+        return None
+
+
+def pick(d, *keys):
+    for k in keys:
+        if isinstance(d, dict) and d.get(k) not in (None, ""):
+            return d[k]
+    return None

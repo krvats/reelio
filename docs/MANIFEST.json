@@ -1,6 +1,6 @@
 {
  "version": "1.9.0",
- "at": "2026-11-06T07:38:07Z",
+ "at": "2026-11-07T08:57:20Z",
  "files": {
   ".github/workflows/deploy-keepalive.yml": {
    "sha": "9390578edf78295e",
@@ -8,9 +8,9 @@
    "bytes": 551
   },
   ".github/workflows/grab.yml": {
-   "sha": "83da574989c850e6",
+   "sha": "42493f5ad59d8637",
    "lines": 56,
-   "bytes": 2384
+   "bytes": 2402
   },
   ".github/workflows/long.yml": {
    "sha": "1fe781e93ead4ee4",
@@ -28,14 +28,14 @@
    "bytes": 312
   },
   ".github/workflows/tick-hosted.yml": {
-   "sha": "15a15485d9d642ba",
+   "sha": "cfec458d50d31801",
    "lines": 30,
-   "bytes": 1045
+   "bytes": 1097
   },
   ".github/workflows/tick.yml": {
-   "sha": "a8ed6ceda0413f2a",
+   "sha": "0629866d13a20a90",
    "lines": 56,
-   "bytes": 2129
+   "bytes": 2181
   },
   ".github/workflows/watchdog.yml": {
    "sha": "aecb501062bfb830",
@@ -128,9 +128,9 @@
    "bytes": 2734
   },
   "docs/CHANGELOG.md": {
-   "sha": "3d47e456d6cfea0b",
-   "lines": 32,
-   "bytes": 5936
+   "sha": "262ecbd3794a04e0",
+   "lines": 33,
+   "bytes": 6164
   },
   "docs/COOKIES.md": {
    "sha": "a84c1c4a20ae090f",
@@ -141,6 +141,11 @@
    "sha": "0ead1134190c53b6",
    "lines": 48,
    "bytes": 4558
+  },
+  "docs/OVERLAYS.md": {
+   "sha": "d8ef936431ef6a45",
+   "lines": 20,
+   "bytes": 1935
   },
   "docs/PHASE_A.md": {
    "sha": "100e9085e55a2a7b",
@@ -153,9 +158,9 @@
    "bytes": 1614
   },
   "docs/ROADMAP.md": {
-   "sha": "ef8deac05df25460",
-   "lines": 34,
-   "bytes": 3128
+   "sha": "0febfaa759291273",
+   "lines": 36,
+   "bytes": 3241
   },
   "docs/SELLING.md": {
    "sha": "d58795b992ca28b3",
@@ -417,10 +422,15 @@
    "lines": 134,
    "bytes": 15858
   },
+  "web/js/v_flowopts.js": {
+   "sha": "973edec07f064e74",
+   "lines": 219,
+   "bytes": 26350
+  },
   "web/js/v_flows.js": {
-   "sha": "4034ba247d08a164",
-   "lines": 175,
-   "bytes": 23398
+   "sha": "82608ab0394b6cac",
+   "lines": 182,
+   "bytes": 23720
   },
   "web/js/v_grab.js": {
    "sha": "a252f76a1119b5a9",
@@ -453,9 +463,9 @@
    "bytes": 6700
   },
   "web/js/v_queue.js": {
-   "sha": "bd2dd08aee57428c",
+   "sha": "48d0a612562ec32c",
    "lines": 115,
-   "bytes": 11157
+   "bytes": 11258
   },
   "web/manifest.webmanifest": {
    "sha": "b600fd126e386e06",
@@ -488,9 +498,9 @@
    "bytes": 20402
   },
   "web/style.css": {
-   "sha": "8096ffda1079d043",
-   "lines": 272,
-   "bytes": 24119
+   "sha": "e6a5f706902ae544",
+   "lines": 276,
+   "bytes": 24686
   },
   "web/sw.js": {
    "sha": "4bcee2542b1751aa",
@@ -563,9 +573,9 @@
    "bytes": 9068
   },
   "worker/reelio/engine.py": {
-   "sha": "9397a4f68212f512",
-   "lines": 701,
-   "bytes": 37857
+   "sha": "ab59bd8a884f1eea",
+   "lines": 791,
+   "bytes": 42565
   },
   "worker/reelio/errors.py": {
    "sha": "9cff67be03e31ee2",
@@ -588,14 +598,14 @@
    "bytes": 3430
   },
   "worker/reelio/ig_api.py": {
-   "sha": "bdfe6575273dc109",
-   "lines": 234,
-   "bytes": 9533
+   "sha": "74e139ca4142c33f",
+   "lines": 237,
+   "bytes": 9936
   },
   "worker/reelio/ig_common.py": {
-   "sha": "90d4e7ef87983ebd",
-   "lines": 232,
-   "bytes": 8472
+   "sha": "56f4e53b886ead2c",
+   "lines": 268,
+   "bytes": 9790
   },
   "worker/reelio/ig_mirror.py": {
    "sha": "8ef3599b2dd20999",
@@ -603,9 +613,14 @@
    "bytes": 15219
   },
   "worker/reelio/igarchive.py": {
-   "sha": "d6e057a101ce9ea4",
-   "lines": 351,
-   "bytes": 15755
+   "sha": "9ba91c2512c6e747",
+   "lines": 366,
+   "bytes": 16930
+  },
+  "worker/reelio/layers.py": {
+   "sha": "e25917819a5cfbde",
+   "lines": 347,
+   "bytes": 18106
   },
   "worker/reelio/license.py": {
    "sha": "54bdbd3c02d90891",
@@ -623,9 +638,9 @@
    "bytes": 23156
   },
   "worker/reelio/media.py": {
-   "sha": "fdd22f029f929614",
-   "lines": 162,
-   "bytes": 7932
+   "sha": "5776c50ebd23b8b5",
+   "lines": 200,
+   "bytes": 9877
   },
   "worker/reelio/notify.py": {
    "sha": "8de53a9534409185",
@@ -638,9 +653,9 @@
    "bytes": 3842
   },
   "worker/reelio/sources/__init__.py": {
-   "sha": "aa792fb265b1a30c",
+   "sha": "a4c5028d26a9162a",
    "lines": 32,
-   "bytes": 1441
+   "bytes": 1464
   },
   "worker/reelio/sources/drive.py": {
    "sha": "8f11055ad6efceda",
@@ -653,14 +668,19 @@
    "bytes": 1420
   },
   "worker/reelio/sources/links.py": {
-   "sha": "da87840df829cae1",
-   "lines": 139,
-   "bytes": 6543
+   "sha": "7234000b9b49a121",
+   "lines": 150,
+   "bytes": 7211
+  },
+  "worker/reelio/sources/multi.py": {
+   "sha": "76ae318c16fafb7b",
+   "lines": 64,
+   "bytes": 2530
   },
   "worker/reelio/sources/page.py": {
-   "sha": "0ca81854fd50cb03",
-   "lines": 97,
-   "bytes": 4285
+   "sha": "aaffde19c7678c18",
+   "lines": 142,
+   "bytes": 6233
   },
   "worker/reelio/sources/upload.py": {
    "sha": "250b7b2076d1715d",
@@ -731,6 +751,11 @@
    "sha": "ab751d9a61f10569",
    "lines": 445,
    "bytes": 23592
+  },
+  "worker/tests/test_flows_mix.py": {
+   "sha": "61fe518664d5bba8",
+   "lines": 120,
+   "bytes": 6961
   },
   "worker/tests/test_git.py": {
    "sha": "ff9d8b455e3b8cc8",

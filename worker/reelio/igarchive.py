@@ -21,6 +21,7 @@ hourly Save to Drive run stays fast when nobody uses this.
 import os, re, sys, json, random, shutil, subprocess, importlib
 from . import util as _u
 from .util import say, scrub, register_secret
+from .ig_common import pick, to_int, to_iso
 from .errors import ItemProblem
 
 _USER = re.compile(r"instagram\.com/([A-Za-z0-9_.]{1,30})/?", re.I)
@@ -126,10 +127,13 @@ def _tool(env_name, module, pip_name):
     return [sys.executable, "-m", module]
 
 
-def _row(user, sc, media_url=None):
+def _row(user, sc, media_url=None, views=None, likes=None, posted_at=None):
     r = {"id": sc, "title": "", "url": f"https://www.instagram.com/reel/{sc}/", "playlist_title": f"Instagram - {user}", "user": user}
     if media_url:
         r["media_url"] = media_url
+    for k, v in (("views", views), ("likes", likes), ("posted_at", posted_at)):
+        if v is not None:
+            r[k] = v
     return r
 
 
@@ -152,9 +156,19 @@ def _list_gallerydl(store, user, limit, tmp):
     os.chmod(cfg, 0o600)
     cmd += ["--config", cfg, "-j"] + (["--range", f"1-{limit}"] if limit else []) + [f"https://www.instagram.com/{user}/reels/"]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=700)
-    codes = _uniq(_CODES.findall(p.stdout or ""))
+    stats = {}
+    try:                                   # gallery-dl prints one JSON list; read the numbers when they are there
+        for entry in json.loads(p.stdout or "[]"):
+            m = entry[-1] if isinstance(entry, list) and entry and isinstance(entry[-1], dict) else None
+            sc = pick(m, "post_shortcode", "shortcode")
+            if sc and sc not in stats:
+                stats[sc] = (to_int(pick(m, "video_view_count", "view_count", "play_count", "video_play_count", "views")), to_int(pick(m, "likes", "like_count")),
+                             to_iso(pick(m, "post_date", "date")))
+    except (ValueError, TypeError):
+        pass
+    codes = _uniq(list(stats) + _CODES.findall(p.stdout or ""))
     if codes:
-        return [_row(user, c) for c in codes]
+        return [_row(user, c, None, *stats.get(c, (None, None, None))) for c in codes]
     raise (Blocked if BLOCK.search((p.stderr or "") + (p.stdout or "")) else Fail)((p.stderr or "no reels found")[-160:])
 
 
@@ -176,7 +190,8 @@ def _list_instaloader(store, user, limit, tmp):
         posts = prof.get_reels() if hasattr(prof, "get_reels") else (p for p in prof.get_posts() if p.is_video)
         rows = []
         for post in posts:
-            rows.append(_row(user, post.shortcode, getattr(post, "video_url", None)))
+            rows.append(_row(user, post.shortcode, getattr(post, "video_url", None), to_int(getattr(post, "video_view_count", None)),
+                             to_int(getattr(post, "likes", None)), to_iso(getattr(post, "date_utc", None) and post.date_utc.isoformat())))
             if len(rows) >= (limit or DEFAULT_LIST_LIMIT):
                 break
             polite_pause()
@@ -232,7 +247,7 @@ def _list_mirror(store, user, limit, tmp):
     if res.reels:
         for r in res.reels:
             _lookup.setdefault(user, {})[r.shortcode] = r.video_url
-        return [_row(user, r.shortcode, r.video_url) for r in res.reels]
+        return [_row(user, r.shortcode, r.video_url, r.views, r.likes, r.posted_at) for r in res.reels]
     raise (Blocked if res.blocked else Fail)("; ".join(res.errors)[:160] or "no reels found")
 
 
@@ -256,7 +271,7 @@ def _list_api(store, user, limit, tmp):
         raise Fail(scrub(e)[:160])
     for r in reels:
         _lookup.setdefault(user, {})[r.shortcode] = r.video_url
-    return [_row(user, r.shortcode, r.video_url) for r in reels]
+    return [_row(user, r.shortcode, r.video_url, r.views, r.likes, r.posted_at) for r in reels]
 
 
 LIST_TIERS = [("gallery-dl", _list_gallerydl), ("Instaloader", _list_instaloader), ("browser", _list_browser),

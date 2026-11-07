@@ -86,7 +86,7 @@ export async function queue(S, params, app) {
     }
     await S.data.command({ cmd: 'rescan', route: rid }); await runNow('scan', rid);
   } })) : null;
-  const addLinks = route.source.type === 'links' ? h('button', { class: 'btn primary', onclick: () => {
+  const addLinks = (route.source.type === 'links' || (route.source.type === 'multi' && (route.source.sources || []).some((c) => c.type === 'links'))) ? h('button', { class: 'btn primary', onclick: () => {
     const ta = h('textarea', { rows: 8, placeholder: 'One link per line.\nhttps://www.instagram.com/reel/XXXX/\nhttps://youtube.com/shorts/YYYY | optional caption for this one', 'aria-label': 'Video links' });
     const first = h('input', { type: 'checkbox' }), rights = h('input', { type: 'checkbox' });
     const d = h('dialog', null, h('div', { class: 'body col' }, h('h2', null, 'Add video links'), ta,

@@ -122,6 +122,17 @@ def fetch(item, dest, store, route):
             if cap:
                 item.setdefault("meta", {}).setdefault("caption", cap)
             return
+        m = _IG.search(url)
+        if m:                                    # third chance: the Save-to-Drive ladder (Instaloader, direct link, lookup)
+            try:
+                from .. import igarchive
+                got = igarchive.fallback_download(store, {"vid": m.group(1), "url": url, "media_url": (item.get("meta") or {}).get("media_url")},
+                                                  igarchive.user_of(url) or (item.get("meta") or {}).get("author") or "", tmpd)
+                if got:
+                    shutil.move(got, dest)
+                    return
+            except Exception as e:
+                err = (err + " | " + scrub(e))[-400:]
         if any(w in low for w in ("login", "sign in", "confirm you", "bot", "429", "rate-limit", "rate limit", "cookies", "empty media")):
             raise SourceProblem("The site refused the download from this cloud server.", _block_fix(url), cooldown_min=180, kind="blocked")
         if any(w in low for w in ("private", "unavailable", "removed", "not found", "404", "no video")):

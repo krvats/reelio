@@ -1,5 +1,6 @@
 # Changelog
 ## 1.1.0 (in progress)
+- Flows: mix several pages + own links, sort by views/likes/date, filters, take-turns; overlay layer editor (fonts, pictures, white part with window, text clipped to window, drag preview with sample video). See docs/OVERLAYS.md
 - Added project memory tooling and rules (CLAUDE.md, ROADMAP, WORKLOG, handoff.py)
 ## 1.0.0
 - First complete single-owner version: Drive/YouTube/Instagram/upload sources, Instagram/YouTube targets, scheduler, ledger, recovery, Telegram, diagnose, analytics, web app, setup guide, migration seed, 36 tests

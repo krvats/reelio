@@ -11,3 +11,5 @@
 - 2026-10-15T05:31:51Z v1.1.0: UPI payments, tutorial for no-company path (+1 added, ~10 changed, -0 removed)
 - 2026-10-30T20:47:33Z v1.9.0: v1.9 theme, grab merge, share, ads (+69 added, ~45 changed, -0 removed)
 - 2026-11-06T07:38:07Z v1.9.0: Instagram accounts in Save to Drive: igarchive ladder, fallbacks, 12h watch, 8 tests (+6 added, ~7 changed, -0 removed)
+- 2026-11-07T08:54:34Z v1.9.0: Flows: multi-page mix, sorting/filters, overlay layer editor with sample-video preview (+5 added, ~16 changed, -0 removed)
+- 2026-11-07T08:57:20Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
