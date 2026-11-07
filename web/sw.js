@@ -3,7 +3,7 @@
 const BUILD = '__BUILD__';
 const V = 'reelio-' + BUILD;
 const SHELL = ['app.html', 'style.css', 'icon.svg', 'fonts/figtree-latin-wght-normal.woff2', 'fonts/bricolage-grotesque-latin-wght-normal.woff2', 'app-config.js',
-  'js/app.js', 'js/core.js', 'js/i18n.js', 'js/setup.js', 'js/v_home.js', 'js/v_pages.js', 'js/v_queue.js', 'js/links.js', 'js/v_flows.js', 'js/v_accounts.js', 'js/v_more.js', 'js/v_long.js', 'js/v_grab.js', 'js/cookies.js', 'js/palette.js', 'js/heal.js', 'js/login.js'];
+  'js/app.js', 'js/core.js', 'js/i18n.js', 'js/setup.js', 'js/v_home.js', 'js/v_pages.js', 'js/v_queue.js', 'js/links.js', 'js/v_flows.js', 'js/v_flowopts.js', 'js/v_accounts.js', 'js/v_more.js', 'js/v_long.js', 'js/v_grab.js', 'js/cookies.js', 'js/palette.js', 'js/heal.js', 'js/login.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(V).then((c) => Promise.all(SHELL.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting()));
 });
