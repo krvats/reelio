@@ -1,6 +1,6 @@
 {
  "version": "1.9.0",
- "at": "2026-11-07T10:19:45Z",
+ "at": "2026-11-07T13:14:48Z",
  "files": {
   ".github/workflows/deploy-keepalive.yml": {
    "sha": "9390578edf78295e",
@@ -128,9 +128,9 @@
    "bytes": 2734
   },
   "docs/CHANGELOG.md": {
-   "sha": "0426d911a6ce1207",
-   "lines": 34,
-   "bytes": 6310
+   "sha": "b268c85e81c7667e",
+   "lines": 35,
+   "bytes": 6489
   },
   "docs/COOKIES.md": {
    "sha": "a84c1c4a20ae090f",
@@ -363,9 +363,9 @@
    "bytes": 13979
   },
   "web/js/app.js": {
-   "sha": "502d883e4fec65d7",
-   "lines": 192,
-   "bytes": 12780
+   "sha": "917ee5837f070423",
+   "lines": 193,
+   "bytes": 12975
   },
   "web/js/cookies.js": {
    "sha": "458f0aa90bff22e4",
@@ -428,9 +428,9 @@
    "bytes": 26350
   },
   "web/js/v_flows.js": {
-   "sha": "0be43a2cae5a4d97",
-   "lines": 186,
-   "bytes": 25571
+   "sha": "e5f5580a925876fe",
+   "lines": 193,
+   "bytes": 26222
   },
   "web/js/v_grab.js": {
    "sha": "a252f76a1119b5a9",
@@ -503,9 +503,9 @@
    "bytes": 24686
   },
   "web/sw.js": {
-   "sha": "4bcee2542b1751aa",
+   "sha": "178213482c5486ad",
    "lines": 25,
-   "bytes": 1917
+   "bytes": 1937
   },
   "web/terms.html": {
    "sha": "959221decef0a601",

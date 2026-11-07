@@ -17,3 +17,5 @@
 - 2026-11-07T10:09:06Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
 - 2026-11-07T10:16:27Z v1.9.0: Fix burn watermark canvas size (+0 added, ~2 changed, -0 removed)
 - 2026-11-07T10:19:45Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
+- 2026-11-07T13:10:28Z v1.9.0: Fix v_flows.js syntax error (update banner loop); resilient import (+0 added, ~4 changed, -0 removed)
+- 2026-11-07T13:14:48Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
