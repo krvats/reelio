@@ -13,3 +13,7 @@
 - 2026-11-06T07:38:07Z v1.9.0: Instagram accounts in Save to Drive: igarchive ladder, fallbacks, 12h watch, 8 tests (+6 added, ~7 changed, -0 removed)
 - 2026-11-07T08:54:34Z v1.9.0: Flows: multi-page mix, sorting/filters, overlay layer editor with sample-video preview (+5 added, ~16 changed, -0 removed)
 - 2026-11-07T08:57:20Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
+- 2026-11-07T10:06:21Z v1.9.0: Burned-in watermark, views-high order on page source (+1 added, ~6 changed, -0 removed)
+- 2026-11-07T10:09:06Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
+- 2026-11-07T10:16:27Z v1.9.0: Fix burn watermark canvas size (+0 added, ~2 changed, -0 removed)
+- 2026-11-07T10:19:45Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)

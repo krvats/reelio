@@ -135,8 +135,9 @@ def prepare(src, out, edit=None, logo_path=None, music_path=None, assets=None, v
                   "[fg]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos[f];[b][f]overlay=(W-w)/2:(H-h)/2[fit]")
         cur = "fit"
     pos = wm.get("position", "bottom-right")
+    burn = bool(wm.get("text")) and wm.get("style") != "plain"
     wm_text = None
-    if wm.get("text") and _font():
+    if wm.get("text") and not burn and _font():
         op = max(0.1, min(float(wm.get("opacity", 0.7)), 1.0))
         wm_text = f"drawtext=fontfile={_font()}:text='{_esc(wm['text'])}':fontsize=44:fontcolor=white@{op}:borderw=2:bordercolor=black@{op}:{POS.get(pos, POS['bottom-right'])}"
     if rbox:                                                # the reel sits inside a window on a coloured screen
@@ -166,6 +167,14 @@ def prepare(src, out, edit=None, logo_path=None, music_path=None, assets=None, v
         args += extra_args
         fc += parts
         n_in += sum(1 for a in extra_args if a == "-i")
+    if burn:                                   # printed into the picture, on top of any overlays, under the logo picture
+        try:
+            dims = (info.get("w") // 2 * 2, info.get("h") // 2 * 2) if (fit == "keep" and not layered and info.get("w") and info.get("h")) else None
+            b = layers_mod.burn_watermark(wm, last, os.path.dirname(os.path.abspath(out)), rate_n, d, dims)
+        except OSError:
+            b = None
+        if b:
+            fc += b[0]; last = b[1]
     if logo_idx is not None:
         op = max(0.1, min(float(wm.get("opacity", 0.8)), 1.0))
         fc.append(f"[{logo_idx}:v]scale=iw*min(1\\,200/iw):-1,format=rgba,colorchannelmixer=aa={op}[lg];[{last}][lg]overlay={POS_IMG.get(pos, POS_IMG['bottom-right'])}[v1]")

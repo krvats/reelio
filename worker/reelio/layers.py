@@ -34,6 +34,11 @@ FONTS = {   # key -> (label, candidate files). The first one that exists is used
     "hindi": ("Hindi (Devanagari)", ["/usr/share/fonts/truetype/noto/NotoSansDevanagari-Bold.ttf", "/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf",
                                     "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf"]),
 }
+_HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+FONTS["sleek-light"] = ("Sleek light", [os.path.join(_HERE, "Poppins-Light.ttf"), "/usr/share/fonts/truetype/google-fonts/Poppins-Light.ttf",
+                                        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf"])
+FONTS["sleek"] = ("Sleek", [os.path.join(_HERE, "Poppins-Medium.ttf"), "/usr/share/fonts/truetype/google-fonts/Poppins-Medium.ttf",
+                            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf"])
 DEFAULT_FONT = "sans-bold"
 
 
@@ -344,3 +349,49 @@ def build(layers, start_label, first_input, files, tmp, duration, rate, variable
                 fc.append(f"[{cur}]{dt}{_enable(l)}[{out}]")
             cur = out
     return args, fc, cur
+
+
+# ------------------------------------------------------------------ small "burned in" watermark
+WM_STYLES = {   # name -> (canvas colour, text colour, blend mode, strength): how the mark is mixed INTO the picture
+    "glow": ("black", "white", "screen", 0.55),         # light print: brightens the footage under the letters, like light on the lens
+    "soft": ("0x808080", "white", "overlay", 1.0),     # follows the picture's light and shade, very natural
+    "ink": ("white", "black", "multiply", 0.5),         # dark print: darkens bright areas, like stamped ink
+}
+WM_SIZES = {"tiny": 22, "small": 28, "medium": 36}
+WM_MARGIN = {"top-left": (48, 70, 0), "top-right": (-48, 70, 0), "bottom-left": (48, -230, 0), "bottom-right": (-48, -230, 0), "center": (0, 0, 1)}
+
+
+def burn_watermark(wm, src_label, tmp, rate, duration, size_wh=None):
+    """The channel name printed INTO the picture instead of stuck on top: the text is drawn on a flat canvas, softened a hair, then mixed
+    with the video (screen / soft light / multiply), so it reacts to the footage like a print. Returns (filter parts, out label) or None."""
+    text = str(wm.get("text") or "").strip()[:60]
+    if not text:
+        return None
+    cw, ch = size_wh or (W, H)
+    style = wm.get("style") if wm.get("style") in WM_STYLES else "glow"
+    base, tcol, mode, strength = WM_STYLES[style]
+    size = WM_SIZES.get(wm.get("size"), WM_SIZES["small"]) if not isinstance(wm.get("size"), (int, float)) else max(14, min(float(wm["size"]), 80))
+    size = size * min(cw, ch) / 1080.0 if min(cw, ch) != 1080 else size       # the same look on any picture size
+    op = max(0.1, min(float(wm.get("opacity", 1.0)), 1.0)) * strength
+    font = font_path(wm.get("font") if wm.get("font") in FONTS else "sleek-light")
+    if not font:
+        return None
+    tf = os.path.join(tmp, "wm_text.txt")
+    with open(tf, "w", encoding="utf-8") as f:
+        f.write(text)
+    px, py, centre = WM_MARGIN.get(wm.get("position"), WM_MARGIN["bottom-right"])
+    if centre:
+        xe, ye = "(w-text_w)/2", "(h-text_h)/2"
+    else:
+        xe = f"{px}" if px > 0 else f"w-text_w{px}"
+        ye = f"{py}" if py > 0 else f"h-text_h{py}"
+    glow = f"drawtext=fontfile='{_fesc(font)}':textfile='{_fesc(tf)}':expansion=none:fontsize={size:g}:fontcolor={tcol}@0.6:x={xe}:y={ye}"
+    d = f"{(duration or 60) + 1:.2f}"
+    parts = [f"color=c={base}:s={cw}x{ch}:r={rate}:d={d},format=gbrp,"
+             f"{glow},gblur=sigma={max(0.5, size / 28):.2f}[wmsoft]",              # a faint halo: the print bleeds a little, like ink or light
+             f"color=c={base}:s={cw}x{ch}:r={rate}:d={d},format=gbrp,"
+             f"drawtext=fontfile='{_fesc(font)}':textfile='{_fesc(tf)}':expansion=none:fontsize={size:g}:fontcolor={tcol}:x={xe}:y={ye},gblur=sigma=0.35[wmcore]",
+             "[wmsoft][wmcore]blend=all_mode=lighten[wmmix]" if base != "white" else "[wmsoft][wmcore]blend=all_mode=darken[wmmix]",
+             f"[wmmix][{src_label}]scale2ref=flags=bicubic[wmfit][wmref]",        # safety: the canvas always matches the real picture size
+             f"[wmref]format=gbrp[wma];[wma][wmfit]blend=all_mode={mode}:all_opacity={op:.3f}[wmout]"]
+    return parts, "wmout"

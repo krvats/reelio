@@ -1,5 +1,6 @@
 # Changelog
 ## 1.1.0 (in progress)
+- Watermark text is now a tiny sleek burned-in print (glow/soft/ink) with bundled Poppins; "Most views first" order shown on the Page link source
 - Flows: mix several pages + own links, sort by views/likes/date, filters, take-turns; overlay layer editor (fonts, pictures, white part with window, text clipped to window, drag preview with sample video). See docs/OVERLAYS.md
 - Added project memory tooling and rules (CLAUDE.md, ROADMAP, WORKLOG, handoff.py)
 ## 1.0.0

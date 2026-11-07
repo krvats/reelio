@@ -1,6 +1,6 @@
 {
  "version": "1.9.0",
- "at": "2026-11-07T08:57:20Z",
+ "at": "2026-11-07T10:19:45Z",
  "files": {
   ".github/workflows/deploy-keepalive.yml": {
    "sha": "9390578edf78295e",
@@ -128,9 +128,9 @@
    "bytes": 2734
   },
   "docs/CHANGELOG.md": {
-   "sha": "262ecbd3794a04e0",
-   "lines": 33,
-   "bytes": 6164
+   "sha": "0426d911a6ce1207",
+   "lines": 34,
+   "bytes": 6310
   },
   "docs/COOKIES.md": {
    "sha": "a84c1c4a20ae090f",
@@ -143,9 +143,9 @@
    "bytes": 4558
   },
   "docs/OVERLAYS.md": {
-   "sha": "d8ef936431ef6a45",
-   "lines": 20,
-   "bytes": 1935
+   "sha": "d9fe30291c752939",
+   "lines": 25,
+   "bytes": 2354
   },
   "docs/PHASE_A.md": {
    "sha": "100e9085e55a2a7b",
@@ -428,9 +428,9 @@
    "bytes": 26350
   },
   "web/js/v_flows.js": {
-   "sha": "82608ab0394b6cac",
-   "lines": 182,
-   "bytes": 23720
+   "sha": "0be43a2cae5a4d97",
+   "lines": 186,
+   "bytes": 25571
   },
   "web/js/v_grab.js": {
    "sha": "a252f76a1119b5a9",
@@ -582,6 +582,11 @@
    "lines": 87,
    "bytes": 4965
   },
+  "worker/reelio/fonts/README.txt": {
+   "sha": "ff2b2d897544de9f",
+   "lines": 3,
+   "bytes": 249
+  },
   "worker/reelio/google.py": {
    "sha": "46b5e2de71884eb9",
    "lines": 38,
@@ -618,9 +623,9 @@
    "bytes": 16930
   },
   "worker/reelio/layers.py": {
-   "sha": "e25917819a5cfbde",
-   "lines": 347,
-   "bytes": 18106
+   "sha": "977b6cb35c988dce",
+   "lines": 398,
+   "bytes": 21921
   },
   "worker/reelio/license.py": {
    "sha": "54bdbd3c02d90891",
@@ -638,9 +643,9 @@
    "bytes": 23156
   },
   "worker/reelio/media.py": {
-   "sha": "5776c50ebd23b8b5",
-   "lines": 200,
-   "bytes": 9877
+   "sha": "a277eeb7324ddeb4",
+   "lines": 209,
+   "bytes": 10440
   },
   "worker/reelio/notify.py": {
    "sha": "8de53a9534409185",
@@ -753,9 +758,9 @@
    "bytes": 23592
   },
   "worker/tests/test_flows_mix.py": {
-   "sha": "61fe518664d5bba8",
-   "lines": 120,
-   "bytes": 6961
+   "sha": "071b51a788060951",
+   "lines": 144,
+   "bytes": 8476
   },
   "worker/tests/test_git.py": {
    "sha": "ff9d8b455e3b8cc8",

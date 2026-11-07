@@ -12,8 +12,8 @@ If I add a message below this line, that message wins over the roadmap order.
 
 ---
 ## State captured by `tools/handoff.py prompt`
-- Version: 1.9.0 · last snapshot: 2026-11-07T08:57:20Z
-- Last recorded tests: python: 137 ran, FAILING, license: 18 ran, passing (at 2026-11-07T08:57:20Z)
+- Version: 1.9.0 · last snapshot: 2026-11-07T10:19:45Z
+- Last recorded tests: python: 141 ran, FAILING, license: 18 ran, passing (at 2026-11-07T10:19:45Z)
 - No changes since the last snapshot.
 - Screenshots available: INDEX.md, desktop-accounts.png, desktop-flows.png, desktop-help.png, desktop-home.png, desktop-pages.png, desktop-save-to-drive.png, desktop-schedule.png, desktop-settings.png, desktop-stats.png, desktop-videos.png, landing-desktop.png, mobile-accounts.png, mobile-flows.png, mobile-help.png, mobile-home.png, mobile-pages.png, mobile-save-to-drive.png, mobile-schedule.png, mobile-settings.png, mobile-stats.png, mobile-videos.png
 
@@ -39,14 +39,18 @@ If I add a message below this line, that message wins over the roadmap order.
 - 2026-11-06T07:38:07Z v1.9.0: Instagram accounts in Save to Drive: igarchive ladder, fallbacks, 12h watch, 8 tests (+6 added, ~7 changed, -0 removed)
 - 2026-11-07T08:54:34Z v1.9.0: Flows: multi-page mix, sorting/filters, overlay layer editor with sample-video preview (+5 added, ~16 changed, -0 removed)
 - 2026-11-07T08:57:20Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
+- 2026-11-07T10:06:21Z v1.9.0: Burned-in watermark, views-high order on page source (+1 added, ~6 changed, -0 removed)
+- 2026-11-07T10:09:06Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
+- 2026-11-07T10:16:27Z v1.9.0: Fix burn watermark canvas size (+0 added, ~2 changed, -0 removed)
+- 2026-11-07T10:19:45Z v1.9.0: snapshot (+0 added, ~0 changed, -0 removed)
 
 ### File map
 - .github/: .github/workflows/deploy-keepalive.yml (23), .github/workflows/grab.yml (56), .github/workflows/long.yml (51), .github/workflows/pages.yml (30), .github/workflows/tests.yml (12), .github/workflows/tick-hosted.yml (30), .github/workflows/tick.yml (56), .github/workflows/watchdog.yml (38)
 - ./: CLAUDE.md (12), CONTEXT.md (69), GRAB_README.md (27), LONG_VIDEOS_README.md (32), README.md (68), UPDATE_1.9_README.md (28)
 - api/: api/README.md (12), api/dev-server.mjs (13), api/package.json (4), api/scripts/dev-server.mjs (11), api/src/index.js (217), api/test/api.test.mjs (130), api/test/team.test.mjs (73), api/wrangler.toml (8)
-- docs/: docs/ADD_LINKS.md (28), docs/ADS.md (12), docs/ARCHIVE.md (27), docs/CHANGELOG.md (33), docs/COOKIES.md (28), docs/GRAB.md (48), docs/OVERLAYS.md (20), docs/PHASE_A.md (35), docs/RELIABILITY.md (25), docs/ROADMAP.md (36), docs/SELLING.md (25), docs/SETUP_CHECKLIST.md (13), docs/TUTORIAL.md (68)
+- docs/: docs/ADD_LINKS.md (28), docs/ADS.md (12), docs/ARCHIVE.md (27), docs/CHANGELOG.md (34), docs/COOKIES.md (28), docs/GRAB.md (48), docs/OVERLAYS.md (25), docs/PHASE_A.md (35), docs/RELIABILITY.md (25), docs/ROADMAP.md (36), docs/SELLING.md (25), docs/SETUP_CHECKLIST.md (13), docs/TUTORIAL.md (68)
 - keepalive/: keepalive/package.json (2), keepalive/src/index.js (61), keepalive/test/decide.test.mjs (14), keepalive/wrangler.toml (14)
 - license/: license/README.md (27), license/package.json (9), license/scripts/dev-server.mjs (14), license/scripts/gen-keys.mjs (6), license/scripts/mint-token.mjs (7), license/src/crypto.js (52), license/src/index.js (269), license/src/store.js (16), license/test/license.test.mjs (234), license/wrangler.toml (19)
 - tools/: tools/ad_template.html (27), tools/cookie-sync/README.md (21), tools/cookie-sync/background.js (9), tools/cookie-sync/crypto.js (20), tools/cookie-sync/manifest.json (11), tools/cookie-sync/pool.js (26), tools/cookie-sync/popup.html (11), tools/cookie-sync/popup.js (46), tools/cookie-sync/sync.js (98), tools/cookie-sync/test/sync.test.mjs (46), tools/handoff.py (163), tools/make_ads.py (22), tools/make_seed.py (78), tools/screens.py (47) ... (+3 more)
 - web/: web/admin.html (19), web/app-config.js (14), web/app.html (28), web/dmca.html (13), web/icon.svg (1), web/index.html (189), web/js/app.js (192), web/js/cookies.js (100), web/js/core.js (253), web/js/demo.js (159), web/js/heal.js (32), web/js/i18n.js (18), web/js/license.js (69), web/js/links.js (28) ... (+24 more)
-- worker/: worker/reelio/__init__.py (3), worker/reelio/__main__.py (4), worker/reelio/analytics.py (44), worker/reelio/apimode.py (85), worker/reelio/captions.py (63), worker/reelio/cli.py (79), worker/reelio/cookiepool.py (208), worker/reelio/crypto.py (28), worker/reelio/diagnose.py (131), worker/reelio/driveup.py (164), worker/reelio/engine.py (791), worker/reelio/errors.py (87), worker/reelio/google.py (38), worker/reelio/grab.py (744) ... (+42 more)
+- worker/: worker/reelio/__init__.py (3), worker/reelio/__main__.py (4), worker/reelio/analytics.py (44), worker/reelio/apimode.py (85), worker/reelio/captions.py (63), worker/reelio/cli.py (79), worker/reelio/cookiepool.py (208), worker/reelio/crypto.py (28), worker/reelio/diagnose.py (131), worker/reelio/driveup.py (164), worker/reelio/engine.py (791), worker/reelio/errors.py (87), worker/reelio/fonts/README.txt (3), worker/reelio/google.py (38) ... (+43 more)

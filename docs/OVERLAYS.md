@@ -17,3 +17,8 @@ Layers stack bottom to top above the video. Types: `frame` (coloured screen with
 Text: font (sans-bold, sans, serif-bold, mono-bold, clean-bold, clean-serif, narrow-bold, rounded-bold, hindi, custom .ttf link), size, colour, outline, shadow, strip, align, fade in/out, `clip_to:<frame id>` = text only shows inside that window.
 Variables: {title} {n} {date} {author} {views} {likes}. Rendering is `layers.py` + `media.prepare` (ffmpeg). The editor can preview with a sample video from the owner's device (never uploaded) and layers can be dragged.
 Fonts: workflows install DejaVu, Liberation and Lohit Devanagari. Not verified on the real runner.
+
+## Watermark (burned in)
+`edit.watermark: {text, style: glow|soft|ink|plain, size: tiny|small|medium|<px>, font, position, opacity}`. The name is drawn small on a flat canvas
+(Poppins Light bundled in `worker/reelio/fonts/`, SIL OFL), softened a little and blended into the video (screen / overlay / multiply), so it reacts to the footage.
+`plain` keeps the old stuck-on text. The picture-logo watermark is unchanged.

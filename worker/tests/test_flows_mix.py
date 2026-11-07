@@ -115,5 +115,29 @@ class Render(unittest.TestCase):
         shutil.rmtree(d, ignore_errors=True)
 
 
+@unittest.skipUnless(shutil.which("ffmpeg"), "needs ffmpeg")
+class Burn(unittest.TestCase):
+    def frame(self, d, edit, name):
+        src = os.path.join(d, "in.mp4")
+        if not os.path.exists(src):
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=gray:s=540x960:d=4:r=30", "-f", "lavfi", "-i", "anullsrc", "-t", "4",
+                            "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", src], check=True)
+        out = os.path.join(d, name + ".mp4")
+        media.prepare(src, out, edit)
+        raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-ss", "1", "-i", out, "-frames:v", "1", "-vf", "crop=420:60:600:1650,format=gray", "-f", "rawvideo", "-"],
+                             capture_output=True, check=True).stdout
+        return raw
+
+    def test_burn_changes_only_a_little_and_follows_style(self):
+        d = tempfile.mkdtemp()
+        base = self.frame(d, {"fit": "crop"}, "a")
+        glow = self.frame(d, {"fit": "crop", "watermark": {"text": "@me.reels", "style": "glow"}}, "b")
+        ink = self.frame(d, {"fit": "crop", "watermark": {"text": "@me.reels", "style": "ink"}}, "c")
+        self.assertGreater(max(glow), max(base) + 15)          # light print brightens
+        self.assertLess(min(ink), min(base) - 15)              # dark print darkens
+        self.assertLess(sum(1 for a, b in zip(base, glow) if abs(a - b) > 6), len(base) * 0.25)   # and it is small
+        shutil.rmtree(d, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()
